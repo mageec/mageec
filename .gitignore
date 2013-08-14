@@ -1,0 +1,15 @@
+*~
+.#*
+#*
+*.diff
+*.patch
+*.orig
+*.rej
+*.o
+*.la
+
+autom4te.cache
+Makefile
+config.log
+config.status
+libtool
