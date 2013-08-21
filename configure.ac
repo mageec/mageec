@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT(mageec, 0.1.0)
+AC_INIT([mageec], [0.1.0])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -19,6 +19,20 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 
 AC_ENABLE_SHARED
+
+# Libaries we need to build MAGEEC
+AC_CHECK_HEADERS(libelf.h gelf.h, [], [
+  AC_MSG_ERROR([Unable to find libelf headers.])
+])
+AC_CHECK_LIB(elf, elf_version, [], [
+  AC_MSG_ERROR([Unable to find libelf.])
+])
+AC_CHECK_HEADERS(gcrypt.h, [], [
+  AC_MSG_ERROR([Unable to find libgcrypt headers.])
+])
+AC_CHECK_LIB(gcrypt, gcry_md_open, [], [
+  AC_MSG_ERROR([Unable to find libgcrypt.])
+])
 
 # Doxygen
 AC_CHECK_PROGS([DOXYGEN], [doxygen])

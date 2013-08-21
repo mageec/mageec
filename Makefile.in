@@ -256,7 +256,7 @@ SUBDIRS = ml mageec gcc_plugin
 # Doxygen files to include in distribution
 EXTRA_DIST = include/mageec.h include/mageec-ml.h \
 	include/mageec-features.h include/mageec-flags.h \
-	doc/mageec_logo.png
+	include/elfhash.h doc/mageec_logo.png
 all: all-recursive
 
 .SUFFIXES:

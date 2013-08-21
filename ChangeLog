@@ -1,3 +1,15 @@
+2013-08-21  Simon Cook  <simon.cook@embecosm.com>
+
+	* include/elfhash.h: Define hashedelf.
+	* mageec/elfhash.cpp: Define hashedelf class implementation.
+	* mageec/mageechash.cpp: Added command line interface to hashedelf.
+	* mageec/Makefile.am: Build mageechash, add elfhash to libmageec.
+	* mageec/Makefile.in: Regenerated.
+	* Makefile.am: Include elfhash.h with distribution.
+	* Makefile.in: Regenerated.
+	* configure.ac: Add test for libelf and libgcrypt.
+	* configure: Regenerated.
+
 2013-08-14  Simon Cook  <simon.cook@embecosm.com>
 
 	* doc/Doxyfile.in: Add Doxygen documentation.
