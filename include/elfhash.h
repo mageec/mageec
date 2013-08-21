@@ -33,6 +33,7 @@ class hashedelf
     size_t datasize;
 public:
     hashedelf (bool verbose);
+    bool ignoredsection (char const *sectionname);
     int hash (char const *filename);
     uint64_t getResult();
 };

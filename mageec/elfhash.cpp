@@ -35,6 +35,21 @@ hashedelf::hashedelf (bool verbose) : verbose(verbose)
   datasize = 0;
 }
 
+bool hashedelf::ignoredsection (char const *sectionname)
+{
+  if (sectionname == NULL)
+    return true;
+  if (!strcmp (sectionname, ".note.gnu.build-id"))
+    return true;
+  if (!strcmp (sectionname, ".gnu.hash"))
+    return true;
+  if (!strcmp (sectionname, ".gnu.version"))
+    return true;
+  if (!strcmp (sectionname, ".gnu.version_r"))
+    return true;
+  return false;
+}
+
 #pragma GCC diagnostic ignored "-Wpointer-arith"
 int hashedelf::hash (char const *filename)
 {
@@ -76,7 +91,7 @@ int hashedelf::hash (char const *filename)
     if (name == NULL)
       return 1;
 
-    if (sechdr.sh_flags & SHF_ALLOC)
+    if ((sechdr.sh_flags & SHF_ALLOC) && !ignoredsection(name))
     {
       /* Add sectionname */
       data = realloc (data, datasize + strlen(name));
