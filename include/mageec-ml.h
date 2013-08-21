@@ -67,8 +67,8 @@ public:
    * @param good Whether the result of compilation was valid (for machine
    * learners that understand bad combinations.)
    */
-  void add_result (std::vector<mageec_feature> features,
-                   std::vector<mageec_flag> flags,
+  void add_result (std::vector<mageec_feature*> features,
+                   std::vector<mageec_flag*> flags,
                    int64_t metric,
                    bool good);
 };

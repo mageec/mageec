@@ -44,8 +44,8 @@ void mageec_ml::finish (void)
   cerr << "LEARNER: Goodbye!" << endl;
 }
 
-void mageec_ml::add_result (std::vector<mageec_feature> features __attribute__((unused)),
-                            std::vector<mageec_flag> flags __attribute__((unused)),
+void mageec_ml::add_result (std::vector<mageec_feature*> features __attribute__((unused)),
+                            std::vector<mageec_flag*> flags __attribute__((unused)),
                             int64_t metric __attribute__((unused)),
                             bool good __attribute__((unused)))
 {
