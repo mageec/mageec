@@ -53,8 +53,9 @@ int main(int argc, char const *argv[])
       cerr << "Error with " << argv[f] << endl;
       failure = true;
     }
-    cout << setfill('0') << setw(16) << setbase(16) << elffile.getResult()
-         << ' ' << argv[f] << endl;
+    else
+      cout << setfill('0') << setw(16) << setbase(16) << elffile.getResult()
+           << ' ' << argv[f] << endl;
   }
 
   if (failure)
