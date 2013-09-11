@@ -58,6 +58,27 @@ public:
    */
   void finish (void);
 
+  /**
+   * Provide a set of program features to the machine learner to base decisions
+   * on.
+   * @param features List of features for program.
+   */
+  void provide_features (std::vector<mageec_feature*> features);
+
+  /**
+   * Returns a set of passes the machine learner has chosen the compiler to
+   * execute.
+   * @returns list of passes to execute.
+   */
+  std::vector<mageec_flag*> get_flags();
+
+
+  /**
+   * Informs the machine learner that it can process all new data to update
+   * internal decisions.
+   */
+  void process_results();
+
   /** 
    * Adds a result to the machine learner database.
    * (Depending on the algorithm used, this may be for training purposes only)
@@ -70,6 +91,19 @@ public:
   void add_result (std::vector<mageec_feature*> features,
                    std::vector<mageec_flag*> flags,
                    int64_t metric,
+                   bool good);
+
+  /**
+   * Adds a set of result points to machine learner raw database.
+   * @param features List of features for program.
+   * @param flags List of flags/passes executed during compilation.
+   * @param metric Performance metrics.
+   * @param good Whether the result of compilation was valid (for machine
+   * learners that understand bad combinations.)
+   */   
+  void raw_result (std::vector<mageec_feature*> features,
+                   std::vector<mageec_flag*> flags,
+                   std::vector<int64_t> metrics,
                    bool good);
 };
 

@@ -1,3 +1,7 @@
+2013-09-11  Simon Cook  <simon.cook@embecosm.com>
+
+	* include/mageec-ml.h: Finish machine learner interface.
+
 2013-09-03  Simon Cook  <simon.cook@embecosm.com>
 
 	* mageec/mageechash.cpp (main): Only display hash output if no error
