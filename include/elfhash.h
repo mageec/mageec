@@ -28,11 +28,10 @@ namespace mageec
 
 class hashedelf
 {
-    bool verbose;
     void *data;
     size_t datasize;
 public:
-    hashedelf (bool verbose);
+    hashedelf ();
     bool ignoredsection (char const *sectionname);
     int hash (char const *filename);
     uint64_t getResult();

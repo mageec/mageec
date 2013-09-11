@@ -28,25 +28,18 @@ using namespace mageec;
 
 int main(int argc, char const *argv[])
 {
-  bool verbose = false;
   bool failure = false;
   int f = 1;
 
-  if (argc < 2 || (argc == 2 && string(argv[1]) == "-v"))
+  if (argc < 2)
   {
-    cerr << "Usage: " << argv[0] << " [-v] file [file] ..." << endl;
+    cerr << "Usage: " << argv[0] << " file [file] ..." << endl;
     return 1;
-  }
-
-  if (string(argv[1]) == "-v")
-  {
-    verbose = true;
-    f = 2;
   }
 
   for (; f < argc; f++)
   {
-    hashedelf elffile(verbose);
+    hashedelf elffile;
     int err = elffile.hash (argv[f]);
     if (err != 0)
     {

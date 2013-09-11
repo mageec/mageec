@@ -29,7 +29,7 @@
 
 using namespace mageec;
 
-hashedelf::hashedelf (bool verbose) : verbose(verbose)
+hashedelf::hashedelf ()
 {
   data = NULL;
   datasize = 0;

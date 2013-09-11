@@ -1,5 +1,13 @@
 2013-09-11  Simon Cook  <simon.cook@embecosm.com>
 
+	* include/elfhash.h (hashedelf): Removed verbose member and from
+	constructor.
+	* mageec/elfhash.cpp (hashedelf::hashedelf): Removed verbose from
+	constructor.
+	* mageec/mageechash.cpp (main): Update usage of hashedelf.
+
+2013-09-11  Simon Cook  <simon.cook@embecosm.com>
+
 	* testsuite/Makefile.am: Initilize DejaGnu based test suite.
 	* testsuite/Makefile.in: Generated.
 	* testsuite/config/unix.exp: Added blank tool config file.
