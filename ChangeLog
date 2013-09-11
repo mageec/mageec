@@ -1,5 +1,20 @@
 2013-09-11  Simon Cook  <simon.cook@embecosm.com>
 
+	* testsuite/Makefile.am: Initilize DejaGnu based test suite.
+	* testsuite/Makefile.in: Generated.
+	* testsuite/config/unix.exp: Added blank tool config file.
+	* testsuite/lib/mageec.exp: Added blank tool init file.
+	* testsuite/mageec.tests/Makefile.am: Add test to distribution.
+	* testsuite/mageec.tests/Makefile.in: Generated.
+	* testsuite/mageec.tests/hash.exp: Add mageechash tests.
+	* testsuite/mageec.tests/test.elf: Add test known ELF executable.
+	* configure.ac: Add testsuite Makefiles to AC_OUTPUT.
+	* configure: Regenerated.
+	* Makefile.am: Add testsuite subdirectory.
+	* Makefile.in: Regenerated.
+
+2013-09-11  Simon Cook  <simon.cook@embecosm.com>
+
 	* include/mageec-ml.h: Finish machine learner interface.
 
 2013-09-03  Simon Cook  <simon.cook@embecosm.com>

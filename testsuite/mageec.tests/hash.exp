@@ -1,0 +1,63 @@
+#   MAGEEC File Hashing Tests
+#   Copyright (C) 2013 Embecosm Limited and University of Bristol
+
+#   This file is part of MAGEEC.
+
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set timeout 3
+
+proc hashtest {testname args output} {
+  global objdir
+
+  spawn "$objdir/../mageec/mageechash" $args
+  expect {
+    "$output" {
+      pass "$testname"
+    }
+    eof {
+      fail "$testname"
+    }
+    timeout {
+      unresolved "$testname: timeout"
+    }
+  }
+}
+
+# Test for usage prompt with no input
+spawn "$objdir/../mageec/mageechash"
+expect {
+  "Usage: " {
+    pass "hash-usage"
+  }
+  eof {
+    fail "hash-usage"
+  }
+  timeout {
+    unresolved "hash-usage: timeout"
+  }
+}
+
+# Test for non-existant file
+hashtest "hash-non-existant" "$srcdir/mageec.tests/non-existant-file" \
+  "Error with $srcdir/mageec.tests/non-existant-file"
+
+# Test for known ELF file
+# (Test file is "main(){}" compiled with gcc-4.7.3 for x86_64-linux-gnu)
+hashtest "hash-known" "$srcdir/mageec.tests/test.elf" \
+  "6fa5451c6f37d614 $srcdir/mageec.tests/test.elf"
+
+# Test for not an elf file
+hashtest "hash-not-elf" "$srcdir/mageec.tests/hash.exp" \
+  "Error with $srcdir/mageec.tests/hash.exp"

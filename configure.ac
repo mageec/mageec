@@ -43,4 +43,9 @@ AM_CONDITIONAL([HAVE_DOXYGEN],
 [test -n "$DOXYGEN"])AM_COND_IF([HAVE_DOXYGEN], [AC_CONFIG_FILES([doc/Doxyfile])])
 
 # Output files
-AC_OUTPUT(Makefile mageec/Makefile ml/Makefile gcc_plugin/Makefile)
+AC_OUTPUT(Makefile \
+          mageec/Makefile \
+          ml/Makefile \
+          gcc_plugin/Makefile \
+          testsuite/Makefile \
+          testsuite/mageec.tests/Makefile)

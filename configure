@@ -15888,7 +15888,7 @@ if test -z "$HAVE_DOXYGEN_TRUE"; then :
 fi
 
 # Output files
-ac_config_files="$ac_config_files Makefile mageec/Makefile ml/Makefile gcc_plugin/Makefile"
+ac_config_files="$ac_config_files Makefile mageec/Makefile ml/Makefile gcc_plugin/Makefile testsuite/Makefile testsuite/mageec.tests/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -17017,6 +17017,8 @@ do
     "mageec/Makefile") CONFIG_FILES="$CONFIG_FILES mageec/Makefile" ;;
     "ml/Makefile") CONFIG_FILES="$CONFIG_FILES ml/Makefile" ;;
     "gcc_plugin/Makefile") CONFIG_FILES="$CONFIG_FILES gcc_plugin/Makefile" ;;
+    "testsuite/Makefile") CONFIG_FILES="$CONFIG_FILES testsuite/Makefile" ;;
+    "testsuite/mageec.tests/Makefile") CONFIG_FILES="$CONFIG_FILES testsuite/mageec.tests/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
