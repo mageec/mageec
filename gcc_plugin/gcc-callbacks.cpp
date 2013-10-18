@@ -32,7 +32,7 @@
 void mageec_gcc_finish (void *gcc_data __attribute__((unused)),
 			void *user_data __attribute__((unused)))
 {
-  printf ("GCC:     Finish\n");
+  fprintf (stderr, "GCC:     Finish\n");
   mageec_inst.finish();
 }
 
@@ -46,9 +46,9 @@ void dummy_callback (void *gcc_data, void *user_data)
 void mageec_gcc_start_file (void *gcc_data, void *user_data)
 {
   mageec_inst.new_file ("example.c");
-  printf ("GCC:     Start File\n");
-  printf ("          gcc_data:  %p\n", gcc_data);
-  printf ("          user_data: %p\n", user_data);
+  fprintf (stderr, "GCC:     Start File\n");
+  fprintf (stderr, "          gcc_data:  %p\n", gcc_data);
+  fprintf (stderr, "          user_data: %p\n", user_data);
 
   /* FIXME: Register as a pass to run next or run directly? */
   //mageec_gcc_feature_extract();
@@ -57,7 +57,7 @@ void mageec_gcc_start_file (void *gcc_data, void *user_data)
 void mageec_gcc_finish_file (void *gcc_data, void *user_data)
 {
   mageec_inst.end_file ();
-  printf ("GCC:     End File\n");
-  printf ("          gcc_data:  %p\n", gcc_data);
-  printf ("          user_data: %p\n", user_data);
+  fprintf (stderr, "GCC:     End File\n");
+  fprintf (stderr, "          gcc_data:  %p\n", gcc_data);
+  fprintf (stderr, "          user_data: %p\n", user_data);
 }

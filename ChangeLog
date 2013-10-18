@@ -1,5 +1,24 @@
 2013-10-18  Simon Cook  <simon.cook@embecosm.com>
 
+	* gcc_plugin/gcc-callbacks.cpp (mageec_gcc_finish): Stream info/debug
+	info out to stderr.
+	(mageec_gcc_start_file): Likewise.
+	(mageec_gcc_finish_file): Likewise.
+	* gcc_plugin/plugin-info.cpp (mageec_gcc_pass_info): Likewise.
+	(mageec_gcc_plugin_info): Likewise.
+	* mageec/mageec.cpp (mageec_framework::init): Make use of std namespace
+	consistent.
+	(mageec_framework::new_file): Likewise.
+	(mageec_framework::end_file): Likewise.
+	(mageec_framework::finish): Likewise.
+	* mageec/mageechash.cpp (main): Likewise.
+	* ml/ml.cpp (mageec_ml::init): Likewise.
+	(mageec_ml::new_file): Likewise.
+	(mageec_ml::end_file): Likewise.
+	(mageec_ml::finish): Likewise.
+
+2013-10-18  Simon Cook  <simon.cook@embecosm.com>
+
 	* gcc_plugin/gcc-plugin.cpp (parse_arguments): Added runtime arguments
 	for printing plugin and pass information.
 	(plugin_init): Print plugin and pass information only if requested.

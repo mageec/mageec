@@ -19,29 +19,29 @@
 /** @file ml.cpp MAGEEC Machine Learner */
 #include "mageec-ml.h"
 #include <iostream>
-using namespace std;
+
 using namespace mageec;
 
 int mageec_ml::init (std::string compiler_version __attribute__((unused)),
                      std::string compiler_target __attribute__((unused)))
 {
-  cerr << "LEARNER: Hello!" << endl;
+  std::cerr << "LEARNER: Hello!" << std::endl;
   return 0;
 }
 
 void mageec_ml::new_file (void)
 {
-  cerr << "LEARNER: New file" << endl;
+  std::cerr << "LEARNER: New file" << std::endl;
 }
 
 void mageec_ml::end_file (void)
 {
-  cerr << "LEARNER: End file" << endl;
+  std::cerr << "LEARNER: End file" << std::endl;
 }
 
 void mageec_ml::finish (void)
 {
-  cerr << "LEARNER: Goodbye!" << endl;
+  std::cerr << "LEARNER: Goodbye!" << std::endl;
 }
 
 void mageec_ml::add_result (std::vector<mageec_feature*> features __attribute__((unused)),

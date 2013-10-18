@@ -37,22 +37,22 @@
  */
 void mageec_gcc_pass_info (int disable)
 {
-  printf ("Pass Information\n----------------\n");
+  fprintf (stderr, "Pass Information\n----------------\n");
   int i;
   char buf[200];
-  printf("We have %i passes\n", passes_by_id_size);
+  fprintf (stderr, "We have %i passes\n", passes_by_id_size);
   for (i=0; i<passes_by_id_size; i++)
   {
-    printf (" %3i ", i);
+    fprintf (stderr, " %3i ", i);
     if (passes_by_id[i] == NULL)
-      printf ("*NULL*\n");
+      fprintf (stderr, "*NULL*\n");
     else
     {
-      printf ("%s", passes_by_id[i]->name);
+      fprintf (stderr, "%s", passes_by_id[i]->name);
       switch (passes_by_id[i]->type)
       {
         case GIMPLE_PASS:
-          printf (" (GIMPLE)\n");
+          fprintf (stderr, " (GIMPLE)\n");
           if (disable)
             if (passes_by_id[i]->name[0] != '*')
             {
@@ -61,7 +61,7 @@ void mageec_gcc_pass_info (int disable)
             }
           break;
         case RTL_PASS:
-          printf (" (RTL)\n");
+          fprintf (stderr, " (RTL)\n");
           if (disable)
             if (passes_by_id[i]->name[0] != '*')
             {
@@ -70,10 +70,10 @@ void mageec_gcc_pass_info (int disable)
             }
           break;
         case SIMPLE_IPA_PASS:
-          printf (" (SIMPLE_IPA)\n");
+          fprintf (stderr, " (SIMPLE_IPA)\n");
           goto disableipa;
         case IPA_PASS:
-          printf (" (IPA)\n");
+          fprintf (stderr, " (IPA)\n");
         disableipa:
           if (disable)
             if (passes_by_id[i]->name[0] != '*')
@@ -83,12 +83,12 @@ void mageec_gcc_pass_info (int disable)
             }
           break;
         default:
-          printf (" (*UNKNOWN*)\n");
+          fprintf (stderr, " (*UNKNOWN*)\n");
           break;
       }
     }
   }
-  printf ("\n");
+  fprintf (stderr, "\n");
 }
 
 /**
@@ -99,19 +99,19 @@ void mageec_gcc_pass_info (int disable)
 void mageec_gcc_plugin_info (struct plugin_name_args *plugin_info,
                              struct plugin_gcc_version *version)
 {
-  printf ("MAGEEC Plugin Information\n=========================\n");
-  printf ("base_name: %s\n", plugin_info->base_name);
-  printf ("full_name: %s\n", plugin_info->full_name);
-  printf ("#args    : %i\n", plugin_info->argc);
-  printf ("version  : %s\n", plugin_info->version);
-  printf ("help     : %s\n", plugin_info->help);
-  printf ("\n");
+  fprintf (stderr, "MAGEEC Plugin Information\n=========================\n");
+  fprintf (stderr, "base_name: %s\n", plugin_info->base_name);
+  fprintf (stderr, "full_name: %s\n", plugin_info->full_name);
+  fprintf (stderr, "#args    : %i\n", plugin_info->argc);
+  fprintf (stderr, "version  : %s\n", plugin_info->version);
+  fprintf (stderr, "help     : %s\n", plugin_info->help);
+  fprintf (stderr, "\n");
 
-  printf ("GCC Information\n---------------\n");
-  printf ("basever  : %s\n", version->basever);
-  printf ("datestamp: %s\n", version->datestamp);
-  printf ("devphase : %s\n", version->devphase);
-  printf ("revision : %s\n", version->revision);
-  printf ("confargs : %s\n", version->configuration_arguments);
-  printf ("\n");
+  fprintf (stderr, "GCC Information\n---------------\n");
+  fprintf (stderr, "basever  : %s\n", version->basever);
+  fprintf (stderr, "datestamp: %s\n", version->datestamp);
+  fprintf (stderr, "devphase : %s\n", version->devphase);
+  fprintf (stderr, "revision : %s\n", version->revision);
+  fprintf (stderr, "confargs : %s\n", version->configuration_arguments);
+  fprintf (stderr, "\n");
 }

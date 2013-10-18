@@ -21,32 +21,31 @@
 #include "mageec-ml.h"
 #include <iostream>
 
-using namespace std;
 using namespace mageec;
 
 int mageec_framework::init (std::string compiler_version,
                             std::string compiler_target)
 { 
-  cerr << "MAGEEC:  Targetting '" << compiler_version << "' for '"
-       << compiler_target << "'" << endl;
+  std::cerr << "MAGEEC:  Targetting '" << compiler_version << "' for '"
+       << compiler_target << "'" << std::endl;
 
   return ml.init ("", "");
 }
 
 void mageec_framework::new_file (std::string filename)
 {
-  cerr << "MAGEEC:  New source file " << filename << endl;
+  std::cerr << "MAGEEC:  New source file " << filename << std::endl;
   ml.new_file();
 }
 
 void mageec_framework::end_file (void)
 {
-  cerr << "MAGEEC:  End of source file" << endl;
+  std::cerr << "MAGEEC:  End of source file" << std::endl;
   ml.end_file();
 }
 
 void mageec_framework::finish (void)
 {
-  cerr << "MAGEEC:  Finish" << endl;
+  std::cerr << "MAGEEC:  Finish" << std::endl;
   ml.finish();
 }

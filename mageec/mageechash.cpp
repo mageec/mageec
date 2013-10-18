@@ -23,7 +23,6 @@
 #include <iomanip>
 #include <string>
 
-using namespace std;
 using namespace mageec;
 
 int main(int argc, char const *argv[])
@@ -33,7 +32,7 @@ int main(int argc, char const *argv[])
 
   if (argc < 2)
   {
-    cerr << "Usage: " << argv[0] << " file [file] ..." << endl;
+    std::cerr << "Usage: " << argv[0] << " file [file] ..." << std::endl;
     return 1;
   }
 
@@ -43,12 +42,12 @@ int main(int argc, char const *argv[])
     int err = elffile.hash (argv[f]);
     if (err != 0)
     {
-      cerr << "Error with " << argv[f] << endl;
+      std::cerr << "Error with " << argv[f] << std::endl;
       failure = true;
     }
     else
-      cout << setfill('0') << setw(16) << setbase(16) << elffile.getResult()
-           << ' ' << argv[f] << endl;
+      std::cout << std::setfill('0') << std::setw(16) << std::setbase(16)
+                << elffile.getResult() << ' ' << argv[f] << std::endl;
   }
 
   if (failure)
