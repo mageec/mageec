@@ -25,9 +25,71 @@
 #undef PACKAGE_VERSION
 
 #include "gcc-plugin.h"
+#include "tree-pass.h"
 #include "mageec-plugin.h"
 
 #include <stdio.h>
+
+/**
+ * Prints information about passes found within GCC.
+ * May also attempt to turn each pass off, which causes compilation to fail.
+ * @param disable If non-zero plugin will attempt to disable all passes.
+ */
+void mageec_gcc_pass_info (int disable)
+{
+  printf ("Pass Information\n----------------\n");
+  int i;
+  char buf[200];
+  printf("We have %i passes\n", passes_by_id_size);
+  for (i=0; i<passes_by_id_size; i++)
+  {
+    printf (" %3i ", i);
+    if (passes_by_id[i] == NULL)
+      printf ("*NULL*\n");
+    else
+    {
+      printf ("%s", passes_by_id[i]->name);
+      switch (passes_by_id[i]->type)
+      {
+        case GIMPLE_PASS:
+          printf (" (GIMPLE)\n");
+          if (disable)
+            if (passes_by_id[i]->name[0] != '*')
+            {
+              sprintf (buf, "tree-%s", passes_by_id[i]->name);
+              disable_pass (buf);
+            }
+          break;
+        case RTL_PASS:
+          printf (" (RTL)\n");
+          if (disable)
+            if (passes_by_id[i]->name[0] != '*')
+            {
+              sprintf (buf, "rtl-%s", passes_by_id[i]->name);
+              disable_pass (buf);
+            }
+          break;
+        case SIMPLE_IPA_PASS:
+          printf (" (SIMPLE_IPA)\n");
+          goto disableipa;
+        case IPA_PASS:
+          printf (" (IPA)\n");
+        disableipa:
+          if (disable)
+            if (passes_by_id[i]->name[0] != '*')
+            {
+              sprintf (buf, "ipa-%s", passes_by_id[i]->name);
+              disable_pass (buf);
+            }
+          break;
+        default:
+          printf (" (*UNKNOWN*)\n");
+          break;
+      }
+    }
+  }
+  printf ("\n");
+}
 
 /**
  * Prints information about the plugin to stdout.

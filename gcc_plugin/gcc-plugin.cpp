@@ -41,11 +41,31 @@ static struct plugin_info mageec_plugin_version =
   .help = NULL
 };
 
+static int print_plugin_info = 0;
+static int print_pass_info = 0;
+static int print_pass_info_disable = 0;
+
 /** Stored GCC Plugin name for future register_callbacks. */
 const char *mageec_gcc_plugin_name;
 
 /** MAGEEC Instance */
 mageec_framework mageec_inst;
+
+static void parse_arguments (int argc, struct plugin_argument *argv)
+{
+  int i;
+  for (i = 0; i < argc; i++)
+  {
+    if (!strcmp (argv[i].key, "plugininfo"))
+      print_plugin_info = 1;
+    else if (!strcmp (argv[i].key, "dumppasses"))
+      {
+	print_pass_info = 1;
+	if (argv[i].value != NULL && !strcmp (argv[i].value, "disable"))
+	    print_pass_info_disable = 1;
+      }
+  }
+}
 
 /**
  * Initilizes GCC Plugin by calling mageec_init.
@@ -56,11 +76,15 @@ mageec_framework mageec_inst;
 int plugin_init (struct plugin_name_args *plugin_info,
                  struct plugin_gcc_version *version)
 {
-  /* Register our information and print plugin information. */
+  /* Register our information, parse arguments. */
   register_callback (plugin_info->base_name, PLUGIN_INFO, NULL,
                      &mageec_plugin_version);
   mageec_gcc_plugin_name = plugin_info->base_name;
-  mageec_gcc_plugin_info (plugin_info, version);
+  parse_arguments (plugin_info->argc, plugin_info->argv);
+  if (print_plugin_info)
+    mageec_gcc_plugin_info (plugin_info, version);
+  if (print_pass_info)
+    mageec_gcc_pass_info (print_pass_info_disable);
 
   /* Initialize MAGEEC Framework, returning error if failed. */
   /* FIXME: Get real compiler version string and target. */

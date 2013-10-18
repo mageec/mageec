@@ -1,3 +1,12 @@
+2013-10-18  Simon Cook  <simon.cook@embecosm.com>
+
+	* gcc_plugin/gcc-plugin.cpp (parse_arguments): Added runtime arguments
+	for printing plugin and pass information.
+	(plugin_init): Print plugin and pass information only if requested.
+	* gcc_plugin/mageec-plugin.h (mageec_gcc_pass_info): Declared.
+	* gcc_plugin/plugin-info.cpp (mageec_gcc_pass_info): Added function
+	to print passes internal to GCC and attempts to disable all.
+
 2013-09-11  Simon Cook  <simon.cook@embecosm.com>
 
 	* include/elfhash.h (hashedelf): Removed verbose member and from

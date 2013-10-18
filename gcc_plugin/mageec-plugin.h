@@ -30,6 +30,13 @@ void mageec_gcc_finish (void *gcc_data,
 extern const char *mageec_gcc_plugin_name;
 
 /**
+ * Prints information about passes found within GCC.
+ * May also attempt to turn each pass off, which causes compilation to fail.
+ * @param disable If non-zero plugin will attempt to disable all passes.
+ */
+void mageec_gcc_pass_info (int disable);
+
+/**
  * Prints information about the plugin to stdout.
  * @param plugin_name_args GCC plugin information.
  * @param plugin_gcc_version GCC version information. 
