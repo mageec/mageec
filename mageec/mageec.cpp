@@ -29,7 +29,7 @@ int mageec_framework::init (std::string compiler_version,
   std::cerr << "MAGEEC:  Targetting '" << compiler_version << "' for '"
        << compiler_target << "'" << std::endl;
 
-  return ml.init ("", "");
+  return ml.init (compiler_version, compiler_target);
 }
 
 void mageec_framework::new_file (std::string filename)
