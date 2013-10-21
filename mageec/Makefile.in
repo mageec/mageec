@@ -95,7 +95,7 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libmageec_la_DEPENDENCIES = ../ml/libmageec_learner.la
-am_libmageec_la_OBJECTS = mageec.lo elfhash.lo
+am_libmageec_la_OBJECTS = mageec.lo elfhash.lo features.lo flags.lo
 libmageec_la_OBJECTS = $(am_libmageec_la_OBJECTS)
 libmageec_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
@@ -255,7 +255,7 @@ AM_CXXFLAGS = $(CXXFLAGS) $(AM_CFLAGS)
 
 # Build MAGEEC Library
 lib_LTLIBRARIES = libmageec.la
-libmageec_la_SOURCES = mageec.cpp elfhash.cpp
+libmageec_la_SOURCES = mageec.cpp elfhash.cpp features.cpp flags.cpp
 libmageec_la_LDFLAGS = -release 0.1.0
 libmageec_la_LIBADD = ../ml/libmageec_learner.la
 mageechash_SOURCES = mageechash.cpp
@@ -385,6 +385,8 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elfhash.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/features.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/flags.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mageec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mageechash.Po@am__quote@
 

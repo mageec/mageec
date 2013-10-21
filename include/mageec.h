@@ -64,6 +64,8 @@ public:
    * Disconnects MAGEEC from Machine Learner.
    */
   void finish (void);
+
+  std::vector<mageec_flag*> all_flags (void);
 };
 
 } // End mageec namespace

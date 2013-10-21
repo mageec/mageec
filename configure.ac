@@ -33,6 +33,12 @@ AC_CHECK_HEADERS(gcrypt.h, [], [
 AC_CHECK_LIB(gcrypt, gcry_md_open, [], [
   AC_MSG_ERROR([Unable to find libgcrypt.])
 ])
+AC_CHECK_HEADERS(sqlite3.h, [], [
+  AC_MSG_ERROR([Unable to find sqlite3 headers.])
+])
+AC_CHECK_LIB(sqlite3, sqlite3_open, [], [
+  AC_MSG_ERROR([Unable to find sqlite3.])
+])
 
 # Doxygen
 AC_CHECK_PROGS([DOXYGEN], [doxygen])

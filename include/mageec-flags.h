@@ -20,6 +20,8 @@
 #ifndef __MAGEEC_FLAGS_H
 #define __MAGEEC_FLAGS_H_
 
+#include <string>
+
 namespace mageec
 {
 /**
@@ -31,9 +33,18 @@ namespace mageec
 class mageec_flag
 {
 public:
-  std::string name();
+  virtual std::string name() = 0;
   /* FIXME Is an int sufficient? */
-  virtual int get_feature() = 0;
+  virtual int value() = 0;
+};
+
+class basic_flag : public mageec_flag
+{
+  std::string flag_name;
+public:
+  basic_flag(std::string name);
+  std::string name();
+  int value();
 };
 
 } // End namespace mageec

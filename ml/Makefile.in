@@ -93,7 +93,7 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libmageec_learner_la_LIBADD =
-am_libmageec_learner_la_OBJECTS = ml.lo
+am_libmageec_learner_la_OBJECTS = ml.lo database.lo
 libmageec_learner_la_OBJECTS = $(am_libmageec_learner_la_OBJECTS)
 libmageec_learner_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
@@ -243,13 +243,13 @@ top_srcdir = @top_srcdir@
 
 # Compilation Flags
 # Force us to be really specific with what we mean
-AM_CFLAGS = -g -O2 -I$(top_srcdir)/include -Wall -Wextra -Werror
+AM_CFLAGS = -g -O2 -I$(top_srcdir)/include -Wall -Wextra
 AM_LDFLAGS = 
 AM_CXXFLAGS = $(CXXFLAGS) $(AM_CFLAGS)
 
 # Build Machine Learning Library
 lib_LTLIBRARIES = libmageec_learner.la
-libmageec_learner_la_SOURCES = ml.cpp
+libmageec_learner_la_SOURCES = ml.cpp database.cpp
 libmageec_learner_la_LDFLAGS = -release 0.1.0
 all: all-am
 
@@ -326,6 +326,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/database.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ml.Plo@am__quote@
 
 .cpp.o:

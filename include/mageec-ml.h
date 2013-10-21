@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include "mageec-features.h"
 #include "mageec-flags.h"
+#include "mageec-db.h"
 
 namespace mageec
 {
@@ -34,6 +35,8 @@ namespace mageec
  */
 class mageec_ml
 {
+  database *db;
+  std::vector<mageec_flag*> flags;
 public:
   /**
    * Initilizes the MAGEEC Machine Learner
@@ -71,6 +74,13 @@ public:
    * @returns list of passes to execute.
    */
   std::vector<mageec_flag*> get_flags();
+
+  /**
+   * Returns complete list of flags known to machine learner for disabling
+   * upon initialisation.
+   * @returns list of all passes.
+   */
+  std::vector<mageec_flag*> all_flags();
 
 
   /**

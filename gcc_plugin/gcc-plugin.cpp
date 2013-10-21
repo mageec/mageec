@@ -25,6 +25,7 @@
 #undef PACKAGE_VERSION
 
 #include "gcc-plugin.h"
+#include "tree-pass.h"
 #include "mageec.h"
 #include "mageec-plugin.h"
 //#include <string>
@@ -99,5 +100,11 @@ int plugin_init (struct plugin_name_args *plugin_info,
                        mageec_gcc_finish_file, NULL);
   register_callback (plugin_info->base_name, PLUGIN_FINISH,
                      mageec_gcc_finish, NULL);
+
+  /* Disable all passes. These will then be turned back on by the framework */
+  std::vector<mageec_flag*> flags = mageec_inst.all_flags();
+  for (int i=0, size=flags.size(); i < size; i++)
+    disable_pass (flags[i]->name().c_str());
+
   return 0;
 }

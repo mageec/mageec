@@ -1,3 +1,33 @@
+2013-10-21  Simon Cook  <simon.cook@embecosm.com>
+
+	* gcc_plugin/gcc-plugin.cpp (plugin_init): Disable all passes provided
+	by database on launch.
+	* include/mageec-db.h (mageec::database): Declared first database
+	interface.
+	* include/mageec-features.h (mageec_feature): Mark name virtual.
+	(basic_feature): Implement basic mageec_feature.
+	* include/mageec-flags.h (mageec_flag::get_feature): Rename to value().
+	(basic_flag): Implement boolean flag.
+	* include/mageec-ml.h (mageec_ml): Add private database and flag list.
+	(mageec_ml::all_flags): Declared.
+	* include/mageec.h (mageec_framework::all_flags): Declared.
+	* mageec/mageec.cpp (mageec_framework::all_flags): Defined to call list
+	of flags known to machine learner.
+	* mageec/features.cpp (basic_feature): Added basic feature definition.
+	* mageec/flags.cpp (basic_flag): Added basic flag definition.
+	* mageec/Makefile.am: Add features.cpp, flags.cpp to libmageec.
+	* mageec/Makefile.in: Regenerated.
+	* ml/database.cpp (database): Defined initial MAGEEC pass list
+	database.
+	* ml/ml.cpp (mageec_ml::init): Load database and pass list on
+	initilisation.
+	(mageec_ml::finish): Delete database on plugin unload.
+	(mageec_ml::all_flags): Returns flag list.
+	* ml/Makefile.am: Add database.cpp to libmageec_learner.
+	* ml/Makefile.in: Regnerated.
+	* configure.ac: Add checks for SQlite3.
+	* configure: Regenerated.
+
 2013-10-18  Simon Cook  <simon.cook@embecosm.com>
 
 	* mageec/mageec.cpp (mageec_framework::init): Pass on compiler_version

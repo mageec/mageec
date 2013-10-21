@@ -49,3 +49,8 @@ void mageec_framework::finish (void)
   std::cerr << "MAGEEC:  Finish" << std::endl;
   ml.finish();
 }
+
+std::vector<mageec_flag*> mageec_framework::all_flags (void)
+{
+  return ml.all_flags();
+}

@@ -1,4 +1,4 @@
-/*  MAGEEC Program Feature Class
+/*  MAGEEC Flag Implementation
     Copyright (C) 2013 Embecosm Limited and University of Bristol
 
     This file is part of MAGEEC.
@@ -16,34 +16,22 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-/** @file mageec-features.h MAGEEC Features */
-#ifndef __MAGEEC_FEATURES_H_
-#define __MAGEEC_FEATURES_H_
+/** @file flags.cpp MAGEEC Compiler Flags. */
+#include "mageec-flags.h"
 
-#include <string>
+using namespace mageec;
 
-namespace mageec
+basic_flag::basic_flag(std::string feat_name)
 {
-/**
- * MAGEEC Program Feature Base Type.
- * This class consists of a name "string" and an int to reveal that information.
- */
-class mageec_feature
+  flag_name = feat_name;
+}
+
+std::string basic_flag::name()
 {
-public:
-  virtual std::string name() = 0;
-  virtual int get_feature() = 0;
-};
+  return flag_name;
+}
 
-class basic_feature : public mageec_feature
+int basic_flag::value()
 {
-  std::string feature_name;
-public:
-  basic_feature (std::string name);
-  std::string name();
-  int get_feature();
-};
-
-} // End namespace mageec
-
-#endif
+  return 0;
+}

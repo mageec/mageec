@@ -22,10 +22,12 @@
 
 using namespace mageec;
 
-int mageec_ml::init (std::string compiler_version __attribute__((unused)),
-                     std::string compiler_target __attribute__((unused)))
+int mageec_ml::init (std::string compiler_version,
+                     std::string compiler_target)
 {
   std::cerr << "LEARNER: Hello!" << std::endl;
+  db = new database(compiler_version + "-" + compiler_target + ".db", true);
+  flags = db->get_flag_list();
   return 0;
 }
 
@@ -42,6 +44,12 @@ void mageec_ml::end_file (void)
 void mageec_ml::finish (void)
 {
   std::cerr << "LEARNER: Goodbye!" << std::endl;
+  delete db;
+}
+
+std::vector<mageec_flag*> mageec_ml::all_flags (void)
+{
+  return flags;
 }
 
 void mageec_ml::add_result (std::vector<mageec_feature*> features __attribute__((unused)),
