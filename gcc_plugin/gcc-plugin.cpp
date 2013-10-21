@@ -102,9 +102,9 @@ int plugin_init (struct plugin_name_args *plugin_info,
                      mageec_gcc_finish, NULL);
 
   /* Disable all passes. These will then be turned back on by the framework */
-  std::vector<mageec_flag*> flags = mageec_inst.all_flags();
-  for (int i=0, size=flags.size(); i < size; i++)
-    disable_pass (flags[i]->name().c_str());
+  std::vector<mageec_pass*> passes = mageec_inst.all_passes();
+  for (int i=0, size=passes.size(); i < size; i++)
+    disable_pass (passes[i]->name().c_str());
 
   return 0;
 }

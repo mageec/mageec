@@ -50,7 +50,7 @@ void mageec_framework::finish (void)
   ml.finish();
 }
 
-std::vector<mageec_flag*> mageec_framework::all_flags (void)
+std::vector<mageec_pass*> mageec_framework::all_passes (void)
 {
-  return ml.all_flags();
+  return ml.all_passes();
 }

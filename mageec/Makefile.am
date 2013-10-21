@@ -7,7 +7,7 @@ AM_CXXFLAGS = $(CXXFLAGS) $(AM_CFLAGS)
 
 # Build MAGEEC Library
 lib_LTLIBRARIES = libmageec.la
-libmageec_la_SOURCES = mageec.cpp elfhash.cpp features.cpp flags.cpp
+libmageec_la_SOURCES = mageec.cpp elfhash.cpp features.cpp passes.cpp
 libmageec_la_LDFLAGS = -release 0.1.0
 libmageec_la_LIBADD = ../ml/libmageec_learner.la
 

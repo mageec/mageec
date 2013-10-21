@@ -1,5 +1,22 @@
 2013-10-21  Simon Cook  <simon.cook@embecosm.com>
 
+	* mageec/flags.cpp, include/mageec-flags.h: Rename to:
+	* mageec/passes.cpp, include/mageec-passes.h.
+	* include/mageec-ml.h: Update references to headers.
+	* include/mageec-passes.h (mageec_flag): Renamed to mageec_pass.
+	(basic_flag): Renamed to basic_pass.
+	* mageec/passes.cpp: Likewise.
+	* gcc_plugin/gcc_plugin.cpp (plugin_init): Update references to
+	new pass class names.
+	* include/mageec.h, mageec/mageec.cpp (mageec_framework::all_flags):
+	Renamed to all_passes, updated references to new class names.
+	* include/mageec-ml.h, ml/ml.cpp (mageec_ml::all_flags): Likewise.
+	* include/mageec-db.h (get_flag_list): Renamed to get_pass_list, update
+	references to new class names.
+	* ml/database.cpp: Likewise.
+
+2013-10-21  Simon Cook  <simon.cook@embecosm.com>
+
 	* gcc_plugin/gcc-plugin.cpp (plugin_init): Disable all passes provided
 	by database on launch.
 	* include/mageec-db.h (mageec::database): Declared first database

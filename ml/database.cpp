@@ -67,20 +67,20 @@ int database::initdb()
 }
 
 /**
- * Loads known flags from the database.
- * @returns empty vector if error, else list of flags as mageec_flags.
+ * Loads known passes from the database.
+ * @returns empty vector if error, else list of passes as mageec_pass.
  */
-std::vector<mageec_flag*> database::get_flag_list()
+std::vector<mageec_pass*> database::get_pass_list()
 {
-  std::vector<mageec_flag*> flags;
+  std::vector<mageec_pass*> passes;
   if (!db)
-    return flags;
+    return passes;
 
   sqlite3_stmt *stmt;
   char query[] = "SELECT * FROM passes";
   int retval = sqlite3_prepare_v2 (db, query, -1, &stmt, 0);
   if (retval) {
-    return flags;
+    return passes;
   }
 
   /* The current design of the database we always use the first column. Should
@@ -91,10 +91,10 @@ std::vector<mageec_flag*> database::get_flag_list()
     if(retval == SQLITE_ROW)
     {
       const char *val = (const char*)sqlite3_column_text(stmt,0);
-      flags.push_back(new basic_flag(val));
+      passes.push_back(new basic_pass(val));
     }
     else if (retval == SQLITE_DONE)
       break;
   }
-  return flags;
+  return passes;
 }

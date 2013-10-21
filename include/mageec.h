@@ -65,7 +65,7 @@ public:
    */
   void finish (void);
 
-  std::vector<mageec_flag*> all_flags (void);
+  std::vector<mageec_pass*> all_passes (void);
 };
 
 } // End mageec namespace

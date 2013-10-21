@@ -50,10 +50,10 @@ public:
   int initdb();
 
   /**
-   * Loads known flags from the database.
-   * @returns empty vector if error, else list of flags as mageec_flags.
+   * Loads known passes from the database.
+   * @returns empty vector if error, else list of passes as mageec_pass.
    */
-  std::vector<mageec_flag*> get_flag_list();
+  std::vector<mageec_pass*> get_pass_list();
 };
 
 } // End namespace mageec

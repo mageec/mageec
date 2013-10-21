@@ -27,7 +27,7 @@ int mageec_ml::init (std::string compiler_version,
 {
   std::cerr << "LEARNER: Hello!" << std::endl;
   db = new database(compiler_version + "-" + compiler_target + ".db", true);
-  flags = db->get_flag_list();
+  passes = db->get_pass_list();
   return 0;
 }
 
@@ -47,13 +47,13 @@ void mageec_ml::finish (void)
   delete db;
 }
 
-std::vector<mageec_flag*> mageec_ml::all_flags (void)
+std::vector<mageec_pass*> mageec_ml::all_passes (void)
 {
-  return flags;
+  return passes;
 }
 
 void mageec_ml::add_result (std::vector<mageec_feature*> features __attribute__((unused)),
-                            std::vector<mageec_flag*> flags __attribute__((unused)),
+                            std::vector<mageec_pass*> passes __attribute__((unused)),
                             int64_t metric __attribute__((unused)),
                             bool good __attribute__((unused)))
 {

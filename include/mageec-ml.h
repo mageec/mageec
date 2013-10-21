@@ -24,7 +24,7 @@
 #include <vector>
 #include <stdint.h>
 #include "mageec-features.h"
-#include "mageec-flags.h"
+#include "mageec-passes.h"
 #include "mageec-db.h"
 
 namespace mageec
@@ -36,7 +36,7 @@ namespace mageec
 class mageec_ml
 {
   database *db;
-  std::vector<mageec_flag*> flags;
+  std::vector<mageec_pass*> passes;
 public:
   /**
    * Initilizes the MAGEEC Machine Learner
@@ -73,14 +73,14 @@ public:
    * execute.
    * @returns list of passes to execute.
    */
-  std::vector<mageec_flag*> get_flags();
+  std::vector<mageec_pass> get_passes();
 
   /**
-   * Returns complete list of flags known to machine learner for disabling
+   * Returns complete list of passes known to machine learner for disabling
    * upon initialisation.
    * @returns list of all passes.
    */
-  std::vector<mageec_flag*> all_flags();
+  std::vector<mageec_pass*> all_passes();
 
 
   /**
@@ -93,26 +93,26 @@ public:
    * Adds a result to the machine learner database.
    * (Depending on the algorithm used, this may be for training purposes only)
    * @param features List of features for program.
-   * @param flags List of flags/passes executed during compilation.
+   * @param passes List of passes executed during compilation.
    * @param metric Performance metric for optimisation.
    * @param good Whether the result of compilation was valid (for machine
    * learners that understand bad combinations.)
    */
   void add_result (std::vector<mageec_feature*> features,
-                   std::vector<mageec_flag*> flags,
+                   std::vector<mageec_pass*> passes,
                    int64_t metric,
                    bool good);
 
   /**
    * Adds a set of result points to machine learner raw database.
    * @param features List of features for program.
-   * @param flags List of flags/passes executed during compilation.
+   * @param passes List of passes executed during compilation.
    * @param metric Performance metrics.
    * @param good Whether the result of compilation was valid (for machine
    * learners that understand bad combinations.)
    */   
   void raw_result (std::vector<mageec_feature*> features,
-                   std::vector<mageec_flag*> flags,
+                   std::vector<mageec_pass*> passes,
                    std::vector<int64_t> metrics,
                    bool good);
 };

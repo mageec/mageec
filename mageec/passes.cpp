@@ -1,4 +1,4 @@
-/*  MAGEEC Flag Class
+/*  MAGEEC Passes Implementation
     Copyright (C) 2013 Embecosm Limited and University of Bristol
 
     This file is part of MAGEEC.
@@ -16,37 +16,22 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-/** @file mageec-flags.h MAGEEC Flags */
-#ifndef __MAGEEC_FLAGS_H
-#define __MAGEEC_FLAGS_H_
+/** @file passes.cpp MAGEEC Compiler Passes. */
+#include "mageec-passes.h"
 
-#include <string>
+using namespace mageec;
 
-namespace mageec
+basic_pass::basic_pass(std::string name)
 {
-/**
- * MAGEEC Flag Base Type
- * A flag consists of a descriptor and value and are used to communicate between
- * the machine learner and the compiler which flags to use and to store
- * in a machine learning database which passes were run.
- */
-class mageec_flag
+  pass_name = name;
+}
+
+std::string basic_pass::name()
 {
-public:
-  virtual std::string name() = 0;
-  /* FIXME Is an int sufficient? */
-  virtual int value() = 0;
-};
+  return pass_name;
+}
 
-class basic_flag : public mageec_flag
+int basic_pass::value()
 {
-  std::string flag_name;
-public:
-  basic_flag(std::string name);
-  std::string name();
-  int value();
-};
-
-} // End namespace mageec
-
-#endif
+  return 0;
+}
