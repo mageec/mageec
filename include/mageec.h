@@ -23,6 +23,7 @@
 #define __MAGEEC_H__
 
 #include <string>
+#include <stdint.h>
 #include "mageec-features.h"
 #include "mageec-ml.h"
 
@@ -67,6 +68,13 @@ public:
 
   std::vector<mageec_pass*> all_passes (void);
 };
+
+/**
+ * Generic 64-bit hash for use throughout MAGEEC.
+ * @param data Data to hash.
+ * @param size Size of data.
+ */
+uint64_t hash_data(const void *data, int size);
 
 } // End mageec namespace
 

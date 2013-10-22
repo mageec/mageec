@@ -18,7 +18,7 @@
 
 /** @file database.cpp MAGEEC Machine Learner Database */
 #include "mageec-ml.h"
-#include "mageec-db.h"
+#include "mageec.h"
 #include <cassert>
 
 using namespace mageec;
@@ -38,6 +38,11 @@ database::database(std::string dbname, bool create)
 
   // If we could not open the database, we can not use machine learning
   assert(loaded == 0 && "Unable to load machine learning database.");
+
+  /* Enable foreign keys (requires sqlite 3.6.19 or above)
+     (If foreign keys are not available, the database will perform, but no
+      foreign key checking will be done) */
+  sqlite3_exec(db, "PRAGMA foreign_keys = ON", NULL, NULL, NULL);
 
   if (create)
     initdb();
@@ -60,8 +65,23 @@ int database::initdb()
 
   int retval;
 
+  // Pass list table
   char qinit[] = "CREATE TABLE IF NOT EXISTS passes (passname TEXT PRIMARY KEY)";
   retval = sqlite3_exec(db, qinit, NULL, NULL, NULL);
+
+  // Pass (executed) order table
+  char qinit2[] = "CREATE TABLE IF NOT EXISTS passorder (seq INTEGER NOT NULL, "
+                  "pos INTEGER NOT NULL, pass TEXT NOT NULL, "
+                  "PRIMARY KEY (seq, pos))";
+  retval |= sqlite3_exec(db, qinit2, NULL, NULL, NULL);
+
+  // Program result table
+  // FIXME: prog should be hash (similar to seq) for a third feature table
+  char qinit3[] = "CREATE TABLE IF NOT EXISTS results (prog TEXT NOT NULL, "
+                  "seq INTEGER NOT NULL, time INTEGER, energy INTEGER, "
+                  "PRIMARY KEY (prog, seq), "
+                  "FOREIGN KEY (seq) REFERENCES passorder(seq))";
+  retval |= sqlite3_exec(db, qinit3, NULL, NULL, NULL);
 
   return retval;
 }
@@ -97,4 +117,60 @@ std::vector<mageec_pass*> database::get_pass_list()
       break;
   }
   return passes;
+}
+
+/**
+ * Adds a result object to the database
+ * @param res Test result to store
+ */
+void database::add_result(result res)
+{
+  char *buffer;
+  sqlite3_stmt *stmt;
+
+  // Calcualte hash
+  std::string hashdata;
+  for (int i=0, size=res.passlist.size(); i < size; i++)
+    hashdata += res.passlist[i]->name();
+  uint64_t hash = hash_data (hashdata.c_str(), hashdata.size());
+
+  /* For SQLite we can only store signed numbers, therefore we sign transform,
+     allowing any sorting to still work */
+  int64_t shash = hash ^ (uint64_t)0x8000000000000000;
+
+  // Check if hash already exists
+  buffer = sqlite3_mprintf ("SELECT seq FROM passorder WHERE seq = %lli "
+                            "GROUP BY seq", (long long int)shash);
+  if (!buffer)
+    return;
+  int retval = sqlite3_prepare_v2 (db, buffer, -1, &stmt, 0);
+  sqlite3_free (buffer);
+  if (retval)
+    return;
+
+  // FIXME: Add collision detection
+  retval = sqlite3_step(stmt);
+  if (retval != SQLITE_DONE)
+  {
+    // The hash search has not found any result, add passes to database
+    for (int i=0, size=res.passlist.size(); i < size; i++)
+    {
+      buffer = sqlite3_mprintf ("INSERT INTO passorder VALUES (%lli, %i, %Q)",
+                                (long long int)shash, i,
+                                res.passlist[i]->name().c_str());
+      if (!buffer)
+        return;
+      sqlite3_exec (db, buffer, NULL, NULL, NULL);
+      sqlite3_free (buffer);
+    }
+  }
+  
+  // Add result
+  buffer = sqlite3_mprintf ("INSERT INTO results VALUES (%Q, %lli, 0, %i)",
+                            res.progname.c_str(), (long long int)shash,
+                            res.metric);
+  if (!buffer)
+    return;
+  sqlite3_exec (db, buffer, NULL, NULL, NULL);
+  sqlite3_free (buffer);
 }

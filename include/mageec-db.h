@@ -21,6 +21,7 @@
 #define __MAGEEC_DB_H__
 
 #include <string>
+#include "mageec-ml.h"
 #include "sqlite3.h"
 
 namespace mageec
@@ -54,6 +55,8 @@ public:
    * @returns empty vector if error, else list of passes as mageec_pass.
    */
   std::vector<mageec_pass*> get_pass_list();
+
+  void add_result(result res);
 };
 
 } // End namespace mageec

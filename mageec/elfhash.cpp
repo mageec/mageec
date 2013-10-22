@@ -18,6 +18,7 @@
 
 /** @file elfhash.cpp ELF Object Hasher. */
 #include "elfhash.h"
+#include "mageec.h"
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -132,29 +133,5 @@ int hashedelf::hash (char const *filename)
 
 uint64_t hashedelf::getResult()
 {
-  gcry_md_hd_t handle = NULL;
-  gcry_error_t err = 0;
-  unsigned char *hash = NULL;
-  uint64_t finalhash;
-
-  err = gcry_md_open (&handle, GCRY_MD_SHA256, 0);
-  if (err != 0)
-    return 0;
-  
-  gcry_md_write(handle, data, datasize);
-  hash = gcry_md_read(handle, GCRY_MD_SHA256);
-  if (hash == NULL)
-    return 0;
-
-  /* XOR each 64-bit block to generate 64-bit hash */
-  finalhash  = (uint64_t)(hash[0] ^ hash[8] ^ hash[16] ^ hash[24]) << 56;
-  finalhash |= (uint64_t)(hash[1] ^ hash[9] ^ hash[17] ^ hash[25]) << 48;
-  finalhash |= (uint64_t)(hash[2] ^ hash[10] ^ hash[18] ^ hash[26]) << 40;
-  finalhash |= (uint64_t)(hash[3] ^ hash[11] ^ hash[19] ^ hash[27]) << 32;
-  finalhash |= (uint64_t)(hash[4] ^ hash[12] ^ hash[20] ^ hash[28]) << 24;
-  finalhash |= (uint64_t)(hash[5] ^ hash[13] ^ hash[21] ^ hash[29]) << 16;
-  finalhash |= (uint64_t)(hash[6] ^ hash[14] ^ hash[22] ^ hash[30]) << 8;
-  finalhash |= (uint64_t)(hash[7] ^ hash[15] ^ hash[23] ^ hash[31]);
-
-  return finalhash;
+  return hash_data (data, datasize);
 }

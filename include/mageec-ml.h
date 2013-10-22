@@ -25,11 +25,11 @@
 #include <stdint.h>
 #include "mageec-features.h"
 #include "mageec-passes.h"
+#include "mageec-result.h"
 #include "mageec-db.h"
 
 namespace mageec
 {
-
 /**
  * MAGEEC Machine Learner
  */
@@ -102,6 +102,12 @@ public:
                    std::vector<mageec_pass*> passes,
                    int64_t metric,
                    bool good);
+
+  /**
+   * Adds a result to the machine learner database.
+   * @param res Result structure containing program, pass and metric info
+   */
+  void add_result (result res);
 
   /**
    * Adds a set of result points to machine learner raw database.

@@ -1,5 +1,21 @@
 2013-10-22  Simon Cook  <simon.cook@embecosm.com>
 
+	* include/mageec-db.h (add_result): Add support for adding result to
+	database.
+	* include/mageec-ml.h (add_result): Add result struct based variant.
+	* include/mageec-result.h (result): Create structure for holding
+	machine learning result data.
+	* include/mageec.h (hash_data): Add global hash function.
+	* mageec/Makefile.am: Add hasher.cpp to libmageec.
+	* mageec/Makefile.in: Regenerated.
+	* mageec/elfhash.cpp: Use hash_data instead of built in hash.
+	* ml/database.cpp (initdb): Create passorder and result tables.
+	(add_result): Add storage for result structure.
+	* ml/ml.cpp (add_result): Convert to result structure and add to
+	database.
+
+2013-10-22  Simon Cook  <simon.cook@embecosm.com>
+
 	* ml/Makefile.am: Readd -Werror to flags.
 	* ml/Makefile.in: Regenerated.
 

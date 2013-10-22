@@ -26,6 +26,8 @@ int mageec_ml::init (std::string compiler_version,
                      std::string compiler_target)
 {
   std::cerr << "LEARNER: Hello!" << std::endl;
+  /* FIXME: The second parameter should be false, we do not want to be creating
+     a new database here */
   db = new database(compiler_version + "-" + compiler_target + ".db", true);
   passes = db->get_pass_list();
   return 0;
@@ -53,9 +55,23 @@ std::vector<mageec_pass*> mageec_ml::all_passes (void)
 }
 
 void mageec_ml::add_result (std::vector<mageec_feature*> features __attribute__((unused)),
-                            std::vector<mageec_pass*> passes __attribute__((unused)),
-                            int64_t metric __attribute__((unused)),
+                            std::vector<mageec_pass*> passes,
+                            int64_t metric,
                             bool good __attribute__((unused)))
 {
+  if (!db)
+    return;
 
+  result res = {.passlist = passes,
+                .progname = "",
+                .metric = metric};
+
+  db->add_result(res);
+}
+
+void mageec_ml::add_result (result res)
+{
+  if (!db)
+    return;
+  db->add_result(res);
 }
