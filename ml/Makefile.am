@@ -2,7 +2,7 @@
 AM_CFLAGS = -g -O2 -I$(top_srcdir)/include
 AM_LDFLAGS = 
 # Force us to be really specific with what we mean
-AM_CFLAGS += -Wall -Wextra
+AM_CFLAGS += -Wall -Wextra -Werror
 AM_CXXFLAGS = $(CXXFLAGS) $(AM_CFLAGS)
 
 # Build Machine Learning Library
