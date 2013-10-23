@@ -50,4 +50,6 @@ void dummy_callback (void *gcc_data,
 void mageec_gcc_start_file (void *gcc_data, void *user_data);
 void mageec_gcc_finish_file (void *gcc_data, void *user_data);
 
+void register_featextract (void);
+
 #endif

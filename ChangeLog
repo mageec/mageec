@@ -1,3 +1,11 @@
+2013-10-23  Simon Cook  <simon.cook@embecosm.com>
+
+	* gcc_plugin/feature-extract.cpp: Define basic feature extractor.
+	* gcc_plugin/gcc-plugin.cpp: Register feature extractor on launch.
+	* gcc_plugin/mageec-plugin.h: Add register_featextract.
+	* gcc_plugin/Makefile.am: Added feature-extract.cpp to libmageec_gcc.
+	* gcc_plugin/Makefile.in: Regenerated.
+
 2013-10-22  Simon Cook  <simon.cook@embecosm.com>
 
 	* include/mageec-db.h (add_result): Add support for adding result to

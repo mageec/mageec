@@ -8,7 +8,8 @@ AM_CXXFLAGS = $(CXXFLAGS) $(AM_CFLAGS)
 
 # Build GCC Plugin
 lib_LTLIBRARIES = libmageec_gcc.la
-libmageec_gcc_la_SOURCES = gcc-plugin.cpp gcc-callbacks.cpp plugin-info.cpp
+libmageec_gcc_la_SOURCES = feature-extract.cpp gcc-plugin.cpp \
+  gcc-callbacks.cpp plugin-info.cpp
 libmageec_gcc_la_LDFLAGS = -release 0.1.0
 libmageec_gcc_la_LIBADD = ../mageec/libmageec.la
 

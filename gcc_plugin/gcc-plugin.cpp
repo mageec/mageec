@@ -100,6 +100,7 @@ int plugin_init (struct plugin_name_args *plugin_info,
                        mageec_gcc_finish_file, NULL);
   register_callback (plugin_info->base_name, PLUGIN_FINISH,
                      mageec_gcc_finish, NULL);
+  register_featextract();
 
   /* Disable all passes. These will then be turned back on by the framework */
   std::vector<mageec_pass*> passes = mageec_inst.all_passes();

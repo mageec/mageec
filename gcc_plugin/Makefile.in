@@ -93,8 +93,8 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libmageec_gcc_la_DEPENDENCIES = ../mageec/libmageec.la
-am_libmageec_gcc_la_OBJECTS = gcc-plugin.lo gcc-callbacks.lo \
-	plugin-info.lo
+am_libmageec_gcc_la_OBJECTS = feature-extract.lo gcc-plugin.lo \
+	gcc-callbacks.lo plugin-info.lo
 libmageec_gcc_la_OBJECTS = $(am_libmageec_gcc_la_OBJECTS)
 libmageec_gcc_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
@@ -251,7 +251,9 @@ AM_CXXFLAGS = $(CXXFLAGS) $(AM_CFLAGS)
 
 # Build GCC Plugin
 lib_LTLIBRARIES = libmageec_gcc.la
-libmageec_gcc_la_SOURCES = gcc-plugin.cpp gcc-callbacks.cpp plugin-info.cpp
+libmageec_gcc_la_SOURCES = feature-extract.cpp gcc-plugin.cpp \
+  gcc-callbacks.cpp plugin-info.cpp
+
 libmageec_gcc_la_LDFLAGS = -release 0.1.0
 libmageec_gcc_la_LIBADD = ../mageec/libmageec.la
 
@@ -332,6 +334,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/feature-extract.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gcc-callbacks.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gcc-plugin.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/plugin-info.Plo@am__quote@
