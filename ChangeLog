@@ -1,3 +1,7 @@
+2013-10-24  Simon Cook  <simon.cook@embecosm.com>
+
+	* include/mageec-passes.h: Fix include guard.
+
 2013-10-23  Simon Cook  <simon.cook@embecosm.com>
 
 	* gcc_plugin/feature-extract.cpp: Define basic feature extractor.

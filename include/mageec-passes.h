@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 /** @file mageec-passes.h MAGEEC Passes */
-#ifndef __MAGEEC_PASSES_H
+#ifndef __MAGEEC_PASSES_H_
 #define __MAGEEC_PASSES_H_
 
 #include <string>
