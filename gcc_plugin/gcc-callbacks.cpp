@@ -25,12 +25,15 @@
 #undef PACKAGE_VERSION
 
 #include "gcc-plugin.h"
+#include "tree-pass.h"
+#include "function.h"
 #include "mageec-plugin.h"
 #include "mageec.h"
+#include <string>
 #include <stdio.h>
 
 void mageec_gcc_finish (void *gcc_data __attribute__((unused)),
-			void *user_data __attribute__((unused)))
+      void *user_data __attribute__((unused)))
 {
   fprintf (stderr, "GCC:     Finish\n");
   mageec_inst.finish();
@@ -60,4 +63,44 @@ void mageec_gcc_finish_file (void *gcc_data, void *user_data)
   fprintf (stderr, "GCC:     End File\n");
   fprintf (stderr, "          gcc_data:  %p\n", gcc_data);
   fprintf (stderr, "          user_data: %p\n", user_data);
+}
+
+/**
+ * Get string representing type of pass.
+ * @param pass compiler pass
+ * @returns string corresponding to type of pass (GIMPLE, RTL, etc.)
+ */
+static std::string pass_type_str(opt_pass* pass)
+{
+  if (pass == NULL)
+    return "*NULL*";
+  switch (pass->type)
+  {
+    case GIMPLE_PASS:
+      return "GIMPLE";
+      break;
+    case RTL_PASS:
+      return "RTL";
+      break;
+    case SIMPLE_IPA_PASS:
+      return "SIMPLE_IPA";
+      break;
+    case IPA_PASS:
+      return "IPA";
+      break;
+    default:
+      return "*UNKNOWN*";
+      break;
+  }
+  return "*UNKNOWN*";
+}
+
+void mageec_pass_gate (void *gcc_data,
+                       void *user_data __attribute__((unused)))
+{
+  short *result = (short *)gcc_data;
+  if (mageec_print_pass_info)
+    fprintf (stderr, "Pass: '%s',  Type: %s,  Function: '%s',  Gate: %hi\n",
+             current_pass->name, pass_type_str(current_pass).c_str(),
+             current_function_name(), *result);
 }

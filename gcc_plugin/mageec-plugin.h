@@ -29,12 +29,9 @@ void mageec_gcc_finish (void *gcc_data,
 /** The plugin base_name for our hooks to use to schedule new passes */
 extern const char *mageec_gcc_plugin_name;
 
-/**
- * Prints information about passes found within GCC.
- * May also attempt to turn each pass off, which causes compilation to fail.
- * @param disable If non-zero plugin will attempt to disable all passes.
- */
-void mageec_gcc_pass_info (int disable);
+/** Configuration variable for whether we should print out pass info on
+    post-gate hook */
+extern int mageec_print_pass_info;
 
 /**
  * Prints information about the plugin to stdout.
@@ -49,6 +46,8 @@ void dummy_callback (void *gcc_data,
 
 void mageec_gcc_start_file (void *gcc_data, void *user_data);
 void mageec_gcc_finish_file (void *gcc_data, void *user_data);
+
+void mageec_pass_gate (void *gcc_data, void *user_data);
 
 void register_featextract (void);
 

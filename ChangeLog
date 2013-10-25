@@ -1,3 +1,16 @@
+2013-10-25  Simon Cook  <simon.cook@embecosm.com>
+
+	* gcc_plugin/gcc-callbacks.cpp (pass_type_str): Define pass to type
+	conversion function.
+	(mageec_pass_gate): Print pass information on gate override.
+	* gcc_plugin/gcc-plugin.cpp (parse_arguments): Remove
+	dumppasses=disable option.
+	(plugin_init): Register mageec_pass_gate as PLUGIN_OVERRIDE_GATE.
+	Remove use of disable_pass.
+	* gcc_plugin/mageec-plugin.h (mageec_gcc_pass_info): Removed.
+	(mageec_pass_gate): Declared.
+	* gcc_plugin/plugin-info.cpp (mageec_gcc_pass_info): Removed.
+
 2013-10-24  Simon Cook  <simon.cook@embecosm.com>
 
 	* include/mageec-passes.h: Fix include guard.

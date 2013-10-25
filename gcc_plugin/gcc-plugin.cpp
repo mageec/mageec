@@ -43,8 +43,7 @@ static struct plugin_info mageec_plugin_version =
 };
 
 static int print_plugin_info = 0;
-static int print_pass_info = 0;
-static int print_pass_info_disable = 0;
+int mageec_print_pass_info = 0;
 
 /** Stored GCC Plugin name for future register_callbacks. */
 const char *mageec_gcc_plugin_name;
@@ -60,11 +59,7 @@ static void parse_arguments (int argc, struct plugin_argument *argv)
     if (!strcmp (argv[i].key, "plugininfo"))
       print_plugin_info = 1;
     else if (!strcmp (argv[i].key, "dumppasses"))
-      {
-	print_pass_info = 1;
-	if (argv[i].value != NULL && !strcmp (argv[i].value, "disable"))
-	    print_pass_info_disable = 1;
-      }
+      mageec_print_pass_info = 1;
   }
 }
 
@@ -84,8 +79,6 @@ int plugin_init (struct plugin_name_args *plugin_info,
   parse_arguments (plugin_info->argc, plugin_info->argv);
   if (print_plugin_info)
     mageec_gcc_plugin_info (plugin_info, version);
-  if (print_pass_info)
-    mageec_gcc_pass_info (print_pass_info_disable);
 
   /* Initialize MAGEEC Framework, returning error if failed. */
   /* FIXME: Get real compiler version string and target. */
@@ -97,15 +90,12 @@ int plugin_init (struct plugin_name_args *plugin_info,
   register_callback (plugin_info->base_name, PLUGIN_START_UNIT,
                      mageec_gcc_start_file, NULL);
   register_callback (plugin_info->base_name, PLUGIN_FINISH_UNIT,
-                       mageec_gcc_finish_file, NULL);
+                     mageec_gcc_finish_file, NULL);
   register_callback (plugin_info->base_name, PLUGIN_FINISH,
                      mageec_gcc_finish, NULL);
+  register_callback (plugin_info->base_name, PLUGIN_OVERRIDE_GATE,
+                     mageec_pass_gate, NULL);
   register_featextract();
-
-  /* Disable all passes. These will then be turned back on by the framework */
-  std::vector<mageec_pass*> passes = mageec_inst.all_passes();
-  for (int i=0, size=passes.size(); i < size; i++)
-    disable_pass (passes[i]->name().c_str());
 
   return 0;
 }
