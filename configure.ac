@@ -53,5 +53,6 @@ AC_OUTPUT(Makefile \
           mageec/Makefile \
           ml/Makefile \
           gcc_plugin/Makefile \
+          doc/Makefile \
           testsuite/Makefile \
           testsuite/mageec.tests/Makefile)

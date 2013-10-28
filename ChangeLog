@@ -1,3 +1,16 @@
+2013-10-28  Simon Cook  <simon.cook@embecosm.com>
+
+	* doc/Makefile.am: Add mageec.texi for documentation.
+	* doc/Makefile.in: Generated.
+	* doc/fdl-1.3.texi: Add GFDL 1.3.
+	* doc/mdate-sh, doc/texinfo.texi: Add build infrastructure.
+	* doc/mageec.texi: Add initial documentation.
+	* .gitignore: Ignore .log files.
+	* Makefile.am: Build in doc subdirectory.
+	* Makefile.in: Rengerated.
+	* configure.ac: Generate doc/Makefile.
+	* configure: Regenerated.
+
 2013-10-25  Simon Cook  <simon.cook@embecosm.com>
 
 	* gcc_plugin/gcc-callbacks.cpp (pass_type_str): Define pass to type

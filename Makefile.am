@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = ml mageec gcc_plugin testsuite
+SUBDIRS = ml mageec gcc_plugin testsuite doc
 
 # Common header files to be included in distribution
 EXTRA_DIST =  include/mageec.h include/mageec-ml.h include/mageec-features.h \
