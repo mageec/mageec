@@ -52,6 +52,7 @@ AM_CONDITIONAL([HAVE_DOXYGEN],
 AC_OUTPUT(Makefile \
           mageec/Makefile \
           ml/Makefile \
+          ml/C5/Makefile \
           gcc_plugin/Makefile \
           doc/Makefile \
           testsuite/Makefile \

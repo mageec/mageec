@@ -1,3 +1,4 @@
+SUBDIRS = C5
 # Compilation Flags
 AM_CFLAGS = -g -O2 -I$(top_srcdir)/include
 AM_LDFLAGS = 

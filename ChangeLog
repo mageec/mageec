@@ -1,3 +1,21 @@
+2013-11-26  Simon Cook  <simon.cook@embecosm.com>
+
+	* ml/C5/attwinnow.c, ml/C5/c50.c, ml/C5/classify.c, ml/C5/confmat.c,
+	ml/C5/construct.c, ml/C5/contin.c, ml/C5/defns.i, ml/C5/discr.c,
+	ml/C5/extern.i, ml/C5/formrules.c, ml/C5/formtree.c, ml/C5/getdata.c,
+	ml/C5/getnames.c, ml/C5/global.c, ml/C5/gpl.txt, ml/C5/implicitatt.c,
+	ml/C5/info.c, ml/C5/mcost.c, ml/C5/modelfiles.c, ml/C5/prune.c,
+	ml/C5/p-thresh.c, ml/C5/report.c, ml/C5/rules.c, ml/C5/ruletree.c,
+	ml/C5/siftrules.c, ml/C5/sort.c, ml/C5/subset.c, ml/C5/text.i,
+	ml/C5/trees.c, ml/C5/update.c, ml/C5/utility.c, ml/C5/xval,
+	ml/C5/xval.c: Add source files from GPL C5.0 Release 2.07.
+	* ml/C5/Makefile.am: Build C5.0 executable.
+	* ml/C5/Makefile.in: Generate.
+	* ml/Makefile.am: Add C5 subdirectory.
+	* ml/Makefile.in: Regenerated.
+	* configure.ac: Add generation of ml/C5/Makefile
+	* configure: Regenerated.
+
 2013-10-28  Simon Cook  <simon.cook@embecosm.com>
 
 	* doc/Makefile.am: Add mageec.texi for documentation.
