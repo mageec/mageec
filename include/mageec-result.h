@@ -30,6 +30,7 @@ namespace mageec
 struct result
 {
   std::vector<mageec_pass*> passlist;
+  std::vector<mageec_feature*> featlist;
   std::string progname;
   int64_t metric;
 };

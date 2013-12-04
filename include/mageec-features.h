@@ -38,8 +38,10 @@ public:
 class basic_feature : public mageec_feature
 {
   std::string feature_name;
+  int feature_value;
 public:
   basic_feature (std::string name);
+  basic_feature (std::string name, int value);
   std::string name();
   int get_feature();
 };

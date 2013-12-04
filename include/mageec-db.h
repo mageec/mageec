@@ -56,7 +56,21 @@ public:
    */
   std::vector<mageec_pass*> get_pass_list();
 
+  /**
+   * Loads all results from the table.
+   * @returns empty vector if empty, else list of results.
+   */
+  std::vector<result> get_all_results();
+
   void add_result(result res);
+
+  /**
+   * Stores a text string against a pass name. If a string already exists in
+   * the database for a pass it will be replaced with blob.
+   * @param passname Name of pass.
+   * @param blob Data to store
+   */
+  void store_pass_blob(std::string passname, char *blob);
 };
 
 } // End namespace mageec

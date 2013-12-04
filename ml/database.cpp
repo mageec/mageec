@@ -75,13 +75,22 @@ int database::initdb()
                   "PRIMARY KEY (seq, pos))";
   retval |= sqlite3_exec(db, qinit2, NULL, NULL, NULL);
 
+  char qinit3[] = "CREATE TABLE IF NOT EXISTS features (prog INTEGER NOT NULL, "
+                  "feature INTEGER NOT NULL, value INTEGER NOT NULL, "
+                  "PRIMARY KEY (prog, feature))";
+  retval |= sqlite3_exec(db, qinit3, NULL, NULL, NULL);
+
   // Program result table
-  // FIXME: prog should be hash (similar to seq) for a third feature table
-  char qinit3[] = "CREATE TABLE IF NOT EXISTS results (prog TEXT NOT NULL, "
+  char qinit4[] = "CREATE TABLE IF NOT EXISTS results (prog TEXT NOT NULL, "
                   "seq INTEGER NOT NULL, time INTEGER, energy INTEGER, "
                   "PRIMARY KEY (prog, seq), "
                   "FOREIGN KEY (seq) REFERENCES passorder(seq))";
-  retval |= sqlite3_exec(db, qinit3, NULL, NULL, NULL);
+  retval |= sqlite3_exec(db, qinit4, NULL, NULL, NULL);
+
+  // Pass blob table (for e.g. storing tree output)
+  char qinit5[] = "CREATE TABLE IF NOT EXISTS passblob (pass TEXT, blob TEXT, "
+                  "PRIMARY KEY (pass))";
+  retval |= sqlite3_exec(db, qinit5, NULL, NULL, NULL);
 
   return retval;
 }
@@ -99,9 +108,8 @@ std::vector<mageec_pass*> database::get_pass_list()
   sqlite3_stmt *stmt;
   char query[] = "SELECT * FROM passes";
   int retval = sqlite3_prepare_v2 (db, query, -1, &stmt, 0);
-  if (retval) {
+  if (retval)
     return passes;
-  }
 
   /* The current design of the database we always use the first column. Should
      this change in the future, this function should also be changed. */
@@ -171,6 +179,98 @@ void database::add_result(result res)
                             res.metric);
   if (!buffer)
     return;
+  sqlite3_exec (db, buffer, NULL, NULL, NULL);
+  sqlite3_free (buffer);
+}
+
+std::vector<result> database::get_all_results()
+{
+  std::vector<result> results;
+  char *buffer;
+  int retval, passretval;
+  sqlite3_stmt *stmt, *passstmt;
+
+  buffer = sqlite3_mprintf("SELECT * FROM results");
+  retval = sqlite3_prepare_v2 (db, buffer, -1, &stmt, 0);
+  sqlite3_free (buffer);
+  if (retval)
+    return results;
+
+  while (1)
+  {
+    retval = sqlite3_step(stmt);
+    if (retval == SQLITE_ROW)
+    {
+      const char *progkey = (const char*)sqlite3_column_text(stmt, 0);
+      const char *passkey = (const char*)sqlite3_column_text(stmt, 1);
+
+      // Select pass list for test
+      std::vector<mageec_pass *> passes;
+      buffer = sqlite3_mprintf ("SELECT * FROM passorder WHERE seq = %s ORDER "
+                                "BY pos", passkey);
+      passretval = sqlite3_prepare_v2 (db, buffer, -1, &passstmt, 0);
+      sqlite3_free (buffer);
+      if (passretval)
+        continue;
+      while (1)
+      {
+        passretval = sqlite3_step(passstmt);
+        if (passretval == SQLITE_ROW)
+        {
+          const char *passname = (const char*)sqlite3_column_text(passstmt, 2);
+          passes.push_back (new basic_pass(passname));
+        }
+        else if (passretval == SQLITE_DONE)
+          break;
+      }
+
+      // Select feature set for test
+      std::vector<mageec_feature *> features;
+      buffer = sqlite3_mprintf ("SELECT * FROM features WHERE prog = %s ORDER "
+                                "BY feature", progkey);
+      passretval = sqlite3_prepare_v2 (db, buffer, -1, &passstmt, 0);
+      sqlite3_free (buffer);
+      if (passretval)
+        continue;
+      while (1)
+      {
+        passretval = sqlite3_step(passstmt);
+        if (passretval == SQLITE_ROW)
+        {
+          const char *featname = (const char*)sqlite3_column_text(passstmt, 1);
+          int featdata = sqlite3_column_int(passstmt, 2);
+          features.push_back (new basic_feature(featname, featdata));
+        }
+        else if (passretval == SQLITE_DONE)
+          break;
+      }
+
+      // Build object and add to results
+      int energy = sqlite3_column_int(stmt, 3);
+      result res = {.passlist = passes,
+                    .featlist = features,
+                    .progname = progkey,
+                    .metric = energy};
+      results.push_back (res);
+    }
+    else if (retval == SQLITE_DONE)
+      break;
+  }
+
+  return results;
+}
+
+void database::store_pass_blob(std::string passname, char *blob)
+{
+  char *buffer;
+  buffer = sqlite3_mprintf ("DELETE FROM passblob WHERE pass = %Q",
+                            passname.c_str());
+  sqlite3_exec (db, buffer, NULL, NULL, NULL);
+  sqlite3_free (buffer);
+
+  buffer = sqlite3_mprintf ("INSERT INTO passblob VALUES (%Q, %Q)",
+                            passname.c_str(),
+                            blob);
   sqlite3_exec (db, buffer, NULL, NULL, NULL);
   sqlite3_free (buffer);
 }

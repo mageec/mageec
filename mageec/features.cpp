@@ -26,6 +26,12 @@ basic_feature::basic_feature(std::string feat_name)
   feature_name = feat_name;
 }
 
+basic_feature::basic_feature(std::string feat_name, int value)
+{
+  feature_name = feat_name;
+  feature_value = value;
+}
+
 std::string basic_feature::name()
 {
   return feature_name;
@@ -33,5 +39,5 @@ std::string basic_feature::name()
 
 int basic_feature::get_feature()
 {
-  return 0;
+  return feature_value;
 }

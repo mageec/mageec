@@ -1,5 +1,22 @@
 2013-11-26  Simon Cook  <simon.cook@embecosm.com>
 
+	* include/mageec-db.h (get_all_results): Added.
+	(store_pass_blob): Likewise.
+	* include/mageec-features.h (basic_feature): Added string, int
+	constructor.
+	* include/mageec-result.h (result): Added featlist.
+	* mageec/features.cpp (basic_feature): Added string, int constructor.
+	(basic_feature::get_feature): Return correct feature value.
+	* ml/database.cpp (initdb): Add feature and passblob tables.
+	(get_all_results): Add function to return all compiled data known to
+	database.
+	* ml/ml.cpp (add_result): Store feature list in result object.
+	(process_results): Generate files for C5.0 to machine learn passes.
+	* ml/Makefile.am: Add passing libexec dir to compiler.
+	* ml/Makefile.in: Regenerated.
+
+2013-11-26  Simon Cook  <simon.cook@embecosm.com>
+
 	* ml/C5/attwinnow.c, ml/C5/c50.c, ml/C5/classify.c, ml/C5/confmat.c,
 	ml/C5/construct.c, ml/C5/contin.c, ml/C5/defns.i, ml/C5/discr.c,
 	ml/C5/extern.i, ml/C5/formrules.c, ml/C5/formtree.c, ml/C5/getdata.c,
