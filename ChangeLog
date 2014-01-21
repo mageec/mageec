@@ -1,5 +1,34 @@
 2014-01-21  Simon Cook  <simon.cook@embecosm.com>
 
+	* include/elfhash.h: Renamed to include/mageec/elfhash.h.
+	* include/mageec-db.h: Renamed to include/mageec/mageec-db.h
+	* include/mageec-features.h: Renamed to
+	include/mageec/mageec-features.h
+	* include/mageec-ml.h: Renamed to include/mageec/mageec-ml.h.
+	* include/mageec-passes.h: Renamed to include/mageec/mageec-passes.h.
+	* include/mageec-result.h: Renamed to include/mageec/mageec-result.h.
+	* include/mageec.h: Renamed to include/mageec/mageec.h.
+	* gcc_plugin/gcc-callbacks.cpp: Update include references.
+	* gcc_plugin/gcc-plugin.cpp: Likewise.
+	* gcc_plugin/mageec-plugin.h: Likewise.
+	* mageec/elfhash.cpp: Likewise.
+	* mageec/elfhash.cpp: Likewise.
+	* mageec/features.cpp: Likewise.
+	* mageec/hasher.cpp: Likewise.
+	* mageec/mageec.cpp: Likewise.
+	* mageec/mageechash.cpp: Likewise.
+	* mageec/passes.cpp: Likewise.
+	* ml/database.cpp: Likewise.
+	* ml/ml.cpp: Likewise.
+	* include/Makefile.am: Added rule to install headers.
+	* include/Makefile.in: Generated.
+	* Makefile.am: Add include subdirectory and update include references.
+	* Makefile.in: Regenerated.
+	* configure.ac: Add generation of include/Makefile.
+	* configure: Regenerated.
+
+2014-01-21  Simon Cook  <simon.cook@embecosm.com>
+
 	* doc/mageec.texi: Add build instructions.
 
 2013-11-26  Simon Cook  <simon.cook@embecosm.com>

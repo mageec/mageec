@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 /** @file passes.cpp MAGEEC Compiler Passes. */
-#include "mageec-passes.h"
+#include "mageec/mageec-passes.h"
 
 using namespace mageec;
 

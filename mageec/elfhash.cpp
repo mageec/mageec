@@ -17,8 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 /** @file elfhash.cpp ELF Object Hasher. */
-#include "elfhash.h"
-#include "mageec.h"
+#include "mageec/elfhash.h"
+#include "mageec/mageec.h"
 #include <cstdlib>
 #include <cstring>
 #include <iostream>

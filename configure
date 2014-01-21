@@ -15953,7 +15953,7 @@ if test -z "$HAVE_DOXYGEN_TRUE"; then :
 fi
 
 # Output files
-ac_config_files="$ac_config_files Makefile mageec/Makefile ml/Makefile ml/C5/Makefile gcc_plugin/Makefile doc/Makefile testsuite/Makefile testsuite/mageec.tests/Makefile"
+ac_config_files="$ac_config_files Makefile mageec/Makefile ml/Makefile ml/C5/Makefile gcc_plugin/Makefile doc/Makefile include/Makefile testsuite/Makefile testsuite/mageec.tests/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -17084,6 +17084,7 @@ do
     "ml/C5/Makefile") CONFIG_FILES="$CONFIG_FILES ml/C5/Makefile" ;;
     "gcc_plugin/Makefile") CONFIG_FILES="$CONFIG_FILES gcc_plugin/Makefile" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
+    "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
     "testsuite/Makefile") CONFIG_FILES="$CONFIG_FILES testsuite/Makefile" ;;
     "testsuite/mageec.tests/Makefile") CONFIG_FILES="$CONFIG_FILES testsuite/mageec.tests/Makefile" ;;
 

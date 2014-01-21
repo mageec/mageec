@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 /** @file ml.cpp MAGEEC Machine Learner */
-#include "mageec-ml.h"
+#include "mageec/mageec-ml.h"
 #include <iostream>
 #include <fstream>
 #include <cstdio>

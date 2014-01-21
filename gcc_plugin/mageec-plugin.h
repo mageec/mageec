@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 /** @file mageec-plugin.h MAGEEC GCC Plugin. */
-#include "mageec.h"
+#include "mageec/mageec.h"
 #ifndef __MAGEEC_PLUGIN_H__
 #define __MAGEEC_PLUGIN_H__
 

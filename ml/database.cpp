@@ -17,8 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 /** @file database.cpp MAGEEC Machine Learner Database */
-#include "mageec-ml.h"
-#include "mageec.h"
+#include "mageec/mageec-ml.h"
+#include "mageec/mageec.h"
 #include <cassert>
 
 using namespace mageec;

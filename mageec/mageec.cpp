@@ -17,8 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 /** @file mageec.cpp MAGEEC Main Coordinator. */
-#include "mageec.h"
-#include "mageec-ml.h"
+#include "mageec/mageec.h"
+#include "mageec/mageec-ml.h"
 #include <iostream>
 
 using namespace mageec;

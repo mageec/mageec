@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 /** @file features.cpp MAGEEC Program Features. */
-#include "mageec-features.h"
+#include "mageec/mageec-features.h"
 
 using namespace mageec;
 

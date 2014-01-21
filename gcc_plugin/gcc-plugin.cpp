@@ -26,7 +26,7 @@
 
 #include "gcc-plugin.h"
 #include "tree-pass.h"
-#include "mageec.h"
+#include "mageec/mageec.h"
 #include "mageec-plugin.h"
 //#include <string>
 

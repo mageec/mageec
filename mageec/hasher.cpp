@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 /** @file hasher.cpp Generic hasher. */
-#include "mageec.h"
+#include "mageec/mageec.h"
 #include "gcrypt.h"
 
 uint64_t mageec::hash_data(const void *data, int size)

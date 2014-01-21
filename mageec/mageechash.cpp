@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 /** @file mageechash.cpp ELF Object Hasher Command. */
-#include "elfhash.h"
+#include "mageec/elfhash.h"
 
 #include <iostream>
 #include <iomanip>
