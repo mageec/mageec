@@ -1,5 +1,5 @@
 /*  ELF Object Hasher
-    Copyright (C) 2013 Embecosm Limited and University of Bristol
+    Copyright (C) 2013, 2014 Embecosm Limited and University of Bristol
 
     This file is part of MAGEEC.
 
