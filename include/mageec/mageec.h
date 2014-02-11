@@ -22,8 +22,11 @@
 #ifndef __MAGEEC_H__
 #define __MAGEEC_H__
 
+#include <map>
 #include <string>
 #include <stdint.h>
+#include <vector>
+#include "mageec-decision.h"
 #include "mageec-features.h"
 #include "mageec-ml.h"
 
@@ -37,6 +40,11 @@ namespace mageec
 class mageec_framework
 {
   mageec::mageec_ml ml;
+
+  /**
+   * Storage for feature pass set
+   */
+   std::map< std::string, std::vector<mageec_feature*> > featset;
 
 public:
   /**
@@ -67,6 +75,21 @@ public:
   void finish (void);
 
   std::vector<mageec_pass*> all_passes (void);
+
+  /**
+   * Pass a feature set to the MAGEEC feature set storage.
+   * @param name Function name.
+   * @param features Feature vector for function.
+   */
+  void take_features (std::string name, std::vector<mageec_feature*> features);
+
+  /**
+   * Make a decision based on function name and already stored feature set.
+   * @param pass Pass name.
+   * @param function Function name.
+   * @returns Decision.
+   */
+  decision make_decision(std::string pass, std::string function);
 };
 
 /**

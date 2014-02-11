@@ -14,4 +14,4 @@ libmageec_la_LIBADD = ../ml/libmageec_learner.la
 # Build ELF Hasher
 bin_PROGRAMS = mageechash
 mageechash_SOURCES = mageechash.cpp
-mageechash_LDADD = libmageec.la
+mageechash_LDADD = libmageec.la ../ml/libmageec_learner.la

@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 #include <stdint.h>
+#include "mageec-decision.h"
 #include "mageec-features.h"
 #include "mageec-passes.h"
 #include "mageec-result.h"
@@ -82,6 +83,14 @@ public:
    */
   std::vector<mageec_pass*> all_passes();
 
+  /**
+   * Make a single function/pass decision based on provided feature vector.
+   * @param pass Pass to make a decision about.
+   * @param features Feature vector of function to run pass on.
+   * @returns decision
+   */
+  decision make_decision (mageec_pass* pass,
+                          std::vector<mageec_feature*> features);
 
   /**
    * Informs the machine learner that it can process all new data to update

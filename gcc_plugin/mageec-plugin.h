@@ -33,6 +33,10 @@ extern const char *mageec_gcc_plugin_name;
     post-gate hook */
 extern int mageec_print_pass_info;
 
+/** Configuration variable for whether MAGEEC should NOT override the pass
+    manager. */
+extern int mageec_no_decision;
+
 /**
  * Prints information about the plugin to stdout.
  * @param plugin_name_args GCC plugin information.

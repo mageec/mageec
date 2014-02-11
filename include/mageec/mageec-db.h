@@ -71,6 +71,14 @@ public:
    * @param blob Data to store
    */
   void store_pass_blob(std::string passname, char *blob);
+
+  /**
+   * Returns a text string stored against a pass name. It is up to the caller
+   * to free this pointer.
+   * @param passname Name of pass.
+   * @returns Valid pointer to stored data if data has been stored, else NULL.
+   */
+   const char *get_pass_blob(std::string passname);
 };
 
 } // End namespace mageec

@@ -274,3 +274,27 @@ void database::store_pass_blob(std::string passname, char *blob)
   sqlite3_exec (db, buffer, NULL, NULL, NULL);
   sqlite3_free (buffer);
 }
+
+const char *database::get_pass_blob(std::string passname)
+{
+  char *buffer;
+  int retval;
+  sqlite3_stmt *stmt;
+  buffer = sqlite3_mprintf("SELECT blob FROM passblob WHERE pass = %Q",
+                           passname.c_str());
+  retval = sqlite3_prepare_v2(db, buffer, -1, &stmt, 0);
+  sqlite3_free(buffer);
+
+  // Return code is non-zero if selection failed
+  if (retval)
+    return NULL;
+
+  retval = sqlite3_step(stmt);
+  if (retval == SQLITE_ROW)
+  {
+    const char *data = (const char*)sqlite3_column_text(stmt, 0);
+    return data;
+  }
+
+  return NULL;
+}

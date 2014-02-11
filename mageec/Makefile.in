@@ -104,7 +104,7 @@ libmageec_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 PROGRAMS = $(bin_PROGRAMS)
 am_mageechash_OBJECTS = mageechash.$(OBJEXT)
 mageechash_OBJECTS = $(am_mageechash_OBJECTS)
-mageechash_DEPENDENCIES = libmageec.la
+mageechash_DEPENDENCIES = libmageec.la ../ml/libmageec_learner.la
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -260,7 +260,7 @@ libmageec_la_SOURCES = mageec.cpp hasher.cpp features.cpp passes.cpp elfhash.cpp
 libmageec_la_LDFLAGS = -release 0.1.0
 libmageec_la_LIBADD = ../ml/libmageec_learner.la
 mageechash_SOURCES = mageechash.cpp
-mageechash_LDADD = libmageec.la
+mageechash_LDADD = libmageec.la ../ml/libmageec_learner.la
 all: all-am
 
 .SUFFIXES:

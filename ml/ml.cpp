@@ -20,10 +20,16 @@
 #include "mageec/mageec-ml.h"
 #include <iostream>
 #include <fstream>
+#include <cassert>
 #include <cstdio>
 #include <cstdlib>
 
 using namespace mageec;
+
+// Modified C5 classifier which is currently compiled as C
+extern "C" {
+  int c5_classify_main(char *filestem);
+}
 
 int mageec_ml::init (std::string compiler_version,
                      std::string compiler_target)
@@ -78,6 +84,64 @@ void mageec_ml::add_result (result res)
   if (!db)
     return;
   db->add_result(res);
+}
+
+decision mageec_ml::make_decision (mageec_pass *pass,
+                                   std::vector<mageec_feature*> features)
+{
+  assert(pass != NULL && "Decision of null pass requested.");
+  // We cannot make a decision if we don't have a database backend
+  if (!db)
+    return NATIVE_DECISION;
+
+  unsigned int featurecount = features.size();
+  assert(featurecount > 0 && "Empty feature vector.");
+  const char *passname = pass->name().c_str();
+
+  // namebuf will be used as a buffer to generate file names
+  char namebuf[1024];
+
+  // "tree" file - Learnt machine learning tree (and return if no tree)
+  const char *treedata = db->get_pass_blob (pass->name());
+  if (treedata == NULL)
+    return NATIVE_DECISION;
+
+  snprintf (namebuf, 1024, "/tmp/%s.tree", passname);
+  std::ofstream treefile(namebuf);
+  treefile << treedata;
+  treefile.close();
+
+  // "names" file - Columns for classifier
+  snprintf (namebuf, 1024, "/tmp/%s.names", passname);
+  std::ofstream namefile(namebuf);
+  namefile << "runpass." << std::endl;
+  for (unsigned int i = 0; i < featurecount; i++)
+    namefile << features[i]->name() << ": continuous." << std::endl;
+  namefile << "runpass: t,f" << std::endl;;
+  namefile.close();
+
+  // "cases" file - Data to make decision on (i.e. our function)
+  snprintf (namebuf, 1024, "/tmp/%s.cases", passname);
+  std::ofstream casesfile(namebuf);
+  for (unsigned int i = 0; i < featurecount; i++)
+    casesfile << features[i]->get_feature() << ',';
+  casesfile << '?' << std::endl;
+  casesfile.close();
+
+  // Classify program as run/don't run
+  snprintf (namebuf, 1024, "/tmp/%s", passname);
+  int execute = c5_classify_main(namebuf);
+
+  // Delete temporary files
+  /*snprintf (namebuf, 1024, "/tmp/%s.cases", passname);
+  remove (namebuf);
+  snprintf (namebuf, 1024, "/tmp/%s.names", passname);
+  remove (namebuf);
+  snprintf (namebuf, 1024, "/tmp/%s.tree", passname);
+  remove (namebuf);
+  */
+
+  return (execute == 1) ? FORCE_EXECUTE : FORCE_NOEXECUTE;
 }
 
 // FIXME: Add random file name prefix

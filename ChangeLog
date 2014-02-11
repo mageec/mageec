@@ -1,5 +1,38 @@
 2014-02-11  Simon Cook  <simon.cook@embecosm.com>
 
+	* gcc_plugin/feature-extract.cpp (mageec_featextract_exec): Build
+	feature vector and pass to MAGEEC storage layer.
+	* gcc_plugin/gcc-callbacks.cpp (mageec_pass_gate): Make decision
+	on executing pass based on previously stored features.
+	* gcc_plugin/gcc-plugin.cpp (void parse_arguments): Add parsing for
+	'nodecide' argument to disable decision making.
+	* gcc_plugin/mageec-plugin.h (mageec_no_decision): Add parameter for
+	disabling decision making.
+	* include/mageec/mageec-db.h (get_pass_blob): Defined.
+	* include/mageec/mageec-decision.h: Add header for decision state.
+	* include/mageec/mageec-ml.h (mageec_framework::make_decision):
+	Defined.
+	* include/mageec/mageec.h (mageec_framework::featset): Add feature
+	vector storage.
+	(mageec_framework::take_features): Defined to add to feature storage.
+	(mageec_framework::make_decision): Defined for decision making.
+	* include/Makefile.am: Add mageec/mageec-decision.h to headers.
+	* include/Makefile.in: Regenerated.
+	* mageec/mageec.cpp (mageec_framework::new_file): Clear feature store.
+	(mageec_framework::end_file): Clear feature store.
+	(mageec_framework::take_features): Store given features in store.
+	(mageec_framework::make_decision): Pass stored features to ML layer.
+	* mageec/Makefile.am: Link mageechash against libmageec_learner.
+	* mageec/Makefile.in: Regenerated.
+	* ml/database.cpp (database::store_pass_blob): Return blob (decision
+	tree) if one has been previously stored.
+	* ml/ml.cpp: Add C linkage reference to c5_classify_main.
+	(mageec_ml::make_decision): Restore decision tree information stored
+	in database and use given features to make decision via
+	c5_classify_main.
+
+2014-02-11  Simon Cook  <simon.cook@embecosm.com>
+
 	* ml/C5/classify-hooks.c (FreeGlobals): Removed freeing of PropVal, as
 	inclusion in library causes free to abort.
 	* ml/C5/classify-sample.c (main): Renamed to c5_classify_main.

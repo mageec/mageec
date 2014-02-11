@@ -33,6 +33,8 @@
 #include <iostream>
 #include <vector>
 
+using namespace mageec;
+
 /**
  * Minimum element in a vector. We define this because we can't include
  * algorithm after gcc-plugin.h"
@@ -101,7 +103,7 @@ static unsigned mageec_featextract_exec(void)
 {
   basic_block bb;
   gimple_stmt_iterator gsi;
-  std::vector<int> count;
+  std::vector<unsigned> count;
 
   unsigned bb_count = 0;
   unsigned stmt_count = 0;
@@ -126,6 +128,16 @@ static unsigned mageec_featextract_exec(void)
   std::cerr << "  Avg Statement in BB:   " << vector_sum(count)/bb_count
             << std::endl;
   std::cerr << "  Total Statement in BB: " << vector_sum(count) << std::endl;
+
+  /* Build feature vector to pass to machine learner */
+  std::vector<mageec::mageec_feature*> features;
+  features.push_back(new basic_feature("1", bb_count));
+  features.push_back(new basic_feature("2", vector_min(count)));
+  //features.push_back(new basic_feature("ft3a", vector_max(count)));
+  //features.push_back(new basic_feature("ft4a", (vector_sum(count)/bb_count)));
+  //features.push_back(new basic_feature("ft5a", vector_sum(count)));
+
+  mageec_inst.take_features(current_function_name(), features);
 
   return 0;
 }

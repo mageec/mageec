@@ -44,6 +44,7 @@ static struct plugin_info mageec_plugin_version =
 
 static int print_plugin_info = 0;
 int mageec_print_pass_info = 0;
+int mageec_no_decision = 0;
 
 /** Stored GCC Plugin name for future register_callbacks. */
 const char *mageec_gcc_plugin_name;
@@ -60,6 +61,8 @@ static void parse_arguments (int argc, struct plugin_argument *argv)
       print_plugin_info = 1;
     else if (!strcmp (argv[i].key, "dumppasses"))
       mageec_print_pass_info = 1;
+    else if (!strcmp (argv[i].key, "nodecide"))
+      mageec_no_decision = 1;
   }
 }
 

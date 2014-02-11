@@ -92,6 +92,9 @@ static std::string pass_type_str(opt_pass* pass)
   return "*UNKNOWN*";
 }
 
+/**
+ * Use MAGEEC framework to decide whether to execute pass.
+ */
 void mageec_pass_gate (void *gcc_data,
                        void *user_data __attribute__((unused)))
 {
@@ -100,4 +103,21 @@ void mageec_pass_gate (void *gcc_data,
     fprintf (stderr, "Pass: '%s',  Type: %s,  Function: '%s',  Gate: %hi\n",
              current_pass->name, pass_type_str(current_pass).c_str(),
              current_function_name(), *result);
+
+  if (!mageec_no_decision)
+  {
+    mageec::decision d = mageec_inst.make_decision(current_pass->name,
+                                                   current_function_name());
+    switch (d) {
+      case mageec::NATIVE_DECISION:
+        return;
+      case mageec::FORCE_EXECUTE:
+        *result = (short)1;
+        break;
+      case mageec::FORCE_NOEXECUTE:
+        *result = (short)0;
+    }
+    if (mageec_print_pass_info)
+      fprintf (stderr, "  New gate: %hi\n", *result);
+  }
 }

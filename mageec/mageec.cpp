@@ -35,12 +35,14 @@ int mageec_framework::init (std::string compiler_version,
 void mageec_framework::new_file (std::string filename)
 {
   std::cerr << "MAGEEC:  New source file " << filename << std::endl;
+  featset.clear();
   ml.new_file();
 }
 
 void mageec_framework::end_file (void)
 {
   std::cerr << "MAGEEC:  End of source file" << std::endl;
+  featset.clear();
   ml.end_file();
 }
 
@@ -53,4 +55,24 @@ void mageec_framework::finish (void)
 std::vector<mageec_pass*> mageec_framework::all_passes (void)
 {
   return ml.all_passes();
+}
+
+void mageec_framework::take_features (std::string name,
+                                      std::vector<mageec_feature*> features)
+{
+  featset[name] = features;
+}
+
+decision mageec_framework::make_decision (std::string pass,
+                                          std::string function)
+{
+  // If we don't have a feature set, we use the compiler's decision.
+  if (featset.count(function) == 0)
+    return NATIVE_DECISION;
+
+  std::vector<mageec_feature*> featureset = featset[function];
+  
+  mageec_pass *mpass = new basic_pass(pass);
+  decision d = ml.make_decision(mpass, featureset);
+  return d;
 }
