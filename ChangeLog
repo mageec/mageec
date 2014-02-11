@@ -1,5 +1,13 @@
 2014-02-11  Simon Cook  <simon.cook@embecosm.com>
 
+	* ml/C5/classify-defns.h, ml/C5/classify-global.c,
+	ml/C5/classify-hooks.c, ml/C5/classify-sample.c: Add sample public
+	RuleQuest C5 code.
+	* ml/Makefile.am: add C5/classify-sample.c to ML library.
+	* ml/Makefile.in: Regenerated.
+
+2014-02-11  Simon Cook  <simon.cook@embecosm.com>
+
 	* gcc_plugin/gcc-callbacks.cpp: Removed comment about executing
 	pass directly.
 

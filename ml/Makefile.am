@@ -8,5 +8,5 @@ AM_CXXFLAGS = $(CXXFLAGS) $(AM_CFLAGS)
 
 # Build Machine Learning Library
 lib_LTLIBRARIES = libmageec_learner.la
-libmageec_learner_la_SOURCES = ml.cpp database.cpp
+libmageec_learner_la_SOURCES = ml.cpp database.cpp C5/classify-sample.c
 libmageec_learner_la_LDFLAGS = -release 0.1.0
