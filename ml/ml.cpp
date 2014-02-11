@@ -55,7 +55,8 @@ void mageec_ml::end_file (void)
 void mageec_ml::finish (void)
 {
   std::cerr << "LEARNER: Goodbye!" << std::endl;
-  delete db;
+  if (db)
+    delete db;
 }
 
 std::vector<mageec_pass*> mageec_ml::all_passes (void)

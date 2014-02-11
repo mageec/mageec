@@ -1,5 +1,10 @@
 2014-02-11  Simon Cook  <simon.cook@embecosm.com>
 
+	* ml/ml.cpp (mageec_ml::finish): Only delete database object if it
+	exists.
+
+2014-02-11  Simon Cook  <simon.cook@embecosm.com>
+
 	* gcc_plugin/feature-extract.cpp (mageec_featextract_exec): Build
 	feature vector and pass to MAGEEC storage layer.
 	* gcc_plugin/gcc-callbacks.cpp (mageec_pass_gate): Make decision
