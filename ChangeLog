@@ -1,5 +1,13 @@
 2014-02-11  Simon Cook  <simon.cook@embecosm.com>
 
+	* ml/C5/classify-hooks.c (FreeGlobals): Removed freeing of PropVal, as
+	inclusion in library causes free to abort.
+	* ml/C5/classify-sample.c (main): Renamed to c5_classify_main.
+	(c5_classify_main): Removed printfs, now returns whether test
+	was classified as "t"/run pass.
+
+2014-02-11  Simon Cook  <simon.cook@embecosm.com>
+
 	* ml/C5/classify-defns.h, ml/C5/classify-global.c,
 	ml/C5/classify-hooks.c, ml/C5/classify-sample.c: Add sample public
 	RuleQuest C5 code.

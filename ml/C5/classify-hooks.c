@@ -4087,7 +4087,8 @@ void FreeGlobals()
 	free(Pruned);
     }
 
-    FreeUnlessNil(PropVal);
+    // FIXME: This causes a problem so commented out (need to fix memory leak)
+    //FreeUnlessNil(PropVal);
 
     /*  Free memory allocated for cost matrix  */
 

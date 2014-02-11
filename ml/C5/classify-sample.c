@@ -67,7 +67,7 @@
 /*************************************************************************/
 
 
-int main(int Argc, char *Argv[])
+int c5_classify_main(char *filestem)
 /*  ----  */
 {
     FILE		*F;
@@ -79,24 +79,11 @@ int main(int Argc, char *Argv[])
     extern String	OptArg, Option;
     void		ShowRules(int);
 
-    /*  Process options  */
+    /* Variable for holding whether we want to run a pass */
+    int runpass = 0;
 
-    while ( (o = ProcessOption(Argc, Argv, "f+xrR")) )
-    {
-	switch (o)
-	{
-	case 'f':   FileStem = OptArg;
-		    break;
-	case 'r':   RULES = true;
-		    break;
-	case 'R':   RULES = RULESUSED = true;
-		    break;
-	case 'x':   XRefForm = true;
-		    break;
-	case '?':   printf("    **Unrecognised option %s\n", Option);
-		    exit(1);
-	}
-    }
+    /*  Process options  */
+    FileStem = filestem;
 
     /*  Read information on attribute names, values, and classes  */
 
@@ -164,18 +151,18 @@ int main(int Argc, char *Argv[])
 	    if ( (o = strlen(ClassName[c])) > MaxClassLen ) MaxClassLen = o;
 	}
 
-	printf("%-15s %*s   [Predicted]%s\n\n",
+	/*printf("%-15s %*s   [Predicted]%s\n\n",
 	       "Case", -MaxClassLen, "Class",
-	       ( RULESUSED ? "   Rules" : "" ));
+	       ( RULESUSED ? "   Rules" : "" ));*/
 
 	StartList = 16 + MaxClassLen + 3 +
 		    ( MaxClassLen > 9 ? MaxClassLen + 2 : 11 ) + 3;
     }
     else
     {
-	printf("Case\t\tGiven\t\tPredicted%s\n %s\t\tClass\t\tClass\n\n",
+	/*printf("Case\t\tGiven\t\tPredicted%s\n %s\t\tClass\t\tClass\n\n",
 		( RULESUSED ? "\t\t    Rules" : "" ),
-		( LabelAtt ? "ID" : "No" ));
+		( LabelAtt ? "ID" : "No" ));*/
 
 	StartList = 60;
     }
@@ -194,37 +181,42 @@ int main(int Argc, char *Argv[])
 
 	if ( LabelAtt )
 	{
-	    printf("%-15.15s ", (String) (IgnoredVals + SVal(Case,LabelAtt)));
+	    /*printf("%-15.15s ", (String) (IgnoredVals + SVal(Case,LabelAtt)));*/
 	}
 	else
 	{
-	    printf("%4d\t\t", ++CaseNo);
+	    /*printf("%4d\t\t", ++CaseNo);*/
 	}
 
 	/*  Print the result for this case in alternative formats  */
 
 	if ( XRefForm )
 	{
-	    printf("%*s", -MaxClassLen, ClassName[Class(Case)]);
+	    /*printf("%*s", -MaxClassLen, ClassName[Class(Case)]);
 	    CurrentPosition = 16 + MaxClassLen;
 
 	    if ( Class(Case) != Predict )
 	    {
 		printf("   [%s]", ClassName[Predict]);
 		CurrentPosition += 5 + strlen(ClassName[Predict]);
-	    }
+	    }*/
 	}
 	else
 	{
-	    printf("%-15.15s %-15.15s [%.2f]",
+	    /*&printf("%-15.15s %-15.15s [%.2f]",
 		    ClassName[Class(Case)],
-		    ClassName[Predict], GCEnv->Confidence);
+		    ClassName[Predict], GCEnv->Confidence);*/
 	    CurrentPosition = 54;
 	}
 
+  /* Return the value that MAGEEC Basic Pass Selector wants.
+     This is whether we classify as "t". */
+  if (!strcmp(ClassName[Predict], "t"))
+    runpass = 1;
+
 	if ( RULESUSED ) ShowRules(StartList - CurrentPosition);
 
-	printf("\n");
+	/*printf("\n");*/
 
 	/*  Free the memory used by this case  */
 
@@ -236,7 +228,7 @@ int main(int Argc, char *Argv[])
     fclose(F);
     FreeGlobals();
     
-    return 0;
+    return runpass;
 }
 
 
