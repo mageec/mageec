@@ -52,9 +52,6 @@ void mageec_gcc_start_file (void *gcc_data, void *user_data)
   fprintf (stderr, "GCC:     Start File\n");
   fprintf (stderr, "          gcc_data:  %p\n", gcc_data);
   fprintf (stderr, "          user_data: %p\n", user_data);
-
-  /* FIXME: Register as a pass to run next or run directly? */
-  //mageec_gcc_feature_extract();
 }
 
 void mageec_gcc_finish_file (void *gcc_data, void *user_data)
