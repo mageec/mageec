@@ -241,3 +241,38 @@ void mageec_ml::process_results()
 
   }
 }
+
+// Initilizer for file based machine learner
+int file_ml::init (std::string compiler_version __attribute__((unused)),
+                   std::string compiler_target __attribute__((unused)))
+{
+  // Attempt to load the file pointed to by MAGEEC_EXECUTELIST or a default.
+  char *pass_file = getenv("MAGEEC_EXECUTELIST");
+  if (pass_file == NULL)
+    pass_file = (char*)"/tmp/mageec-executelist";
+  std::ifstream input_file(pass_file);
+  if (!input_file.is_open())
+    return 1;
+
+  // Each line in this file holds the name of a pass we want to execute
+  // Empty lines are ignored as they do not contain a pass
+  for (std::string line; getline(input_file, line); )
+    if (line != "")
+      passlist.push_back(line);
+
+  input_file.close();
+  return 0;
+}
+
+// File based decision maker
+decision file_ml::make_decision (mageec_pass *pass,
+                                 std::vector<mageec_feature*> features
+                                   __attribute__((unused)))
+{
+  int passcount = passlist.size();
+  std::string passname = pass->name();
+  for (int i = 0; i < passcount; i++)
+    if (passlist[i] == passname)
+      return FORCE_EXECUTE;
+  return FORCE_NOEXECUTE;
+}

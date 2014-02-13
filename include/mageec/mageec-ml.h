@@ -45,8 +45,8 @@ public:
    * @param compiler_target Compiler target, e.g. arm-none-gnueabi.
    * @returns 0 if MAGEEC successfully set up, 1 otherwise.
    */
-  int init (std::string compiler_version,
-            std::string compiler_target);
+  virtual int init (std::string compiler_version,
+                    std::string compiler_target);
   /**
    * Prepares Machine Learner for a new file.
    */
@@ -89,8 +89,8 @@ public:
    * @param features Feature vector of function to run pass on.
    * @returns decision
    */
-  decision make_decision (mageec_pass* pass,
-                          std::vector<mageec_feature*> features);
+  virtual decision make_decision (mageec_pass* pass,
+                                  std::vector<mageec_feature*> features);
 
   /**
    * Informs the machine learner that it can process all new data to update
@@ -130,6 +130,22 @@ public:
                    std::vector<mageec_pass*> passes,
                    std::vector<int64_t> metrics,
                    bool good);
+};
+
+/**
+ * File based "Machine Learner"
+ *
+ * This is a static decision maker that loads a file containing passes to
+ * execute. This is intended to be used for generating training data.
+ */
+class file_ml : public mageec_ml
+{
+  std::vector<std::string> passlist;
+public:
+  virtual int init (std::string compiler_version,
+                    std::string compiler_target);
+  virtual decision make_decision (mageec_pass* pass,
+                                  std::vector<mageec_feature*> features);
 };
 
 } // End namespace mageec
