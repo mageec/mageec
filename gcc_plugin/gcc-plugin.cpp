@@ -63,6 +63,8 @@ static void parse_arguments (int argc, struct plugin_argument *argv)
       mageec_print_pass_info = 1;
     else if (!strcmp (argv[i].key, "nodecide"))
       mageec_no_decision = 1;
+    else
+      fprintf (stderr, "MAGEEC Warning: Unknown option %s\n", argv[i].key);
   }
 }
 

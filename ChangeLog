@@ -1,5 +1,10 @@
 2014-03-04  Simon Cook  <simon.cook@embecosm.com>
 
+	* gcc_plugin/gcc-plguin.cpp (parse_arguments): Add warning for unknown
+	options.
+
+2014-03-04  Simon Cook  <simon.cook@embecosm.com>
+
 	* gcc_plugin/feature-extract.cpp: Added use of vector_math.h.
 	(vector_min): Removed.
 	(vector_max): Removed.
