@@ -30,62 +30,11 @@
 #include "function.h"
 #include "toplev.h"
 #include "mageec-plugin.h"
+#include "mageec/vectormath.h"
 #include <iostream>
 #include <vector>
 
 using namespace mageec;
-
-/**
- * Minimum element in a vector. We define this because we can't include
- * algorithm after gcc-plugin.h"
- */
-template <class T>
-static T vector_min (std::vector<T> a)
-{
-  unsigned int size = a.size();
-  if (size == 0)
-    return 0;
-  if (size == 1)
-    return a[0];
-  T min_val = std::min(a[0], a[1]);
-  for (unsigned int i=2; i < size; i++)
-    min_val = std::min(min_val, a[i]);
-  return min_val;
-}
-
-/**
- * Maximum element in a vector. We define this because we can't include
- * algorithm after gcc-plugin.h"
- */
-template <class T>
-static T vector_max (std::vector<T> a)
-{
-  unsigned int size = a.size();
-  if (size == 0)
-    return 0;
-  if (size == 1)
-    return a[0];
-  T min_val = std::max(a[0], a[1]);
-  for (unsigned int i=2; i < size; i++)
-    min_val = std::max(min_val, a[i]);
-  return min_val;
-}
-
-/**
- * Sum of a vector. We define this because we can't include
- * algorithm after gcc-plugin.h"
- */
-template <class T>
-static T vector_sum (std::vector<T> a)
-{
-  unsigned int size = a.size();
-  if (size == 0)
-    return 0;
-  T total = a[0];
-  for (unsigned int i=1; i < size; i++)
-    total += a[i];
-  return total;
-}
 
 /**
  * Gate for whether to run the MAGEEC Feature Extractor.

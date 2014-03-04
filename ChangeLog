@@ -1,3 +1,14 @@
+2014-03-04  Simon Cook  <simon.cook@embecosm.com>
+
+	* gcc_plugin/feature-extract.cpp: Added use of vector_math.h.
+	(vector_min): Removed.
+	(vector_max): Removed.
+	(vector_sum): Removed.
+	* include/vector_math.h: Add vector functions from GCC feature
+	extractor.
+	* include/Makefile.am: Add vectormath.h to installed headers.
+	* include/Makefile.in: Regenerated.
+
 2014-02-13  Simon Cook  <simon.cook@embecosm.com>
 
 	* include/mageec/mageec-ml.h (mageec_ml::init): Mark as virtual.
