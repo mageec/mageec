@@ -15893,15 +15893,13 @@ else
 fi
 
 
-# Don't want to permenantly modify CPPFLAGS, so change for just this test
-save_CPPFLAGS=$save_CPPFLAGSFLAGS
-CPPFLAGS="$CPPFLAGS -I`$CC -print-file-name=plugin`/include"
-for ac_header in gcc-plugin.h
+for ac_header in `gcc -print-file-name=plugin/include/gcc-plugin.h`
 do :
-  ac_fn_c_check_header_mongrel "$LINENO" "gcc-plugin.h" "ac_cv_header_gcc_plugin_h" "$ac_includes_default"
-if test "x$ac_cv_header_gcc_plugin_h" = xyes; then :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_GCC_PLUGIN_H 1
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
 
 else
@@ -15912,7 +15910,6 @@ fi
 
 done
 
-CPPFLAGS=$save_CPPFLAGS
 
 # Doxygen
 for ac_prog in doxygen

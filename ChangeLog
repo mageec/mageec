@@ -1,5 +1,10 @@
 2014-03-07  James Pallister  <james.pallister@embecosm.com>
 
+	* configure.ac: Fixed check for gcc-plugin headers.
+	* configure: Regenerated.
+
+2014-03-07  James Pallister  <james.pallister@embecosm.com>
+
 	* configure.ac: Added check for gcc-plugin headers.
 	* configure: Regenerated.
 

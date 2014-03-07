@@ -40,13 +40,9 @@ AC_CHECK_LIB(sqlite3, sqlite3_open, [], [
   AC_MSG_ERROR([Unable to find sqlite3.])
 ])
 
-# Don't want to permenantly modify CPPFLAGS, so change for just this test
-save_CPPFLAGS=$save_CPPFLAGSFLAGS
-CPPFLAGS="$CPPFLAGS -I`$CC -print-file-name=plugin`/include"
-AC_CHECK_HEADERS(gcc-plugin.h, [], [
+AC_CHECK_HEADERS(`gcc -print-file-name=plugin/include/gcc-plugin.h`, [], [
   AC_MSG_ERROR([Unable to find gcc-plugin headers.])
 ])
-CPPFLAGS=$save_CPPFLAGS
 
 # Doxygen
 AC_CHECK_PROGS([DOXYGEN], [doxygen])
