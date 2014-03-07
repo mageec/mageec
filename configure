@@ -15893,6 +15893,27 @@ else
 fi
 
 
+# Don't want to permenantly modify CPPFLAGS, so change for just this test
+save_CPPFLAGS=$save_CPPFLAGSFLAGS
+CPPFLAGS="$CPPFLAGS -I`$CC -print-file-name=plugin`/include"
+for ac_header in gcc-plugin.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "gcc-plugin.h" "ac_cv_header_gcc_plugin_h" "$ac_includes_default"
+if test "x$ac_cv_header_gcc_plugin_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_GCC_PLUGIN_H 1
+_ACEOF
+
+else
+
+  as_fn_error $? "Unable to find gcc-plugin headers." "$LINENO" 5
+
+fi
+
+done
+
+CPPFLAGS=$save_CPPFLAGS
+
 # Doxygen
 for ac_prog in doxygen
 do
