@@ -1,3 +1,8 @@
+2014-03-18  Simon Cook  <simon.cook@embecosm.com>
+
+	* gcc_plugin/gcc-plugin.cpp (mageec_featextract_exec): Add support
+	for predecessor/successor counting features.
+
 2014-03-07  James Pallister  <james.pallister@embecosm.com>
 
 	* configure.ac: Fixed check for gcc-plugin headers.

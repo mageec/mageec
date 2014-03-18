@@ -52,39 +52,117 @@ static unsigned mageec_featextract_exec(void)
 {
   basic_block bb;
   gimple_stmt_iterator gsi;
-  std::vector<unsigned> count;
 
-  unsigned bb_count = 0;
+  // Variables for holding feature information
+  std::vector<unsigned> insn_counts;
+  unsigned bb_count = 0;              // ft1
+  unsigned bb_single_successor = 0;   // ft2
+  unsigned bb_two_successors = 0;     // ft3
+  unsigned bb_gt2_successors = 0;     // ft4
+  unsigned bb_single_predecessor = 0; // ft5
+  unsigned bb_two_predecessors = 0;   // ft6
+  unsigned bb_gt2_predecessors = 0;   // ft7
+  unsigned bb_1pred_1succ = 0;        // ft8
+  unsigned bb_1pred_2succ = 0;        // ft9
+  unsigned bb_2pred_1succ = 0;        //ft10
+  unsigned bb_2pred_2succ = 0;        //ft11
+  unsigned bb_gt2pred_gt2succ = 0;    //ft12
+  unsigned insn_count_lt15 = 0;       //ft13
+  unsigned insn_count_15_to_500 = 0;  //ft14
+  unsigned insn_count_gt500 = 0;      //ft15
+  unsigned method_assignments = 0;    //ft21
+
+  // Temporaries
   unsigned stmt_count = 0;
 
   FOR_EACH_BB(bb)
   {
-    if (bb_count != 0)
-      count.push_back(stmt_count);
     stmt_count = 0;
+    // For this block count instructions and types
     bb_count++;
     for (gsi=gsi_start_bb(bb); !gsi_end_p(gsi); gsi_next(&gsi))
     {
+      gimple stmt = gsi_stmt (gsi);
       stmt_count++;
+      if (is_gimple_assign (stmt))
+        method_assignments++;
     }
+
+    // Successor/predecessor information
+    if (EDGE_COUNT(bb->succs) == 1)
+      bb_single_successor++;
+    else if (EDGE_COUNT(bb->succs) == 2)
+      bb_two_successors++;
+    else if (EDGE_COUNT(bb->succs) > 2)
+      bb_gt2_successors++;
+    if (EDGE_COUNT(bb->preds) == 1)
+      bb_single_predecessor++;
+    else if (EDGE_COUNT(bb->preds) == 2)
+      bb_two_predecessors++;
+    else if (EDGE_COUNT(bb->preds) > 2)
+      bb_gt2_predecessors++;
+    if ((EDGE_COUNT(bb->preds) == 1) && (EDGE_COUNT(bb->succs) == 1))
+      bb_1pred_1succ++;
+    if ((EDGE_COUNT(bb->preds) == 1) && (EDGE_COUNT(bb->succs) == 2))
+      bb_1pred_2succ++;
+    if ((EDGE_COUNT(bb->preds) == 2) && (EDGE_COUNT(bb->succs) == 1))
+      bb_2pred_1succ++;
+    if ((EDGE_COUNT(bb->preds) == 2) && (EDGE_COUNT(bb->succs) == 2))
+      bb_2pred_2succ++;
+    if ((EDGE_COUNT(bb->preds) > 2) && (EDGE_COUNT(bb->succs) > 2))
+      bb_gt2pred_gt2succ++;
+
+    // Store processed data about this block
+    insn_counts.push_back(stmt_count);
+    if (bb_count < 15)
+      insn_count_lt15++;
+    else if (bb_count > 500)
+      insn_count_gt500++;
+    else
+      insn_count_15_to_500++;
   }
-  count.push_back(stmt_count);
 
   std::cerr << "Current Function: " << current_function_name() << std::endl;
-  std::cerr << "  Basic Block Count:     " << bb_count << std::endl;
-  std::cerr << "  Min Statement in BB:   " << vector_min(count) << std::endl;
-  std::cerr << "  Max Statement in BB:   " << vector_max(count) << std::endl;
-  std::cerr << "  Avg Statement in BB:   " << vector_sum(count)/bb_count
+  std::cerr << "  (ft1)  Basic Block Count:       " << bb_count << std::endl;
+  std::cerr << "  (ft2)  BB with 1 successor:     " << bb_single_successor << std::endl;
+  std::cerr << "  (ft3)  BB with 2 successor:     " << bb_two_successors << std::endl;
+  std::cerr << "  (ft4)  BB with > 2 successor:   " << bb_gt2_successors << std::endl;
+  std::cerr << "  (ft5)  BB with 1 predecessor:   " << bb_single_predecessor << std::endl;
+  std::cerr << "  (ft6)  BB with 2 predecessor:   " << bb_two_predecessors << std::endl;
+  std::cerr << "  (ft7)  BB with > 2 predecessor: " << bb_gt2_predecessors << std::endl;
+  std::cerr << "  (ft8)  BB with 1 pred 1 succ:   " << bb_1pred_1succ << std::endl;
+  std::cerr << "  (ft9)  BB with 1 pred 2 succ:   " << bb_1pred_2succ << std::endl;
+  std::cerr << "  (ft10) BB with 2 pred 1 succ:   " << bb_2pred_1succ << std::endl;
+  std::cerr << "  (ft11) BB with 2 pred 2 succ:   " << bb_2pred_2succ << std::endl;
+  std::cerr << "  (ft12) BB with >2 pred >2 succ: " << bb_gt2pred_gt2succ << std::endl;
+  std::cerr << "  (ft13) BB with insn < 15:       " << insn_count_lt15 << std::endl;
+  std::cerr << "  (ft14) BB with insn [15, 500]:  " << insn_count_15_to_500 << std::endl;
+  std::cerr << "  (ft15) BB with insn > 500:      " << insn_count_gt500 << std::endl;
+  std::cerr << "  (ft21) Assignments in method:   " << method_assignments << std::endl;
+  std::cerr << "  (ft24) Total Statement in BB:   " << vector_sum(insn_counts) << std::endl;
+  std::cerr << "  (ft25) Avg Statement in BB:     " << vector_sum(insn_counts)/bb_count
             << std::endl;
-  std::cerr << "  Total Statement in BB: " << vector_sum(count) << std::endl;
 
   /* Build feature vector to pass to machine learner */
   std::vector<mageec::mageec_feature*> features;
-  features.push_back(new basic_feature("1", bb_count));
-  features.push_back(new basic_feature("2", vector_min(count)));
-  //features.push_back(new basic_feature("ft3a", vector_max(count)));
-  //features.push_back(new basic_feature("ft4a", (vector_sum(count)/bb_count)));
-  //features.push_back(new basic_feature("ft5a", vector_sum(count)));
+  features.push_back(new basic_feature("ft1", bb_count));
+  features.push_back(new basic_feature("ft2", bb_single_successor));
+  features.push_back(new basic_feature("ft3", bb_two_successors));
+  features.push_back(new basic_feature("ft4", bb_gt2_successors));
+  features.push_back(new basic_feature("ft5", bb_single_predecessor));
+  features.push_back(new basic_feature("ft6", bb_two_predecessors));
+  features.push_back(new basic_feature("ft7", bb_gt2_predecessors));
+  features.push_back(new basic_feature("ft8", bb_1pred_1succ));
+  features.push_back(new basic_feature("ft9", bb_1pred_2succ));
+  features.push_back(new basic_feature("ft10", bb_2pred_1succ));
+  features.push_back(new basic_feature("ft11", bb_2pred_2succ));
+  features.push_back(new basic_feature("ft12", bb_gt2pred_gt2succ));
+  features.push_back(new basic_feature("ft13", insn_count_lt15));
+  features.push_back(new basic_feature("ft14", insn_count_15_to_500));
+  features.push_back(new basic_feature("ft15", insn_count_gt500));
+  features.push_back(new basic_feature("ft21", method_assignments));
+  features.push_back(new basic_feature("ft24", vector_sum(insn_counts)));
+  features.push_back(new basic_feature("ft25", (vector_sum(insn_counts)/bb_count)));
 
   mageec_inst.take_features(current_function_name(), features);
 
