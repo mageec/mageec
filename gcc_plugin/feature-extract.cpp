@@ -71,13 +71,29 @@ static unsigned mageec_featextract_exec(void)
   unsigned insn_count_15_to_500 = 0;  //ft14
   unsigned insn_count_gt500 = 0;      //ft15
   unsigned method_assignments = 0;    //ft21
+  unsigned average_phi_node_head = 0; //ft26
+  unsigned average_phi_args = 0;      //ft27
+  unsigned bb_phi_count_0 = 0;        //ft28
+  unsigned bb_phi_count_0_to_3 = 0;   //ft29
+  unsigned bb_phi_count_gt3 = 0;      //ft30
+  unsigned bb_phi_args_gt5 = 0;       //ft31
+  unsigned bb_phi_args_1_to_5 = 0;    //ft32
 
   // Temporaries
   unsigned stmt_count = 0;
+  unsigned phi_nodes = 0;
+  unsigned phi_args = 0;
+  bool in_phi_header = false;      //switch for ft26
+  unsigned phi_header_nodes = 0;      //total for ft26
+  unsigned total_phi_args = 0;        //total for ft27
+  unsigned total_phi_nodes = 0;       //divisor for ft27
 
   FOR_EACH_BB(bb)
   {
     stmt_count = 0;
+    phi_nodes = 0;
+    phi_args = 0;
+    in_phi_header = true;
     // For this block count instructions and types
     bb_count++;
     for (gsi=gsi_start_bb(bb); !gsi_end_p(gsi); gsi_next(&gsi))
@@ -86,6 +102,17 @@ static unsigned mageec_featextract_exec(void)
       stmt_count++;
       if (is_gimple_assign (stmt))
         method_assignments++;
+      if (gimple_code (stmt) == GIMPLE_PHI)
+      {
+        phi_nodes++;
+        total_phi_nodes++;
+        if (in_phi_header)
+          phi_header_nodes++;
+        phi_args += gimple_phi_num_args (stmt);
+        total_phi_args += gimple_phi_num_args (stmt);
+      }
+      else
+        in_phi_header = false;
     }
 
     // Successor/predecessor information
@@ -120,7 +147,23 @@ static unsigned mageec_featextract_exec(void)
       insn_count_gt500++;
     else
       insn_count_15_to_500++;
+
+    if (phi_nodes == 0)
+      bb_phi_count_0++;
+    if (phi_nodes <= 3)
+      bb_phi_count_0_to_3++;
+    else
+      bb_phi_count_gt3++;
+    if (phi_args > 5)
+      bb_phi_args_gt5++;
+    else if ((phi_args >= 1) && (phi_args <= 5))
+      bb_phi_args_1_to_5++;
   }
+
+  // Calculate averages once totals have been collected
+  if (total_phi_nodes > 0)
+    average_phi_args = total_phi_args / total_phi_nodes;
+  average_phi_node_head = phi_header_nodes / bb_count;
 
   std::cerr << "Current Function: " << current_function_name() << std::endl;
   std::cerr << "  (ft1)  Basic Block Count:       " << bb_count << std::endl;
@@ -142,6 +185,13 @@ static unsigned mageec_featextract_exec(void)
   std::cerr << "  (ft24) Total Statement in BB:   " << vector_sum(insn_counts) << std::endl;
   std::cerr << "  (ft25) Avg Statement in BB:     " << vector_sum(insn_counts)/bb_count
             << std::endl;
+  std::cerr << "  (ft26) Avg phis at top of BB:   " << average_phi_node_head << std::endl;
+  std::cerr << "  (ft27) Average phi arg count:   " << average_phi_args << std::endl;
+  std::cerr << "  (ft28) BB with 0 phis:          " << bb_phi_count_0 << std::endl;
+  std::cerr << "  (ft29) BB with [0, 3] phis:     " << bb_phi_count_0_to_3 << std::endl;
+  std::cerr << "  (ft30) BB with > 3 phis:        " << bb_phi_count_gt3 << std::endl;
+  std::cerr << "  (ft31) BB phis with > 5 args:   " << bb_phi_args_gt5 << std::endl;
+  std::cerr << "  (ft32) BB phis with [1,5] args: " << bb_phi_args_1_to_5 << std::endl;
 
   /* Build feature vector to pass to machine learner */
   std::vector<mageec::mageec_feature*> features;
@@ -163,6 +213,13 @@ static unsigned mageec_featextract_exec(void)
   features.push_back(new basic_feature("ft21", method_assignments));
   features.push_back(new basic_feature("ft24", vector_sum(insn_counts)));
   features.push_back(new basic_feature("ft25", (vector_sum(insn_counts)/bb_count)));
+  features.push_back(new basic_feature("ft26", average_phi_node_head));
+  features.push_back(new basic_feature("ft27", average_phi_args));
+  features.push_back(new basic_feature("ft28", bb_phi_count_0));
+  features.push_back(new basic_feature("ft29", bb_phi_count_0_to_3));
+  features.push_back(new basic_feature("ft30", bb_phi_count_gt3));
+  features.push_back(new basic_feature("ft31", bb_phi_args_gt5));
+  features.push_back(new basic_feature("ft32", bb_phi_args_1_to_5));
 
   mageec_inst.take_features(current_function_name(), features);
 
