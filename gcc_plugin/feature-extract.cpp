@@ -78,12 +78,14 @@ static unsigned mageec_featextract_exec(void)
   unsigned bb_phi_count_gt3 = 0;      //ft30
   unsigned bb_phi_args_gt5 = 0;       //ft31
   unsigned bb_phi_args_1_to_5 = 0;    //ft32
+  unsigned method_switch_stmt = 0;    //ft33
+  unsigned method_unary_ops = 0;      //ft34
 
   // Temporaries
   unsigned stmt_count = 0;
   unsigned phi_nodes = 0;
   unsigned phi_args = 0;
-  bool in_phi_header = false;      //switch for ft26
+  bool in_phi_header = false;         //switch for ft26
   unsigned phi_header_nodes = 0;      //total for ft26
   unsigned total_phi_args = 0;        //total for ft27
   unsigned total_phi_nodes = 0;       //divisor for ft27
@@ -94,14 +96,22 @@ static unsigned mageec_featextract_exec(void)
     phi_nodes = 0;
     phi_args = 0;
     in_phi_header = true;
+
     // For this block count instructions and types
     bb_count++;
     for (gsi=gsi_start_bb(bb); !gsi_end_p(gsi); gsi_next(&gsi))
     {
       gimple stmt = gsi_stmt (gsi);
       stmt_count++;
+      // Assignment analysis
       if (is_gimple_assign (stmt))
+      {
         method_assignments++;
+        enum gimple_rhs_class grhs_class =
+          get_gimple_rhs_class (gimple_expr_code (stmt));
+        if (grhs_class == GIMPLE_UNARY_RHS)
+          method_unary_ops++;
+      }
       if (gimple_code (stmt) == GIMPLE_PHI)
       {
         phi_nodes++;
@@ -113,6 +123,8 @@ static unsigned mageec_featextract_exec(void)
       }
       else
         in_phi_header = false;
+      if (gimple_code (stmt) == GIMPLE_SWITCH)
+        method_switch_stmt++;
     }
 
     // Successor/predecessor information
@@ -192,6 +204,8 @@ static unsigned mageec_featextract_exec(void)
   std::cerr << "  (ft30) BB with > 3 phis:        " << bb_phi_count_gt3 << std::endl;
   std::cerr << "  (ft31) BB phis with > 5 args:   " << bb_phi_args_gt5 << std::endl;
   std::cerr << "  (ft32) BB phis with [1,5] args: " << bb_phi_args_1_to_5 << std::endl;
+  std::cerr << "  (ft33) Switch stmts in method:  " << method_switch_stmt << std::endl;
+  std::cerr << "  (ft34) Unary ops in method:     " << method_unary_ops << std::endl;
 
   /* Build feature vector to pass to machine learner */
   std::vector<mageec::mageec_feature*> features;
@@ -220,6 +234,8 @@ static unsigned mageec_featextract_exec(void)
   features.push_back(new basic_feature("ft30", bb_phi_count_gt3));
   features.push_back(new basic_feature("ft31", bb_phi_args_gt5));
   features.push_back(new basic_feature("ft32", bb_phi_args_1_to_5));
+  features.push_back(new basic_feature("ft33", method_switch_stmt));
+  features.push_back(new basic_feature("ft34", method_unary_ops));
 
   mageec_inst.take_features(current_function_name(), features);
 
