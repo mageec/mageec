@@ -61,4 +61,6 @@ AC_OUTPUT(Makefile \
           doc/Makefile \
           include/Makefile \
           testsuite/Makefile \
-          testsuite/mageec.tests/Makefile)
+          testsuite/mageec.tests/Makefile \
+          testsuite/gcc_plugin.tests/Makefile \
+          testsuite/config/site.exp)

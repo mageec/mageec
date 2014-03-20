@@ -1,3 +1,21 @@
+2014-04-02  Pierre Langlois  <pierre.langlois@embecosm.com>
+
+	* Makefile.in: Regenerate.
+	* configure: Regenerate.
+	* configure.ac: Add gcc_plugin.tests/Makefile and config/site.exp to
+	AC_OUTPUT.
+	* testsuite/Makefile.am: Set config/site.exp as a configuration file.
+	Add gcc_plugin as a second tool to seperate gcc specific test from
+	mageec tests.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/config/site.exp.in: New file. Configuration to pass to the
+	tests.
+	* testsuite/gcc_plugin.tests/Makefile.am: New file.
+	* testsuite/gcc_plugin.tests/Makefile.in: New file, generate.
+	* testsuite/gcc_plugin.tests/feature-extract.exp: New test file. Checks
+	that features are extracted from compiling an empty source file.
+	* testsuite/gcc_plugin.tests/main.c: New empty source file.
+
 2014-04-02  Simon Cook  <simon.cook@embecosm.com>
 
 	* gcc_plugin/feature-extract.cpp (mageec_featextract_exec):

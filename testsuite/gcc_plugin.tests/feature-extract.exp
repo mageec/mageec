@@ -1,0 +1,62 @@
+#   MAGEEC Feature extraction Tests
+#   Copyright (C) 2014 Embecosm Limited and University of Bristol
+
+#   This file is part of MAGEEC.
+
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+proc feature_extract {testname source_file} {
+  global cc
+  global objdir
+  spawn "$cc" "-fplugin=$objdir/../gcc_plugin/.libs/libmageec_gcc.so" "$source_file"
+  expect {
+    "($testname)" {
+      pass "$testname"
+    }
+    eof {
+      fail "$testname"
+    }
+    timeout {
+      unresolved "$testname: timeout"
+    }
+  }
+}
+
+feature_extract ft1  "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft2  "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft3  "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft4  "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft5  "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft6  "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft7  "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft8  "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft9  "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft10 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft11 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft12 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft13 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft14 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft15 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft21 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft24 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft25 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft26 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft27 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft28 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft29 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft30 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft31 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft32 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft33 "$srcdir/gcc_plugin.tests/main.c"
+feature_extract ft34 "$srcdir/gcc_plugin.tests/main.c"
