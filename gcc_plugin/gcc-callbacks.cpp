@@ -108,16 +108,21 @@ void mageec_pass_gate (void *gcc_data,
   {
     mageec::decision d = mageec_inst.make_decision(current_pass->name,
                                                    current_function_name());
+    bool mageec_changed = false;
     switch (d) {
       case mageec::NATIVE_DECISION:
         return;
       case mageec::FORCE_EXECUTE:
+        if (*result == 0)
+          mageec_changed = true;
         *result = (short)1;
         break;
       case mageec::FORCE_NOEXECUTE:
+        if (*result == 1)
+          mageec_changed = true;
         *result = (short)0;
     }
-    if (mageec_print_pass_info)
+    if (mageec_print_pass_info && mageec_changed)
       fprintf (stderr, "  New gate: %hi\n", *result);
   }
 }

@@ -1,3 +1,8 @@
+2014-03-20  Simon Cook  <simon.cook@embecosm.com>
+
+	* gcc_plugin/gcc-callbacks.cpp (mageec_pass_gate): Add flag to
+	only print out MAGEEC's decision if it overrides the compiler.
+
 2014-03-18  Simon Cook  <simon.cook@embecosm.com>
 
 	* gcc_plguin/feature-extract.cpp (mageec_featextract_exec): Add
