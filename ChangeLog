@@ -4,6 +4,29 @@
 	Correctly store number of statements instead of block count as
 	instruction count features.
 
+2014-03-29  James Pallister  <james.pallister@bristol.ac.uk>
+	Added support for using the library as a python module
+
+	* Makefile.in: Regenerated
+	* aclocal.m4: Regenerated
+	* configure: Regenerated
+	* configure.ac: Add the --enable-python options, and check for python
+	    development headers and boost python
+	* doc/Makefile.in: Regenerated
+	* gcc_plugin/Makefile.in: Regenerated
+	* include/Makefile.in: Regenerated
+	* mageec/Makefile.am: Conditionally compile in python.cpp if
+	    --enable-python is given to configure. Add install hooks to
+	    symlink the library into python dist- packages, so python scripts
+	    can use it
+	* mageec/Makefile.in: Regenerated
+	* mageec/python.cpp: Initial python module file. Support for the
+	    hashedelf class only
+	* ml/C5/Makefile.in: Regenerated
+	* ml/Makefile.in: Regenerated
+	* testsuite/Makefile.in: Regenerated
+	* testsuite/mageec.tests/Makefile.in: Regenerated
+
 2014-03-20  Simon Cook  <simon.cook@embecosm.com>
 
 	* gcc_plugin/gcc-callbacks.cpp (mageec_pass_gate): Add flag to

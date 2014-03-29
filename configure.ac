@@ -20,6 +20,11 @@ AC_PROG_INSTALL
 
 AC_ENABLE_SHARED
 
+# Options to control compilation
+AC_ARG_ENABLE([python], [
+  AS_HELP_STRING([--enable-python], [Also build as python module.])
+], [], [enable_python=no])
+
 # Libaries we need to build MAGEEC
 AC_CHECK_HEADERS(libelf.h gelf.h, [], [
   AC_MSG_ERROR([Unable to find libelf headers.])
@@ -43,6 +48,16 @@ AC_CHECK_LIB(sqlite3, sqlite3_open, [], [
 AC_CHECK_HEADERS(`gcc -print-file-name=plugin/include/gcc-plugin.h`, [], [
   AC_MSG_ERROR([Unable to find gcc-plugin headers.])
 ])
+
+if test x$enable_python == xyes; then
+  AX_PYTHON_DEVEL
+  AX_BOOST_BASE
+  AX_BOOST_PYTHON
+  AM_PATH_PYTHON(2.6, [], [
+    AC_MSG_ERROR([Cannot find python path.])
+  ])
+fi
+AM_CONDITIONAL([ENABLE_PYTHON], [test x$enable_python == xyes])
 
 # Doxygen
 AC_CHECK_PROGS([DOXYGEN], [doxygen])

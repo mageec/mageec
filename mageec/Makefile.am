@@ -15,3 +15,17 @@ libmageec_la_LIBADD = ../ml/libmageec_learner.la
 bin_PROGRAMS = mageechash
 mageechash_SOURCES = mageechash.cpp
 mageechash_LDADD = libmageec.la ../ml/libmageec_learner.la
+
+# Also build library as a python module
+if ENABLE_PYTHON
+libmageec_la_SOURCES += python.cpp
+libmageec_la_LIBADD += -l$(BOOST_PYTHON_LIB)
+libmageec_la_CPPFLAGS = $(PYTHON_CPPFLAGS) $(BOOST_CPPFLAGS)
+libmageec_la_LDFLAGS += $(PYTHON_LDFLAGS) $(BOOST_LDFLAGS)
+
+install-exec-hook:
+	ln -s $(DESTDIR)$(libdir)/libmageec.so $(pythondir)/mageec.so
+uninstall-hook:
+	rm $(pythondir)/mageec.so
+
+endif
