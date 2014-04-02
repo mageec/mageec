@@ -1,3 +1,10 @@
+2014-04-02  James Pallister  <james.pallister@bristol.ac.uk>
+	Added auxiliary m4 files for boost and python detections
+
+	* m4/ax_boost_base.m4: Detection script for boost
+	* m4/ax_boost_python.m4: Detection script for boost python
+	* m4/ax_python_devel.m4: Detection script for python
+
 2014-04-02  Simon Cook  <simon.cook@embecosm.com>
 
 	* gcc_plugin/feature-extract.cpp (mageec_featextract_exec):
