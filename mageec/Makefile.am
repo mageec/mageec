@@ -24,8 +24,8 @@ libmageec_la_CPPFLAGS = $(PYTHON_CPPFLAGS) $(BOOST_CPPFLAGS)
 libmageec_la_LDFLAGS += $(PYTHON_LDFLAGS) $(BOOST_LDFLAGS)
 
 install-exec-hook:
-	ln -s $(DESTDIR)$(libdir)/libmageec.so $(pythondir)/mageec.so
+	ln -s $(DESTDIR)$(libdir)/libmageec.so $(pyexecdir)/mageec.so
 uninstall-hook:
-	rm $(pythondir)/mageec.so
+	rm $(pyexecdir)/mageec.so
 
 endif

@@ -1,4 +1,11 @@
 2014-04-02  James Pallister  <james.pallister@bristol.ac.uk>
+	Fix: install the python module in the correct directory
+
+	* mageec/Makefile.am: Use pyexecdir for location of the python modules
+	    instead
+	* mageec/Makefile.in: Regenerated
+
+2014-04-02  James Pallister  <james.pallister@bristol.ac.uk>
 	Added missing compile file, added by automake 1.14
 
 	* compile: Added missing compile file, added by automake 1.14
