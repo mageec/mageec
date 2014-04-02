@@ -1,4 +1,4 @@
-#   Copyright (C) 2013, 2014 Embecosm Limited and University of Bristol
+#   Copyright (C) 2014 Embecosm Limited and University of Bristol
 
 #   This file is part of MAGEEC.
 
@@ -15,16 +15,4 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Initilize DejaGnu
-AUTOMAKE_OPTIONS = dejagnu
-
-# Include tests with distribution
-EXTRA_DIST = config/unix.exp lib/mageec.exp
-
-# Set extra configuration variables in this file
-EXTRA_DEJAGNU_SITE_CONFIG = config/site.exp
-
-# Run tests in seperate tools
-DEJATOOL = mageec gcc_plugin
-
-SUBDIRS = mageec.tests gcc_plugin.tests
+EXTRA_DIST = main.c

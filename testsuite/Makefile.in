@@ -162,7 +162,6 @@ am__define_uniq_tagged_files = \
   done | $(am__uniquify_input)`
 ETAGS = etags
 CTAGS = ctags
-DEJATOOL = $(PACKAGE)
 RUNTESTDEFAULTFLAGS = --tool $$tool --srcdir $$srcdir
 EXPECT = expect
 RUNTEST = runtest
@@ -336,7 +335,13 @@ AUTOMAKE_OPTIONS = dejagnu
 
 # Include tests with distribution
 EXTRA_DIST = config/unix.exp lib/mageec.exp
-SUBDIRS = mageec.tests
+
+# Set extra configuration variables in this file
+EXTRA_DEJAGNU_SITE_CONFIG = config/site.exp
+
+# Run tests in seperate tools
+DEJATOOL = mageec gcc_plugin
+SUBDIRS = mageec.tests gcc_plugin.tests
 all: all-recursive
 
 .SUFFIXES:
