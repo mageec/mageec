@@ -153,9 +153,9 @@ static unsigned mageec_featextract_exec(void)
 
     // Store processed data about this block
     insn_counts.push_back(stmt_count);
-    if (bb_count < 15)
+    if (stmt_count < 15)
       insn_count_lt15++;
-    else if (bb_count > 500)
+    else if (stmt_count > 500)
       insn_count_gt500++;
     else
       insn_count_15_to_500++;
