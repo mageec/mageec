@@ -1,3 +1,13 @@
+2014-04-02  James Pallister  <james.pallister@bristol.ac.uk>
+	Added subdir-objs to automake options
+
+	* configure.ac: Added subdir-objs to automake options
+	* gcc_plugin/Makefile.in: Regenerated
+	* mageec/Makefile.in: Regenerated
+	* ml/C5/Makefile.in: Regenerated
+	* ml/Makefile.in: Regenerated
+	* testsuite/gcc_plugin.tests/Makefile.in: Regenerated
+
 2014-04-02  Pierre Langlois  <pierre.langlois@embecosm.com>
 
 	* Makefile.in: Regenerate.
