@@ -1,4 +1,24 @@
 2014-04-02  James Pallister  <james.pallister@bristol.ac.uk>
+	Manually find the site packages directory, because on some systems the
+	prefix is incorrectly set to /usr/local
+
+	* Makefile.in: Regenerated
+	* configure: Regenerated
+	* configure.ac: Create a PYTHON_SITEPACKAGES variable to tell make
+	    where to put the mageec module
+	* doc/Makefile.in: Regenerated
+	* gcc_plugin/Makefile.in: Regenerated
+	* include/Makefile.in: Regenerated
+	* mageec/Makefile.am: Change the install hooks to place library
+	    correctly
+	* mageec/Makefile.in: Regenerated
+	* ml/C5/Makefile.in: Regenerated
+	* ml/Makefile.in: Regenerated
+	* testsuite/Makefile.in: Regenerated
+	* testsuite/gcc_plugin.tests/Makefile.in: Regenerated
+	* testsuite/mageec.tests/Makefile.in: Regenerated
+
+2014-04-02  James Pallister  <james.pallister@bristol.ac.uk>
 	Fix: install the python module in the correct directory
 
 	* mageec/Makefile.am: Use pyexecdir for location of the python modules

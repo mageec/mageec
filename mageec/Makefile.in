@@ -284,6 +284,7 @@ PYTHON_EXTRA_LIBS = @PYTHON_EXTRA_LIBS@
 PYTHON_LDFLAGS = @PYTHON_LDFLAGS@
 PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
+PYTHON_SITEPACKAGES = @PYTHON_SITEPACKAGES@
 PYTHON_SITE_PKG = @PYTHON_SITE_PKG@
 PYTHON_VERSION = @PYTHON_VERSION@
 RANLIB = @RANLIB@
@@ -794,9 +795,9 @@ uninstall-am: uninstall-binPROGRAMS uninstall-libLTLIBRARIES
 
 
 @ENABLE_PYTHON_TRUE@install-exec-hook:
-@ENABLE_PYTHON_TRUE@	ln -s $(DESTDIR)$(libdir)/libmageec.so $(pyexecdir)/mageec.so
+@ENABLE_PYTHON_TRUE@	ln -s $(DESTDIR)$(libdir)/libmageec.so $(PYTHON_SITEPACKAGES)/mageec.so
 @ENABLE_PYTHON_TRUE@uninstall-hook:
-@ENABLE_PYTHON_TRUE@	rm $(pyexecdir)/mageec.so
+@ENABLE_PYTHON_TRUE@	rm $(PYTHON_SITEPACKAGES)/mageec.so
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -640,6 +640,7 @@ HAVE_DOXYGEN_TRUE
 DOXYGEN
 ENABLE_PYTHON_FALSE
 ENABLE_PYTHON_TRUE
+PYTHON_SITEPACKAGES
 pkgpyexecdir
 pyexecdir
 pkgpythondir
@@ -17184,6 +17185,9 @@ $as_echo "$am_cv_python_pyexecdir" >&6; }
 
   fi
 
+
+  PY_PREFIX=`$PYTHON-config --prefix`
+  PYTHON_SITEPACKAGES=$PY_PREFIX/lib/python$PYTHON_VERSION/site-packages
 
 fi
  if test x$enable_python == xyes; then

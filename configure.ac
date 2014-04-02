@@ -56,6 +56,8 @@ if test x$enable_python == xyes; then
   AM_PATH_PYTHON(2.6, [], [
     AC_MSG_ERROR([Cannot find python path.])
   ])
+  PY_PREFIX=`$PYTHON-config --prefix`
+  AC_SUBST(PYTHON_SITEPACKAGES,$PY_PREFIX/lib/python$PYTHON_VERSION/site-packages)
 fi
 AM_CONDITIONAL([ENABLE_PYTHON], [test x$enable_python == xyes])
 
