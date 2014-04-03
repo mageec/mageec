@@ -53,7 +53,9 @@ AC_CHECK_HEADERS(`gcc -print-file-name=plugin/include/gcc-plugin.h`, [], [
 
 if test x$enable_python == xyes; then
   AX_PYTHON_DEVEL
-  AX_BOOST_BASE
+  AX_BOOST_BASE([],[],[
+    AC_MSG_ERROR([Cannot find boost libraries])
+  ])
   AX_BOOST_PYTHON
   AM_PATH_PYTHON(2.6, [], [
     AC_MSG_ERROR([Cannot find python path.])

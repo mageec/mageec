@@ -1,4 +1,11 @@
 2014-04-03  James Pallister  <james.pallister@bristol.ac.uk>
+	Fail the configure process if boost is not found
+
+	* configure: Regenerated
+	* configure.ac: Fail the configure process if boost is not found,
+	    instead of continuing anyway
+
+2014-04-03  James Pallister  <james.pallister@bristol.ac.uk>
 	Disabled maintainer mode.
 
 	* Makefile.in: Regenerated

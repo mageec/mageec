@@ -16829,7 +16829,9 @@ $as_echo "$as_me: We could not detect the boost libraries (version $boost_lib_ve
 $as_echo "$as_me: Your boost libraries seems to old (version $_version)." >&6;}
         fi
         # execute ACTION-IF-NOT-FOUND (if present):
-        :
+
+    as_fn_error $? "Cannot find boost libraries" "$LINENO" 5
+
     else
 
 
