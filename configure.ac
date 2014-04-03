@@ -80,4 +80,5 @@ AC_OUTPUT(Makefile \
           testsuite/Makefile \
           testsuite/mageec.tests/Makefile \
           testsuite/gcc_plugin.tests/Makefile \
+          testsuite/python.tests/Makefile \
           testsuite/config/site.exp)

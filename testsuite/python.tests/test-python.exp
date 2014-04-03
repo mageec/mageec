@@ -1,0 +1,80 @@
+#   MAGEEC Python module test file
+#   Copyright (C) 2014 Embecosm Limited and University of Bristol
+#
+#   This file is part of MAGEEC.
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+proc import_test {testname} {
+
+  spawn "python" "-c \"import mageec\""
+
+  expect {
+    "" {
+        pass "$testname"
+    }
+    "Traceback.*" {
+        fail "$testname"
+    }
+    timeout {
+        fail "$testname"
+    }
+  }
+}
+
+proc hash_file_test {testname fname output} {
+  global srcdir
+
+  set olddir [pwd]
+  cd $srcdir/python.tests/
+  spawn "python" "test.py" "$fname"
+  expect {
+    "$output" {
+      pass "$testname"
+    }
+    eof {
+      fail "$testname"
+    }
+    timeout {
+      unresolved "$testname: timeout"
+    }
+  }
+  cd $olddir
+}
+
+proc hash_test {testname fname output} {
+  global srcdir
+
+  set olddir [pwd]
+  cd $srcdir/python.tests/
+  spawn "python" "hash.py" "$fname"
+  expect {
+    "$output" {
+      pass "$testname"
+    }
+    eof {
+      fail "$testname"
+    }
+    timeout {
+      unresolved "$testname: timeout"
+    }
+  }
+  cd $olddir
+}
+
+
+import_test "import-test"
+hash_file_test "hash-non-existant" "/" "1"
+hash_file_test "hash-existant $srcdir" "test.elf" "0"
+hash_test "hash-known" "test.elf" "0x6fa5451c6f37d614"

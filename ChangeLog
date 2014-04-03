@@ -1,3 +1,21 @@
+2014-04-03  James Pallister  <james.pallister@bristol.ac.uk>
+	Added tests for the python module. Check the ability to import the
+	module, and the functionality of hashedelf.
+
+	* configure: Regenerated
+	* configure.ac: Generate additional python tests
+	* testsuite/Makefile.am: Generate additional python tests
+	* testsuite/Makefile.in: Regenerated
+	* testsuite/python.tests/Makefile.am: Distribute python test files
+	* testsuite/python.tests/Makefile.in: Regenerated
+	* testsuite/python.tests/hash.py: Display the hash of an elf file
+	* testsuite/python.tests/test-python.exp: Tests for importing and
+	    hashedelf
+	* testsuite/python.tests/test.elf: Test elf file, copied from
+	    mageec.tests
+	* testsuite/python.tests/test.py: Display the return code from
+	    hashedelf.hash
+
 2014-04-02  James Pallister  <james.pallister@bristol.ac.uk>
 	Manually find the site packages directory, because on some systems the
 	prefix is incorrectly set to /usr/local

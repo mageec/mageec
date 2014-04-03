@@ -17259,7 +17259,7 @@ if test -z "$HAVE_DOXYGEN_TRUE"; then :
 fi
 
 # Output files
-ac_config_files="$ac_config_files Makefile mageec/Makefile ml/Makefile ml/C5/Makefile gcc_plugin/Makefile doc/Makefile include/Makefile testsuite/Makefile testsuite/mageec.tests/Makefile testsuite/gcc_plugin.tests/Makefile testsuite/config/site.exp"
+ac_config_files="$ac_config_files Makefile mageec/Makefile ml/Makefile ml/C5/Makefile gcc_plugin/Makefile doc/Makefile include/Makefile testsuite/Makefile testsuite/mageec.tests/Makefile testsuite/gcc_plugin.tests/Makefile testsuite/python.tests/Makefile testsuite/config/site.exp"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -18406,6 +18406,7 @@ do
     "testsuite/Makefile") CONFIG_FILES="$CONFIG_FILES testsuite/Makefile" ;;
     "testsuite/mageec.tests/Makefile") CONFIG_FILES="$CONFIG_FILES testsuite/mageec.tests/Makefile" ;;
     "testsuite/gcc_plugin.tests/Makefile") CONFIG_FILES="$CONFIG_FILES testsuite/gcc_plugin.tests/Makefile" ;;
+    "testsuite/python.tests/Makefile") CONFIG_FILES="$CONFIG_FILES testsuite/python.tests/Makefile" ;;
     "testsuite/config/site.exp") CONFIG_FILES="$CONFIG_FILES testsuite/config/site.exp" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
