@@ -15,10 +15,16 @@
 #
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+proc setup_python_tests {} {
+  global objdir
+  if {![file exists "$objdir/python.tests/mageec.so"]} {
+    file link -s "$objdir/python.tests/mageec.so" "$objdir/../mageec/.libs/libmageec.so"
+  }
+}
 
 proc import_test {testname} {
-
-  spawn "python" "-c \"import mageec\""
+  global python
+  spawn "$python" "-c \"import mageec\""
 
   expect {
     "" {
@@ -35,10 +41,9 @@ proc import_test {testname} {
 
 proc hash_file_test {testname fname output} {
   global srcdir
+  global python
 
-  set olddir [pwd]
-  cd $srcdir/python.tests/
-  spawn "python" "test.py" "$fname"
+  spawn "$python" "$srcdir/python.tests/test.py" "$srcdir/python.tests/$fname"
   expect {
     "$output" {
       pass "$testname"
@@ -50,15 +55,13 @@ proc hash_file_test {testname fname output} {
       unresolved "$testname: timeout"
     }
   }
-  cd $olddir
 }
 
 proc hash_test {testname fname output} {
   global srcdir
+  global python
 
-  set olddir [pwd]
-  cd $srcdir/python.tests/
-  spawn "python" "hash.py" "$fname"
+  spawn "$python" "$srcdir/python.tests/hash.py" "$srcdir/python.tests/$fname"
   expect {
     "$output" {
       pass "$testname"
@@ -70,11 +73,11 @@ proc hash_test {testname fname output} {
       unresolved "$testname: timeout"
     }
   }
-  cd $olddir
 }
 
+setup_python_tests
 
 import_test "import-test"
 hash_file_test "hash-non-existant" "/" "1"
-hash_file_test "hash-existant $srcdir" "test.elf" "0"
+hash_file_test "hash-existant" "test.elf" "0"
 hash_test "hash-known" "test.elf" "0x6fa5451c6f37d614"

@@ -1,3 +1,9 @@
+2014-04-03  Pierre Langlois  <pierre.langlois@embecosm.com>
+
+	* testsuite/config/site.exp.in: Add python variable.
+	* testsuite/python.tests/test-python.exp: Allow the tests to run
+	without installing.
+
 2014-04-03  James Pallister  <james.pallister@bristol.ac.uk>
 	Fail the configure process if boost is not found
 
