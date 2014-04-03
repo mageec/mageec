@@ -1,4 +1,25 @@
 2014-04-03  James Pallister  <james.pallister@bristol.ac.uk>
+	Use the site python module to find out where the install directory
+	should be.
+
+	* Makefile.in: Regenerated
+	* configure: Regenerated
+	* configure.ac: Create a PYTHON_PACKAGES variable describing where the
+	    packages should be put
+	* doc/Makefile.in: Regenerated
+	* gcc_plugin/Makefile.in: Regenerated
+	* include/Makefile.in: Regenerated
+	* mageec/Makefile.am: Use the new PYTHON_PACKAGES variable as the
+	    symlink destination for the module
+	* mageec/Makefile.in: Regenerated
+	* ml/C5/Makefile.in: Regenerated
+	* ml/Makefile.in: Regenerated
+	* testsuite/Makefile.in: Regenerated
+	* testsuite/gcc_plugin.tests/Makefile.in: Regenerated
+	* testsuite/mageec.tests/Makefile.in: Regenerated
+	* testsuite/python.tests/Makefile.in: Regenerated
+
+2014-04-03  James Pallister  <james.pallister@bristol.ac.uk>
 	Added tests for the python module. Check the ability to import the
 	module, and the functionality of hashedelf.
 
