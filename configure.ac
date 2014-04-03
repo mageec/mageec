@@ -6,6 +6,8 @@ AC_INIT([mageec], [0.1.0])
 AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 
+AM_MAINTAINER_MODE([disable])
+
 AC_CONFIG_SRCDIR([mageec/mageec.cpp])
 AC_CONFIG_SRCDIR([gcc_plugin/gcc-plugin.cpp])
 AC_CONFIG_SRCDIR([ml/ml.cpp])
