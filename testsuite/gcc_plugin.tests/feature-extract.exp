@@ -21,7 +21,7 @@ proc feature_extract {testname source_file} {
   global objdir
   spawn "$cc" "-fplugin=$objdir/../gcc_plugin/.libs/libmageec_gcc.so" "$source_file"
   expect {
-    "($testname)" {
+    -re "\((\ *?)$testname\)" {
       pass "$testname"
     }
     eof {
