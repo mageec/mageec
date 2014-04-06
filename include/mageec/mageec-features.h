@@ -20,7 +20,9 @@
 #ifndef __MAGEEC_FEATURES_H_
 #define __MAGEEC_FEATURES_H_
 
+#include <iostream>
 #include <string>
+#include <vector>
 
 namespace mageec
 {
@@ -32,17 +34,24 @@ class mageec_feature
 {
 public:
   virtual std::string name() = 0;
+  virtual std::string desc() = 0;
   virtual int get_feature() = 0;
+
+  static void dump_vector(std::vector<mageec_feature*> features,
+                          std::ostream &OS, bool json);
 };
 
 class basic_feature : public mageec_feature
 {
   std::string feature_name;
+  std::string feature_desc;
   int feature_value;
 public:
   basic_feature (std::string name);
   basic_feature (std::string name, int value);
+  basic_feature (std::string name, std::string desc, int value);
   std::string name();
+  std::string desc();
   int get_feature();
 };
 

@@ -1,5 +1,17 @@
 2014-04-06  Simon Cook  <simon.cook@embecosm.com>
 
+	* gcc_plugin/feature-extact.cpp (mageec_featextract_exec): Don't
+	print out feature vector manually, use new printing interface.
+	* include/mageec/mageec-features.h (mageec_feature): Add description
+	member, with getter and constructor to use the new member.
+	* mageec/features.cpp (pad_string): Add static string pad function.
+	(mageec_feature::dump_vector): Add plain text/JSON feature vector
+	printer.
+	(mageec_feature::mageec_feature): Add constructor which utilizes
+	new description member.
+
+2014-04-06  Simon Cook  <simon.cook@embecosm.com>
+
 	* compile: Add compile file, replacing symblink.
 
 2014-04-03  Pierre Langlois  <pierre.langlois@embecosm.com>

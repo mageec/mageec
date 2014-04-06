@@ -177,67 +177,42 @@ static unsigned mageec_featextract_exec(void)
     average_phi_args = total_phi_args / total_phi_nodes;
   average_phi_node_head = phi_header_nodes / bb_count;
 
-  std::cerr << "Current Function: " << current_function_name() << std::endl;
-  std::cerr << "  (ft1)  Basic Block Count:       " << bb_count << std::endl;
-  std::cerr << "  (ft2)  BB with 1 successor:     " << bb_single_successor << std::endl;
-  std::cerr << "  (ft3)  BB with 2 successor:     " << bb_two_successors << std::endl;
-  std::cerr << "  (ft4)  BB with > 2 successor:   " << bb_gt2_successors << std::endl;
-  std::cerr << "  (ft5)  BB with 1 predecessor:   " << bb_single_predecessor << std::endl;
-  std::cerr << "  (ft6)  BB with 2 predecessor:   " << bb_two_predecessors << std::endl;
-  std::cerr << "  (ft7)  BB with > 2 predecessor: " << bb_gt2_predecessors << std::endl;
-  std::cerr << "  (ft8)  BB with 1 pred 1 succ:   " << bb_1pred_1succ << std::endl;
-  std::cerr << "  (ft9)  BB with 1 pred 2 succ:   " << bb_1pred_2succ << std::endl;
-  std::cerr << "  (ft10) BB with 2 pred 1 succ:   " << bb_2pred_1succ << std::endl;
-  std::cerr << "  (ft11) BB with 2 pred 2 succ:   " << bb_2pred_2succ << std::endl;
-  std::cerr << "  (ft12) BB with >2 pred >2 succ: " << bb_gt2pred_gt2succ << std::endl;
-  std::cerr << "  (ft13) BB with insn < 15:       " << insn_count_lt15 << std::endl;
-  std::cerr << "  (ft14) BB with insn [15, 500]:  " << insn_count_15_to_500 << std::endl;
-  std::cerr << "  (ft15) BB with insn > 500:      " << insn_count_gt500 << std::endl;
-  std::cerr << "  (ft21) Assignments in method:   " << method_assignments << std::endl;
-  std::cerr << "  (ft24) Total Statement in BB:   " << vector_sum(insn_counts) << std::endl;
-  std::cerr << "  (ft25) Avg Statement in BB:     " << vector_sum(insn_counts)/bb_count
-            << std::endl;
-  std::cerr << "  (ft26) Avg phis at top of BB:   " << average_phi_node_head << std::endl;
-  std::cerr << "  (ft27) Average phi arg count:   " << average_phi_args << std::endl;
-  std::cerr << "  (ft28) BB with 0 phis:          " << bb_phi_count_0 << std::endl;
-  std::cerr << "  (ft29) BB with [0, 3] phis:     " << bb_phi_count_0_to_3 << std::endl;
-  std::cerr << "  (ft30) BB with > 3 phis:        " << bb_phi_count_gt3 << std::endl;
-  std::cerr << "  (ft31) BB phis with > 5 args:   " << bb_phi_args_gt5 << std::endl;
-  std::cerr << "  (ft32) BB phis with [1,5] args: " << bb_phi_args_1_to_5 << std::endl;
-  std::cerr << "  (ft33) Switch stmts in method:  " << method_switch_stmt << std::endl;
-  std::cerr << "  (ft34) Unary ops in method:     " << method_unary_ops << std::endl;
-
   /* Build feature vector to pass to machine learner */
   std::vector<mageec::mageec_feature*> features;
-  features.push_back(new basic_feature("ft1", bb_count));
-  features.push_back(new basic_feature("ft2", bb_single_successor));
-  features.push_back(new basic_feature("ft3", bb_two_successors));
-  features.push_back(new basic_feature("ft4", bb_gt2_successors));
-  features.push_back(new basic_feature("ft5", bb_single_predecessor));
-  features.push_back(new basic_feature("ft6", bb_two_predecessors));
-  features.push_back(new basic_feature("ft7", bb_gt2_predecessors));
-  features.push_back(new basic_feature("ft8", bb_1pred_1succ));
-  features.push_back(new basic_feature("ft9", bb_1pred_2succ));
-  features.push_back(new basic_feature("ft10", bb_2pred_1succ));
-  features.push_back(new basic_feature("ft11", bb_2pred_2succ));
-  features.push_back(new basic_feature("ft12", bb_gt2pred_gt2succ));
-  features.push_back(new basic_feature("ft13", insn_count_lt15));
-  features.push_back(new basic_feature("ft14", insn_count_15_to_500));
-  features.push_back(new basic_feature("ft15", insn_count_gt500));
-  features.push_back(new basic_feature("ft21", method_assignments));
-  features.push_back(new basic_feature("ft24", vector_sum(insn_counts)));
-  features.push_back(new basic_feature("ft25", (vector_sum(insn_counts)/bb_count)));
-  features.push_back(new basic_feature("ft26", average_phi_node_head));
-  features.push_back(new basic_feature("ft27", average_phi_args));
-  features.push_back(new basic_feature("ft28", bb_phi_count_0));
-  features.push_back(new basic_feature("ft29", bb_phi_count_0_to_3));
-  features.push_back(new basic_feature("ft30", bb_phi_count_gt3));
-  features.push_back(new basic_feature("ft31", bb_phi_args_gt5));
-  features.push_back(new basic_feature("ft32", bb_phi_args_1_to_5));
-  features.push_back(new basic_feature("ft33", method_switch_stmt));
-  features.push_back(new basic_feature("ft34", method_unary_ops));
+  features.push_back(new basic_feature("ft1", "Basic Block Count", bb_count));
+  features.push_back(new basic_feature("ft2", "BB with 1 successor", bb_single_successor));
+  features.push_back(new basic_feature("ft3", "BB with 2 successor", bb_two_successors));
+  features.push_back(new basic_feature("ft4", "BB with > 2 successor", bb_gt2_successors));
+  features.push_back(new basic_feature("ft5", "BB with 1 predecessor", bb_single_predecessor));
+  features.push_back(new basic_feature("ft6", "BB with 2 predecessor", bb_two_predecessors));
+  features.push_back(new basic_feature("ft7", "BB with > 2 predecesso", bb_gt2_predecessors));
+  features.push_back(new basic_feature("ft8", "BB with 1 pred 1 succ", bb_1pred_1succ));
+  features.push_back(new basic_feature("ft9", "BB with 1 pred 2 succ", bb_1pred_2succ));
+  features.push_back(new basic_feature("ft10", "BB with 2 pred 1 succ", bb_2pred_1succ));
+  features.push_back(new basic_feature("ft11", "BB with 2 pred 2 succ", bb_2pred_2succ));
+  features.push_back(new basic_feature("ft12", "BB with >2 pred >2 suc", bb_gt2pred_gt2succ));
+  features.push_back(new basic_feature("ft13", "BB with insn < 15", insn_count_lt15));
+  features.push_back(new basic_feature("ft14", "BB with insn [15, 500]", insn_count_15_to_500));
+  features.push_back(new basic_feature("ft15", "BB with insn > 500", insn_count_gt500));
+  features.push_back(new basic_feature("ft21", "Assignments in method", method_assignments));
+  features.push_back(new basic_feature("ft24", "Total Statement in BB", vector_sum(insn_counts)));
+  features.push_back(new basic_feature("ft25", "Avg Statement in BB", vector_sum(insn_counts)/bb_count));
+  features.push_back(new basic_feature("ft26", "Avg phis at top of BB", average_phi_node_head));
+  features.push_back(new basic_feature("ft27", "Average phi arg count", average_phi_args));
+  features.push_back(new basic_feature("ft28", "BB with 0 phis", bb_phi_count_0));
+  features.push_back(new basic_feature("ft29", "BB with [0, 3] phis", bb_phi_count_0_to_3));
+  features.push_back(new basic_feature("ft30", "BB with > 3 phis", bb_phi_count_gt3));
+  features.push_back(new basic_feature("ft31", "BB phis with > 5 args", bb_phi_args_gt5));
+  features.push_back(new basic_feature("ft32", "BB phis with [1,5] arg", bb_phi_args_1_to_5));
+  features.push_back(new basic_feature("ft33", "Switch stmts in method", method_switch_stmt));
+  features.push_back(new basic_feature("ft34", "Unary ops in method", method_unary_ops));
 
   mageec_inst.take_features(current_function_name(), features);
+
+  // Print feature vector, first as a list and then as JSON
+  std::cerr << "Current Function: " << current_function_name() << std::endl;
+  mageec_feature::dump_vector(features, std::cerr, false);
+  mageec_feature::dump_vector(features, std::cerr, true);
 
   return 0;
 }
