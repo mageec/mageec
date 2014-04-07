@@ -1,12 +1,11 @@
 \input texinfo
 @setfilename mageec.info
 @afourpaper
-@include version.texi
 @settitle MAGEEC
 @paragraphindent 0
 
 @copying
-This manual is for MAGEEC (version @value{VERSION}, @value{UPDATED}).
+This manual is for MAGEEC.
 
 Copyright @copyright{} 2013, 2014 Embecosm Limited and University of Bristol.
 @quotation
@@ -20,7 +19,7 @@ Texts. A copy of the license is included in the section entitled
 @end copying
 
 @titlepage
-@title MAGEEC @value{VERSION}
+@title MAGEEC
 @subtitle MAchine Guided Energy Efficient Compilation
 @author Simon Cook
 @page
