@@ -23,12 +23,14 @@ AC_PROG_INSTALL
 AC_ENABLE_SHARED
 
 # Options to control building GCC Plugin
-AC_ARG_ENABLE([gcc-plugin], [AS_HELP_STRING([--disable-gcc-plugin], [Disable build of GCC plugin.])], [enable_gcc_plugin=no], [enable_gcc_plugin=yes])
+AC_ARG_ENABLE([gcc-plugin],
+  [AS_HELP_STRING([--disable-gcc-plugin], [Disable build of GCC plugin.])],
+[enable_gcc_plugin=no], [enable_gcc_plugin=yes])
 
 # Options to control compilation
-AC_ARG_ENABLE([python], [
-  AS_HELP_STRING([--enable-python], [Also build as python module.])
-], [], [enable_python=no])
+AC_ARG_ENABLE([python],
+  [AS_HELP_STRING([--enable-python], [Also build as python module.])],
+[], [enable_python=no])
 
 # Libaries we need to build MAGEEC
 AC_CHECK_HEADERS(libelf.h gelf.h, [], [

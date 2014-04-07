@@ -1,5 +1,11 @@
 2014-04-07  Simon Cook  <simon.cook@embecosm.com>
 
+	* configure.ac: Make output formatting of enable python and gcc
+	more suited to surrounding options.
+	* configure: Regenerated.
+
+2014-04-07  Simon Cook  <simon.cook@embecosm.com>
+
 	* gcc_plugin/Makefile.am: Build GCC Plugin only if
 	ENABLE_GCC_PLUGIN is set.
 	* gcc_plugin/Makefile.in: Regenerated.
