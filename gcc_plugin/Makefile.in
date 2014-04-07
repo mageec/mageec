@@ -122,9 +122,13 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libmageec_gcc_la_DEPENDENCIES = ../mageec/libmageec.la
-am_libmageec_gcc_la_OBJECTS = feature-extract.lo gcc-plugin.lo \
-	gcc-callbacks.lo plugin-info.lo
+@ENABLE_GCC_PLUGIN_TRUE@libmageec_gcc_la_DEPENDENCIES =  \
+@ENABLE_GCC_PLUGIN_TRUE@	../mageec/libmageec.la
+am__libmageec_gcc_la_SOURCES_DIST = feature-extract.cpp gcc-plugin.cpp \
+	gcc-callbacks.cpp plugin-info.cpp
+@ENABLE_GCC_PLUGIN_TRUE@am_libmageec_gcc_la_OBJECTS =  \
+@ENABLE_GCC_PLUGIN_TRUE@	feature-extract.lo gcc-plugin.lo \
+@ENABLE_GCC_PLUGIN_TRUE@	gcc-callbacks.lo plugin-info.lo
 libmageec_gcc_la_OBJECTS = $(am_libmageec_gcc_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -134,6 +138,7 @@ libmageec_gcc_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(libmageec_gcc_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
+@ENABLE_GCC_PLUGIN_TRUE@am_libmageec_gcc_la_rpath = -rpath $(libdir)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -169,7 +174,7 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(libmageec_gcc_la_SOURCES)
-DIST_SOURCES = $(libmageec_gcc_la_SOURCES)
+DIST_SOURCES = $(am__libmageec_gcc_la_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -343,15 +348,15 @@ AM_LDFLAGS =
 AM_CXXFLAGS = $(CXXFLAGS) $(AM_CFLAGS)
 
 # Build GCC Plugin
-lib_LTLIBRARIES = libmageec_gcc.la
-libmageec_gcc_la_SOURCES = feature-extract.cpp gcc-plugin.cpp \
-  gcc-callbacks.cpp plugin-info.cpp
+@ENABLE_GCC_PLUGIN_TRUE@lib_LTLIBRARIES = libmageec_gcc.la
+@ENABLE_GCC_PLUGIN_TRUE@libmageec_gcc_la_SOURCES = feature-extract.cpp gcc-plugin.cpp \
+@ENABLE_GCC_PLUGIN_TRUE@  gcc-callbacks.cpp plugin-info.cpp
 
-libmageec_gcc_la_LDFLAGS = -release 0.1.0
-libmageec_gcc_la_LIBADD = ../mageec/libmageec.la
+@ENABLE_GCC_PLUGIN_TRUE@libmageec_gcc_la_LDFLAGS = -release 0.1.0
+@ENABLE_GCC_PLUGIN_TRUE@libmageec_gcc_la_LIBADD = ../mageec/libmageec.la
 
 # GCC plugin specific headers for distribution
-EXTRA_DIST = $(srcdir)/mageec-plugin.h
+@ENABLE_GCC_PLUGIN_TRUE@EXTRA_DIST = $(srcdir)/mageec-plugin.h
 all: all-am
 
 .SUFFIXES:
@@ -423,7 +428,7 @@ clean-libLTLIBRARIES:
 	}
 
 libmageec_gcc.la: $(libmageec_gcc_la_OBJECTS) $(libmageec_gcc_la_DEPENDENCIES) $(EXTRA_libmageec_gcc_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(libmageec_gcc_la_LINK) -rpath $(libdir) $(libmageec_gcc_la_OBJECTS) $(libmageec_gcc_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(libmageec_gcc_la_LINK) $(am_libmageec_gcc_la_rpath) $(libmageec_gcc_la_OBJECTS) $(libmageec_gcc_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

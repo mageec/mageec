@@ -22,6 +22,9 @@ AC_PROG_INSTALL
 
 AC_ENABLE_SHARED
 
+# Options to control building GCC Plugin
+AC_ARG_ENABLE([gcc-plugin], [AS_HELP_STRING([--disable-gcc-plugin], [Disable build of GCC plugin.])], [enable_gcc_plugin=no], [enable_gcc_plugin=yes])
+
 # Options to control compilation
 AC_ARG_ENABLE([python], [
   AS_HELP_STRING([--enable-python], [Also build as python module.])
@@ -47,9 +50,12 @@ AC_CHECK_LIB(sqlite3, sqlite3_open, [], [
   AC_MSG_ERROR([Unable to find sqlite3.])
 ])
 
-AC_CHECK_HEADERS(`gcc -print-file-name=plugin/include/gcc-plugin.h`, [], [
-  AC_MSG_ERROR([Unable to find gcc-plugin headers.])
-])
+if test x$enable_gcc_plugin == xyes; then
+  AC_CHECK_HEADERS(`gcc -print-file-name=plugin/include/gcc-plugin.h`, [], [
+    AC_MSG_ERROR([Unable to find gcc-plugin headers.])
+  ])
+fi
+AM_CONDITIONAL([ENABLE_GCC_PLUGIN], [test x$enable_gcc_plugin == xyes])
 
 if test x$enable_python == xyes; then
   AX_PYTHON_DEVEL

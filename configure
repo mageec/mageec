@@ -658,6 +658,8 @@ PYTHON_LDFLAGS
 PYTHON_CPPFLAGS
 PYTHON
 PYTHON_VERSION
+ENABLE_GCC_PLUGIN_FALSE
+ENABLE_GCC_PLUGIN_TRUE
 CXXCPP
 am__fastdepCXX_FALSE
 am__fastdepCXX_TRUE
@@ -793,6 +795,7 @@ enable_dependency_tracking
 with_gnu_ld
 with_sysroot
 enable_libtool_lock
+enable_gcc_plugin
 enable_python
 with_boost
 with_boost_libdir
@@ -1445,6 +1448,7 @@ Optional Features:
   --disable-dependency-tracking
                           speeds up one-time build
   --disable-libtool-lock  avoid locking (might break parallel builds)
+  --disable-gcc-plugin    Disable build of GCC plugin.
 
     --enable-python         Also build as python module.
 
@@ -15998,6 +16002,15 @@ fi
 
 
 
+# Options to control building GCC Plugin
+# Check whether --enable-gcc-plugin was given.
+if test "${enable_gcc_plugin+set}" = set; then :
+  enableval=$enable_gcc_plugin; enable_gcc_plugin=no
+else
+  enable_gcc_plugin=yes
+fi
+
+
 # Options to control compilation
 # Check whether --enable-python was given.
 if test "${enable_python+set}" = set; then :
@@ -16205,7 +16218,8 @@ else
 fi
 
 
-for ac_header in `gcc -print-file-name=plugin/include/gcc-plugin.h`
+if test x$enable_gcc_plugin == xyes; then
+  for ac_header in `gcc -print-file-name=plugin/include/gcc-plugin.h`
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -16216,11 +16230,20 @@ _ACEOF
 
 else
 
-  as_fn_error $? "Unable to find gcc-plugin headers." "$LINENO" 5
+    as_fn_error $? "Unable to find gcc-plugin headers." "$LINENO" 5
 
 fi
 
 done
+
+fi
+ if test x$enable_gcc_plugin == xyes; then
+  ENABLE_GCC_PLUGIN_TRUE=
+  ENABLE_GCC_PLUGIN_FALSE='#'
+else
+  ENABLE_GCC_PLUGIN_TRUE='#'
+  ENABLE_GCC_PLUGIN_FALSE=
+fi
 
 
 if test x$enable_python == xyes; then
@@ -17473,6 +17496,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCXX\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_GCC_PLUGIN_TRUE}" && test -z "${ENABLE_GCC_PLUGIN_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_GCC_PLUGIN\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_PYTHON_TRUE}" && test -z "${ENABLE_PYTHON_FALSE}"; then

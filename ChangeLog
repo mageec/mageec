@@ -1,5 +1,13 @@
 2014-04-07  Simon Cook  <simon.cook@embecosm.com>
 
+	* gcc_plugin/Makefile.am: Build GCC Plugin only if
+	ENABLE_GCC_PLUGIN is set.
+	* gcc_plugin/Makefile.in: Regenerated.
+	* configure.ac: Add configure flag to disable GCC plugin.
+	* configure: Regenerated.
+
+2014-04-07  Simon Cook  <simon.cook@embecosm.com>
+
 	* doc/mageec.texi: Remove references to unknown VERSION, UPDATED.
 
 2014-04-06  Pierre Langlois  <pierre.langlois@embecosm.com>

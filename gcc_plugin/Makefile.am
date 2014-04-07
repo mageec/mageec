@@ -7,6 +7,7 @@ AM_CFLAGS += -Wall -Wextra -Werror
 AM_CXXFLAGS = $(CXXFLAGS) $(AM_CFLAGS)
 
 # Build GCC Plugin
+if ENABLE_GCC_PLUGIN
 lib_LTLIBRARIES = libmageec_gcc.la
 libmageec_gcc_la_SOURCES = feature-extract.cpp gcc-plugin.cpp \
   gcc-callbacks.cpp plugin-info.cpp
@@ -15,3 +16,5 @@ libmageec_gcc_la_LIBADD = ../mageec/libmageec.la
 
 # GCC plugin specific headers for distribution
 EXTRA_DIST = $(srcdir)/mageec-plugin.h
+endif
+
