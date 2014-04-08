@@ -1,3 +1,11 @@
+2014-04-08  James Pallister  <james.pallister@bristol.ac.uk>
+	Conditionally enable gcc_plugin tests and python tests based on
+	--enable-XXX flags given to configure
+
+	* testsuite/Makefile.am: Added automake conditional declarations for
+	    the gcc_plugin and python tests
+	* testsuite/Makefile.in: Regenerated
+
 2014-04-07  Simon Cook  <simon.cook@embecosm.com>
 
 	* configure.ac: Make output formatting of enable python and gcc

@@ -25,6 +25,16 @@ EXTRA_DIST = config/unix.exp lib/mageec.exp
 EXTRA_DEJAGNU_SITE_CONFIG = config/site.exp
 
 # Run tests in seperate tools
-DEJATOOL = mageec gcc_plugin python
+DEJATOOL = mageec
 
-SUBDIRS = mageec.tests gcc_plugin.tests python.tests
+SUBDIRS = mageec.tests
+
+if ENABLE_GCC_PLUGIN
+DEJATOOL += gcc_plugin
+SUBDIRS += gcc_plugin.tests
+endif
+
+if ENABLE_PYTHON
+DEJATOOL += python
+SUBDIRS += python.tests
+endif

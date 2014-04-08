@@ -94,6 +94,10 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@ENABLE_GCC_PLUGIN_TRUE@am__append_1 = gcc_plugin
+@ENABLE_GCC_PLUGIN_TRUE@am__append_2 = gcc_plugin.tests
+@ENABLE_PYTHON_TRUE@am__append_3 = python
+@ENABLE_PYTHON_TRUE@am__append_4 = python.tests
 subdir = testsuite
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -165,7 +169,7 @@ CTAGS = ctags
 RUNTESTDEFAULTFLAGS = --tool $$tool --srcdir $$srcdir
 EXPECT = expect
 RUNTEST = runtest
-DIST_SUBDIRS = $(SUBDIRS)
+DIST_SUBDIRS = mageec.tests gcc_plugin.tests python.tests
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 am__relativize = \
   dir0=`pwd`; \
@@ -342,8 +346,8 @@ EXTRA_DIST = config/unix.exp lib/mageec.exp
 EXTRA_DEJAGNU_SITE_CONFIG = config/site.exp
 
 # Run tests in seperate tools
-DEJATOOL = mageec gcc_plugin python
-SUBDIRS = mageec.tests gcc_plugin.tests python.tests
+DEJATOOL = mageec $(am__append_1) $(am__append_3)
+SUBDIRS = mageec.tests $(am__append_2) $(am__append_4)
 all: all-recursive
 
 .SUFFIXES:
