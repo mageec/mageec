@@ -1,2 +1,2 @@
 set cc @CC@
-set python @PYTHON@
+set python "@PYTHON@"

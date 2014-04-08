@@ -1,4 +1,10 @@
 2014-04-08  James Pallister  <james.pallister@bristol.ac.uk>
+	Make check fix for when not enabling python
+
+	* testsuite/config/site.exp.in: Quote @PYTHON@ so if it is not defined
+	    make check does not fail
+
+2014-04-08  James Pallister  <james.pallister@bristol.ac.uk>
 	Conditionally enable gcc_plugin tests and python tests based on
 	--enable-XXX flags given to configure
 
