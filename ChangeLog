@@ -1,4 +1,12 @@
 2014-04-08  James Pallister  <james.pallister@bristol.ac.uk>
+	Add an install-exec-hook to symlink the library into the plugins dir.
+	This allows "gcc -fplugin=mageec" to work.
+
+	* gcc_plugin/Makefile.am: Added an install-exec-hook and a uninstall-
+	    hook to add and remove symlinks to the mageec gcc plugin
+	* gcc_plugin/Makefile.in: Regenerated
+
+2014-04-08  James Pallister  <james.pallister@bristol.ac.uk>
 	Make check fix for when not enabling python
 
 	* testsuite/config/site.exp.in: Quote @PYTHON@ so if it is not defined

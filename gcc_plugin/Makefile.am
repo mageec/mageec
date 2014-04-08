@@ -3,7 +3,7 @@ AM_CFLAGS = -g -O2 -I$(shell $(CC) -print-file-name=plugin)/include \
   -I$(top_srcdir)/include
 AM_LDFLAGS =
 # Force us to be really specific with what we mean
-AM_CFLAGS += -Wall -Wextra -Werror 
+AM_CFLAGS += -Wall -Wextra -Werror
 AM_CXXFLAGS = $(CXXFLAGS) $(AM_CFLAGS)
 
 # Build GCC Plugin
@@ -16,5 +16,11 @@ libmageec_gcc_la_LIBADD = ../mageec/libmageec.la
 
 # GCC plugin specific headers for distribution
 EXTRA_DIST = $(srcdir)/mageec-plugin.h
+
+install-exec-hook:
+	ln -sf $(DESTDIR)$(libdir)/libmageec_gcc.so `$(CC) -print-file-name=plugin`/mageec.so
+uninstall-hook:
+	rm -f `$(CC) -print-file-name=plugin`/mageec.so
+
 endif
 
