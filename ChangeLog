@@ -1,5 +1,16 @@
 2014-07-07  Simon Cook  <simon.cook@embecosm.com>
 
+	* gcc_plugin/feature-extract.cpp: Added conditional includes for GCC
+	4.9 and above.
+	(mageec_featextract_exec): Replace FOR_EACH_BB with FOR_ALL_BB_FN for
+	GCC 4.9 and above.
+	(pass_data_mageec_featextract): Added for GCC 4.9 and above.
+	(class mageec_featpass): Likewise.
+	(make_mageec_pass): Likewise.
+	(register_featextract): Update pass reference depending on GCC 4.9.
+
+2014-07-07  Simon Cook  <simon.cook@embecosm.com>
+
 	* gcc_plugin/gcc-callbacks.cpp (mageec_pass_gate): Use mageec_config
 	map for configuration instead of larger set of globals.
 	* gcc_plugin/gcc-plugin.cpp (parse_arguments): Likewise.

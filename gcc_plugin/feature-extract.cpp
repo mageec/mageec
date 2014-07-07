@@ -24,11 +24,51 @@
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 
-#include "gcc-plugin.h"
-#include "tree-pass.h"
-#include "gimple.h"
-#include "function.h"
-#include "toplev.h"
+#if (GCC_MINOR < 9)
+  #include "gcc-plugin.h"
+  #include "gimple-ssa.h"
+  #include "ssa-iterators.h"
+  #include "tree-core.h"
+  #include "tree-ssa-operands.h"
+  #include "tree-ssanames.h"
+  #include "tree.h"
+  #include "tree-pass.h"
+  #include "gimple.h"
+  #include "function.h"
+  #include "basic-block.h"
+  #include "toplev.h"
+#else
+  #include "gcc-plugin.h"
+  #include "config.h"
+  #include "system.h"
+  #include "coretypes.h"
+  #include "tm.h"
+  #include "tree.h"
+  #include "stringpool.h"
+  #include "toplev.h"
+  #include "basic-block.h"
+  #include "pointer-set.h"
+  #include "hash-table.h"
+  #include "vec.h"
+  #include "ggc.h"
+  #include "basic-block.h"
+  #include "tree-ssa-alias.h"
+  #include "internal-fn.h"
+  #include "gimple-fold.h"
+  #include "tree-eh.h"
+  #include "gimple-expr.h"
+  #include "is-a.h"
+  #include "gimple.h"
+  #include "gimple-iterator.h"
+  #include "tree.h"
+  #include "tree-pass.h"
+  #include "intl.h"
+  #include "plugin-version.h"
+  #include "diagnostic.h"
+  #include "context.h"
+#endif
+
+/* MAGEEC Headers */
 #include "mageec-plugin.h"
 #include "mageec/vectormath.h"
 #include <iostream>
@@ -90,7 +130,11 @@ static unsigned mageec_featextract_exec(void)
   unsigned total_phi_args = 0;        //total for ft27
   unsigned total_phi_nodes = 0;       //divisor for ft27
 
-  FOR_EACH_BB(bb)
+#if (GCC_MINOR < 9)
+  FOR_EACH_BB (bb)
+#else
+  FOR_ALL_BB_FN (bb, cfun)
+#endif
   {
     stmt_count = 0;
     phi_nodes = 0;
@@ -220,6 +264,7 @@ static unsigned mageec_featextract_exec(void)
 /**
  * MAGEEC Feature Extractor Pass Definition
  */
+#if (GCC_MINOR < 9)
 static struct gimple_opt_pass mageec_featextract =
 {
   {
@@ -239,6 +284,45 @@ static struct gimple_opt_pass mageec_featextract =
     0                                     /* todo_flags_finish */
   }
 };
+#else
+namespace {
+
+const pass_data pass_data_mageec_featextract = 
+{
+  GIMPLE_PASS, /* type */
+  "mageec-extractor", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  true, /* has_gate */
+  true, /* has_execute */
+  TV_NONE, /* tv_id */
+  PROP_ssa, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  0, /* todo_flags_finish */
+};
+
+class mageec_featpass : public gimple_opt_pass
+{
+public:
+  mageec_featpass(gcc::context *ctxt)
+    : gimple_opt_pass(pass_data_mageec_featextract, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  bool gate () { return mageec_featextract_gate (); }
+  unsigned int execute () { return mageec_featextract_exec (); }
+
+}; // class mageec_featpass
+
+}
+
+static gimple_opt_pass *
+make_mageec_pass (gcc::context *ctxt)
+{
+  return new mageec_featpass (ctxt);
+}
+#endif
 
 /**
  * Registers the Feature Extractor in the pass list
@@ -248,11 +332,15 @@ void register_featextract (void)
 {
   struct register_pass_info pass;
 
+#if (GCC_MINOR < 9)
   pass.pass = &mageec_featextract.pass;
-  pass.reference_pass_name = "cfg";
+#else
+  pass.pass = make_mageec_pass (g);
+#endif
+  pass.reference_pass_name = "ssa";
   pass.ref_pass_instance_number = 1;
   pass.pos_op = PASS_POS_INSERT_AFTER;
-  
+
   register_callback (mageec_gcc_plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL,
                      &pass);
 }
