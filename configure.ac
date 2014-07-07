@@ -53,9 +53,11 @@ AC_CHECK_LIB(sqlite3, sqlite3_open, [], [
 ])
 
 if test x$enable_gcc_plugin == xyes; then
+  AC_LANG_PUSH([C++])
   AC_CHECK_HEADERS(`gcc -print-file-name=plugin/include/gcc-plugin.h`, [], [
     AC_MSG_ERROR([Unable to find gcc-plugin headers.])
   ])
+  AC_LANG_POP([C++])
 fi
 AM_CONDITIONAL([ENABLE_GCC_PLUGIN], [test x$enable_gcc_plugin == xyes])
 

@@ -1,5 +1,11 @@
 2014-07-07  Simon Cook  <simon.cook@embecosm.com>
 
+	* configure.ac: Make test for GCC headers using a C++ compiler instead
+	of C.
+	* configure: Regenerated.
+
+2014-07-07  Simon Cook  <simon.cook@embecosm.com>
+
 	* gcc_plugin/feature-extract.cpp: Added conditional includes for GCC
 	4.9 and above.
 	(mageec_featextract_exec): Replace FOR_EACH_BB with FOR_ALL_BB_FN for
