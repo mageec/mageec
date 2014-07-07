@@ -42,9 +42,10 @@ static struct plugin_info mageec_plugin_version =
   .help = NULL
 };
 
-static int print_plugin_info = 0;
-int mageec_print_pass_info = 0;
-int mageec_no_decision = 0;
+std::map<std::string, int> mageec_config;
+
+static int print_plugin_info;
+
 
 /** Stored GCC Plugin name for future register_callbacks. */
 const char *mageec_gcc_plugin_name;
@@ -60,9 +61,9 @@ static void parse_arguments (int argc, struct plugin_argument *argv)
     if (!strcmp (argv[i].key, "plugininfo"))
       print_plugin_info = 1;
     else if (!strcmp (argv[i].key, "dumppasses"))
-      mageec_print_pass_info = 1;
+      mageec_config["print_pass_info"] = 1;
     else if (!strcmp (argv[i].key, "nodecide"))
-      mageec_no_decision = 1;
+      mageec_config["no_decision"] = 1;
     else
       fprintf (stderr, "MAGEEC Warning: Unknown option %s\n", argv[i].key);
   }
@@ -77,6 +78,11 @@ static void parse_arguments (int argc, struct plugin_argument *argv)
 int plugin_init (struct plugin_name_args *plugin_info,
                  struct plugin_gcc_version *version)
 {
+  /* Initilize options */
+  print_plugin_info = 0;
+  mageec_config["print_pass_info"] = 0;
+  mageec_config["no_decision"] = 0;
+
   /* Register our information, parse arguments. */
   register_callback (plugin_info->base_name, PLUGIN_INFO, NULL,
                      &mageec_plugin_version);

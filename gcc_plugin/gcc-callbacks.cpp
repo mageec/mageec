@@ -99,12 +99,12 @@ void mageec_pass_gate (void *gcc_data,
                        void *user_data __attribute__((unused)))
 {
   short *result = (short *)gcc_data;
-  if (mageec_print_pass_info)
-    fprintf (stderr, "Pass: '%s',  Type: %s,  Function: '%s',  Gate: %hi\n",
+  if (mageec_config["print_pass_info"])
+    fprintf (stderr, "Pass: '%s',  Type: %s,  Function: '%s',  Gate: %hhi\n",
              current_pass->name, pass_type_str(current_pass).c_str(),
              current_function_name(), *result);
 
-  if (!mageec_no_decision)
+  if (!mageec_config["no_decision"])
   {
     mageec::decision d = mageec_inst.make_decision(current_pass->name,
                                                    current_function_name());
@@ -122,7 +122,7 @@ void mageec_pass_gate (void *gcc_data,
           mageec_changed = true;
         *result = (short)0;
     }
-    if (mageec_print_pass_info && mageec_changed)
-      fprintf (stderr, "  New gate: %hi\n", *result);
+    if (mageec_config["print_pass_info"] && mageec_changed)
+      fprintf (stderr, "  New gate: %hhi\n", *result);
   }
 }

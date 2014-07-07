@@ -17,9 +17,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 /** @file mageec-plugin.h MAGEEC GCC Plugin. */
-#include "mageec/mageec.h"
 #ifndef __MAGEEC_PLUGIN_H__
 #define __MAGEEC_PLUGIN_H__
+
+#include "mageec/mageec.h"
+#include <map>
+#include <string>
 
 extern mageec::mageec_framework mageec_inst;
 
@@ -29,13 +32,8 @@ void mageec_gcc_finish (void *gcc_data,
 /** The plugin base_name for our hooks to use to schedule new passes */
 extern const char *mageec_gcc_plugin_name;
 
-/** Configuration variable for whether we should print out pass info on
-    post-gate hook */
-extern int mageec_print_pass_info;
-
-/** Configuration variable for whether MAGEEC should NOT override the pass
-    manager. */
-extern int mageec_no_decision;
+/** MAGEEC Plugin Configuration */
+extern std::map<std::string, int> mageec_config;
 
 /**
  * Prints information about the plugin to stdout.

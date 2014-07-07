@@ -1,3 +1,13 @@
+2014-07-07  Simon Cook  <simon.cook@embecosm.com>
+
+	* gcc_plugin/gcc-callbacks.cpp (mageec_pass_gate): Use mageec_config
+	map for configuration instead of larger set of globals.
+	* gcc_plugin/gcc-plugin.cpp (parse_arguments): Likewise.
+	* gcc_plugin/mageec-plugin.h (mageec_print_pass_info): Removed,
+	replaced with mageec_config.
+	(mageec_no_decision): Removed, replaced with mageec_config.
+	(mageec_config): Added.
+
 2014-04-08  James Pallister  <james.pallister@bristol.ac.uk>
 	Add an install-exec-hook to symlink the library into the plugins dir.
 	This allows "gcc -fplugin=mageec" to work.
