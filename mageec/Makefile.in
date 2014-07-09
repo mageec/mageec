@@ -79,7 +79,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = mageechash$(EXEEXT)
+bin_PROGRAMS = mageechash$(EXEEXT) mageecdb$(EXEEXT)
 
 # Also build library as a python module
 @ENABLE_PYTHON_TRUE@am__append_1 = python.cpp
@@ -148,6 +148,9 @@ libmageec_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(libmageec_la_LDFLAGS) $(LDFLAGS) -o $@
 PROGRAMS = $(bin_PROGRAMS)
+am_mageecdb_OBJECTS = dbtool.$(OBJEXT)
+mageecdb_OBJECTS = $(am_mageecdb_OBJECTS)
+mageecdb_DEPENDENCIES = libmageec.la ../ml/libmageec_learner.la
 am_mageechash_OBJECTS = mageechash.$(OBJEXT)
 mageechash_OBJECTS = $(am_mageechash_OBJECTS)
 mageechash_DEPENDENCIES = libmageec.la ../ml/libmageec_learner.la
@@ -185,8 +188,10 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(libmageec_la_SOURCES) $(mageechash_SOURCES)
-DIST_SOURCES = $(am__libmageec_la_SOURCES_DIST) $(mageechash_SOURCES)
+SOURCES = $(libmageec_la_SOURCES) $(mageecdb_SOURCES) \
+	$(mageechash_SOURCES)
+DIST_SOURCES = $(am__libmageec_la_SOURCES_DIST) $(mageecdb_SOURCES) \
+	$(mageechash_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -366,6 +371,8 @@ libmageec_la_LDFLAGS = -release 0.1.0 $(am__append_3)
 libmageec_la_LIBADD = ../ml/libmageec_learner.la $(am__append_2)
 mageechash_SOURCES = mageechash.cpp
 mageechash_LDADD = libmageec.la ../ml/libmageec_learner.la
+mageecdb_SOURCES = dbtool.cpp
+mageecdb_LDADD = libmageec.la ../ml/libmageec_learner.la
 @ENABLE_PYTHON_TRUE@libmageec_la_CPPFLAGS = $(PYTHON_CPPFLAGS) $(BOOST_CPPFLAGS)
 all: all-am
 
@@ -489,6 +496,10 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
+mageecdb$(EXEEXT): $(mageecdb_OBJECTS) $(mageecdb_DEPENDENCIES) $(EXTRA_mageecdb_DEPENDENCIES) 
+	@rm -f mageecdb$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(mageecdb_OBJECTS) $(mageecdb_LDADD) $(LIBS)
+
 mageechash$(EXEEXT): $(mageechash_OBJECTS) $(mageechash_DEPENDENCIES) $(EXTRA_mageechash_DEPENDENCIES) 
 	@rm -f mageechash$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(mageechash_OBJECTS) $(mageechash_LDADD) $(LIBS)
@@ -499,6 +510,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dbtool.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmageec_la-elfhash.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmageec_la-features.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmageec_la-hasher.Plo@am__quote@

@@ -41,6 +41,13 @@ class mageec_ml
 public:
   /**
    * Initilizes the MAGEEC Machine Learner
+   * @param dbfilename Path of database file to open.
+   * @returns 0 if MAGEEC successfully set up, 1 otherwise.
+   */
+  virtual int init (std::string dbfilename);
+
+  /**
+   * Initilizes the MAGEEC Machine Learner
    * @param compiler_version Compiler and version, e.g. GCC-4.8.
    * @param compiler_target Compiler target, e.g. arm-none-gnueabi.
    * @returns 0 if MAGEEC successfully set up, 1 otherwise.
@@ -142,6 +149,7 @@ class file_ml : public mageec_ml
 {
   std::vector<std::string> passlist;
 public:
+  virtual int init (std::string dbfilename);
   virtual int init (std::string compiler_version,
                     std::string compiler_target);
   virtual decision make_decision (mageec_pass* pass,

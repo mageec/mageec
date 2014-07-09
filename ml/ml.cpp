@@ -31,15 +31,20 @@ extern "C" {
   int c5_classify_main(char *filestem);
 }
 
-int mageec_ml::init (std::string compiler_version,
-                     std::string compiler_target)
+int mageec_ml::init (std::string dbfilename)
 {
   std::cerr << "LEARNER: Hello!" << std::endl;
   /* FIXME: The second parameter should be false, we do not want to be creating
      a new database here */
-  db = new database(compiler_version + "-" + compiler_target + ".db", true);
+  db = new database(dbfilename, true);
   passes = db->get_pass_list();
   return 0;
+}
+
+int mageec_ml::init (std::string compiler_version,
+                     std::string compiler_target)
+{
+  return init (compiler_version + "-" + compiler_target + ".db");
 }
 
 void mageec_ml::new_file (void)
@@ -243,8 +248,7 @@ void mageec_ml::process_results()
 }
 
 // Initilizer for file based machine learner
-int file_ml::init (std::string compiler_version __attribute__((unused)),
-                   std::string compiler_target __attribute__((unused)))
+int file_ml::init (std::string dbfilename __attribute__((unused)))
 {
   // Attempt to load the file pointed to by MAGEEC_EXECUTELIST or a default.
   char *pass_file = getenv("MAGEEC_EXECUTELIST");
@@ -262,6 +266,13 @@ int file_ml::init (std::string compiler_version __attribute__((unused)),
 
   input_file.close();
   return 0;
+}
+
+// Initilizer for file based machine learner
+int file_ml::init (std::string compiler_version __attribute__((unused)),
+                   std::string compiler_target __attribute__((unused)))
+{
+  return init("");
 }
 
 // File based decision maker

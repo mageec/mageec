@@ -1,3 +1,15 @@
+2014-07-09  Simon Cook  <simon.cook@embecosm.com>
+
+	* include/mageec/mageec-ml.h (mageec_ml::init): Add path to database
+	virtual init function.
+	(class file_ml): Likewise.
+	* mageec/Makefile.am: Add rules for building mageecdb
+	* mageec/Makefile.in: Regenerated.
+	* mageec/dbtool.cpp: Add initial database management tool.
+	* ml/ml.cpp (mageec_ml::init): Add path to database function. Modified
+	COMPILER, VERSION init function to use this instead.
+	(file_ml::init): Likewise.
+
 2014-07-07  Simon Cook  <simon.cook@embecosm.com>
 
 	* configure.ac: Make test for GCC headers using a C++ compiler instead

@@ -16,6 +16,11 @@ bin_PROGRAMS = mageechash
 mageechash_SOURCES = mageechash.cpp
 mageechash_LDADD = libmageec.la ../ml/libmageec_learner.la
 
+# Build MAGEEC Database Tool
+bin_PROGRAMS += mageecdb
+mageecdb_SOURCES = dbtool.cpp
+mageecdb_LDADD = libmageec.la ../ml/libmageec_learner.la
+
 # Also build library as a python module
 if ENABLE_PYTHON
 libmageec_la_SOURCES += python.cpp
