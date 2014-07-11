@@ -1,5 +1,10 @@
 2014-07-11  Simon Cook  <simon.cook@embecosm.com>
 
+	* gcc_plugin/feature-extract.cpp (mageec_featextract_exec): Rename
+	features to remove ft. e.g. ft1 -> 1.
+
+2014-07-11  Simon Cook  <simon.cook@embecosm.com>
+
 	* ml/database.cpp (qinit3): Make prog field in features TEXT.
 	(qinit4): Remove invalid foreign key constraint.
 	(get_all_results): Only select results with the lowest energy.
