@@ -75,7 +75,7 @@ int database::initdb()
                   "PRIMARY KEY (seq, pos))";
   retval |= sqlite3_exec(db, qinit2, NULL, NULL, NULL);
 
-  char qinit3[] = "CREATE TABLE IF NOT EXISTS features (prog INTEGER NOT NULL, "
+  char qinit3[] = "CREATE TABLE IF NOT EXISTS features (prog TEXT NOT NULL, "
                   "feature INTEGER NOT NULL, value INTEGER NOT NULL, "
                   "PRIMARY KEY (prog, feature))";
   retval |= sqlite3_exec(db, qinit3, NULL, NULL, NULL);
@@ -83,8 +83,7 @@ int database::initdb()
   // Program result table
   char qinit4[] = "CREATE TABLE IF NOT EXISTS results (prog TEXT NOT NULL, "
                   "seq INTEGER NOT NULL, time INTEGER, energy INTEGER, "
-                  "PRIMARY KEY (prog, seq), "
-                  "FOREIGN KEY (seq) REFERENCES passorder(seq))";
+                  "PRIMARY KEY (prog, seq))";
   retval |= sqlite3_exec(db, qinit4, NULL, NULL, NULL);
 
   // Pass blob table (for e.g. storing tree output)
@@ -190,7 +189,10 @@ std::vector<result> database::get_all_results()
   int retval, passretval;
   sqlite3_stmt *stmt, *passstmt;
 
-  buffer = sqlite3_mprintf("SELECT * FROM results");
+  // FIXME: Make the minimal request a parameter. Perhaps another function?
+  buffer = sqlite3_mprintf("SELECT `PROG`, `SEQ`, MIN(`energy`) FROM (SELECT "
+                           "`rowid`,* FROM `results`  ORDER BY `rowid` ASC "
+                           "LIMIT 0, 50000) GROUP BY `PROG`");
   retval = sqlite3_prepare_v2 (db, buffer, -1, &stmt, 0);
   sqlite3_free (buffer);
   if (retval)
@@ -226,7 +228,7 @@ std::vector<result> database::get_all_results()
 
       // Select feature set for test
       std::vector<mageec_feature *> features;
-      buffer = sqlite3_mprintf ("SELECT * FROM features WHERE prog = %s ORDER "
+      buffer = sqlite3_mprintf ("SELECT * FROM features WHERE prog = %Q ORDER "
                                 "BY feature", progkey);
       passretval = sqlite3_prepare_v2 (db, buffer, -1, &passstmt, 0);
       sqlite3_free (buffer);

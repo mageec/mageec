@@ -1,5 +1,12 @@
 2014-07-11  Simon Cook  <simon.cook@embecosm.com>
 
+	* ml/database.cpp (qinit3): Make prog field in features TEXT.
+	(qinit4): Remove invalid foreign key constraint.
+	(get_all_results): Only select results with the lowest energy.
+	Correct mprintf for feature set selection to use %Q instead of %s.
+
+2014-07-11  Simon Cook  <simon.cook@embecosm.com>
+
 	* gcc_plugin/feature-extract.cpp: Use bversion.h to determine version.
 	Removed plugin-version.h from includes.
 	* gcc_plugin/Makefile.am: Build with -fno-rtti.
