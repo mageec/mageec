@@ -24,6 +24,10 @@
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 
+#ifndef BUILDING_GCC_MINOR
+    #include "bversion.h"
+    #define GCC_MINOR BUILDING_GCC_MINOR
+#endif
 #if (GCC_MINOR < 9)
   #include "gcc-plugin.h"
   #include "gimple-ssa.h"
@@ -63,7 +67,6 @@
   #include "tree.h"
   #include "tree-pass.h"
   #include "intl.h"
-  #include "plugin-version.h"
   #include "diagnostic.h"
   #include "context.h"
 #endif

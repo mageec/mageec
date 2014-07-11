@@ -1,6 +1,6 @@
 # Compilation Flags
 AM_CFLAGS = -g -O2 -I$(shell $(CC) -print-file-name=plugin)/include \
-  -I$(top_srcdir)/include
+  -I$(top_srcdir)/include -fno-rtti
 AM_LDFLAGS =
 # Force us to be really specific with what we mean
 AM_CFLAGS += -Wall -Wextra -Werror
