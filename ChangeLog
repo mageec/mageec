@@ -1,3 +1,12 @@
+2014-07-29  Simon Cook  <simon.cook@embecosm.com>
+
+	* doc/Makefile.in: Regenerated
+	* gcc_plugin/feature-extract.cpp: Replace uses of GCC_MINOR with
+	GCC_VERSION.
+	Fix GCC 4.8 headers.
+	* mageec/Makefile.am: Link with libmageec_learner before libmageec.
+	* mageec/Makefile.in: Regenerated.
+
 2014-07-11  Simon Cook  <simon.cook@embecosm.com>
 
 	* ml/database.cpp (qinit3): Make prog field in features TEXT.

@@ -150,10 +150,10 @@ libmageec_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 PROGRAMS = $(bin_PROGRAMS)
 am_mageecdb_OBJECTS = dbtool.$(OBJEXT)
 mageecdb_OBJECTS = $(am_mageecdb_OBJECTS)
-mageecdb_DEPENDENCIES = libmageec.la ../ml/libmageec_learner.la
+mageecdb_DEPENDENCIES = ../ml/libmageec_learner.la libmageec.la
 am_mageechash_OBJECTS = mageechash.$(OBJEXT)
 mageechash_OBJECTS = $(am_mageechash_OBJECTS)
-mageechash_DEPENDENCIES = libmageec.la ../ml/libmageec_learner.la
+mageechash_DEPENDENCIES = ../ml/libmageec_learner.la libmageec.la
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -370,9 +370,9 @@ libmageec_la_SOURCES = mageec.cpp hasher.cpp features.cpp passes.cpp \
 libmageec_la_LDFLAGS = -release 0.1.0 $(am__append_3)
 libmageec_la_LIBADD = ../ml/libmageec_learner.la $(am__append_2)
 mageechash_SOURCES = mageechash.cpp
-mageechash_LDADD = libmageec.la ../ml/libmageec_learner.la
+mageechash_LDADD = ../ml/libmageec_learner.la libmageec.la
 mageecdb_SOURCES = dbtool.cpp
-mageecdb_LDADD = libmageec.la ../ml/libmageec_learner.la
+mageecdb_LDADD = ../ml/libmageec_learner.la libmageec.la
 @ENABLE_PYTHON_TRUE@libmageec_la_CPPFLAGS = $(PYTHON_CPPFLAGS) $(BOOST_CPPFLAGS)
 all: all-am
 

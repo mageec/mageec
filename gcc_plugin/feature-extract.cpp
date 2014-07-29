@@ -24,22 +24,15 @@
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 
-#ifndef BUILDING_GCC_MINOR
+#ifndef BUILDING_GCC_VERSION
     #include "bversion.h"
-    #define GCC_MINOR BUILDING_GCC_MINOR
+    #define GCC_VERSION BUILDING_GCC_VERSION
 #endif
-#if (GCC_MINOR < 9)
+#if (BUILDING_GCC_VERSION < 4009)
   #include "gcc-plugin.h"
-  #include "gimple-ssa.h"
-  #include "ssa-iterators.h"
-  #include "tree-core.h"
-  #include "tree-ssa-operands.h"
-  #include "tree-ssanames.h"
-  #include "tree.h"
   #include "tree-pass.h"
   #include "gimple.h"
   #include "function.h"
-  #include "basic-block.h"
   #include "toplev.h"
 #else
   #include "gcc-plugin.h"
@@ -133,7 +126,7 @@ static unsigned mageec_featextract_exec(void)
   unsigned total_phi_args = 0;        //total for ft27
   unsigned total_phi_nodes = 0;       //divisor for ft27
 
-#if (GCC_MINOR < 9)
+#if (GCC_VERSION < 4009)
   FOR_EACH_BB (bb)
 #else
   FOR_ALL_BB_FN (bb, cfun)
@@ -267,7 +260,7 @@ static unsigned mageec_featextract_exec(void)
 /**
  * MAGEEC Feature Extractor Pass Definition
  */
-#if (GCC_MINOR < 9)
+#if (GCC_VERSION < 4009)
 static struct gimple_opt_pass mageec_featextract =
 {
   {
@@ -335,7 +328,7 @@ void register_featextract (void)
 {
   struct register_pass_info pass;
 
-#if (GCC_MINOR < 9)
+#if (GCC_VERSION < 4009)
   pass.pass = &mageec_featextract.pass;
 #else
   pass.pass = make_mageec_pass (g);

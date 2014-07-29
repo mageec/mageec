@@ -14,12 +14,12 @@ libmageec_la_LIBADD = ../ml/libmageec_learner.la
 # Build ELF Hasher
 bin_PROGRAMS = mageechash
 mageechash_SOURCES = mageechash.cpp
-mageechash_LDADD = libmageec.la ../ml/libmageec_learner.la
+mageechash_LDADD = ../ml/libmageec_learner.la libmageec.la
 
 # Build MAGEEC Database Tool
 bin_PROGRAMS += mageecdb
 mageecdb_SOURCES = dbtool.cpp
-mageecdb_LDADD = libmageec.la ../ml/libmageec_learner.la
+mageecdb_LDADD = ../ml/libmageec_learner.la libmageec.la
 
 # Also build library as a python module
 if ENABLE_PYTHON
