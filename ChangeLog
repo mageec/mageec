@@ -1,3 +1,9 @@
+2014-08-01  Simon Cook  <simon.cook@embecosm.com>
+
+	* gcc_plugin/feature-extract.cpp (mageec_featextract_exec): Add
+	missing features ft16, ft17, ft18, ft19, ft20, ft22, ft23, ft35,
+	ft39, ft42, ft43, ft44, ft45, ft46.
+
 2014-07-29  Simon Cook  <simon.cook@embecosm.com>
 
 	* doc/Makefile.in: Regenerated

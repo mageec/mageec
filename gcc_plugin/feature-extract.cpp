@@ -88,6 +88,8 @@ static unsigned mageec_featextract_exec(void)
 {
   basic_block bb;
   gimple_stmt_iterator gsi;
+  edge e;
+  edge_iterator ei;
 
   // Variables for holding feature information
   std::vector<unsigned> insn_counts;
@@ -106,7 +108,14 @@ static unsigned mageec_featextract_exec(void)
   unsigned insn_count_lt15 = 0;       //ft13
   unsigned insn_count_15_to_500 = 0;  //ft14
   unsigned insn_count_gt500 = 0;      //ft15
+  unsigned edges_in_cfg = 0;          //ft16
+  unsigned edges_critical = 0;        //ft17
+  unsigned edges_abnormal = 0;        //ft18
+  unsigned method_cond_stmt = 0;      //ft19
+  unsigned call_direct = 0;           //ft20
   unsigned method_assignments = 0;    //ft21
+  unsigned int_operations = 0;        //ft22
+  unsigned float_operations = 0;      //ft23
   unsigned average_phi_node_head = 0; //ft26
   unsigned average_phi_args = 0;      //ft27
   unsigned bb_phi_count_0 = 0;        //ft28
@@ -116,6 +125,13 @@ static unsigned mageec_featextract_exec(void)
   unsigned bb_phi_args_1_to_5 = 0;    //ft32
   unsigned method_switch_stmt = 0;    //ft33
   unsigned method_unary_ops = 0;      //ft34
+  unsigned pointer_arith = 0;         //ft35
+  unsigned call_indirect = 0;         //ft39
+  unsigned call_ptr_arg = 0;          //ft42
+  unsigned call_gt4_args = 0;         //ft43
+  unsigned call_ret_float = 0;        //ft44
+  unsigned call_ret_int = 0;          //ft45
+  unsigned uncond_branches = 0;       //ft46
 
   // Temporaries
   unsigned stmt_count = 0;
@@ -151,7 +167,22 @@ static unsigned mageec_featextract_exec(void)
           get_gimple_rhs_class (gimple_expr_code (stmt));
         if (grhs_class == GIMPLE_UNARY_RHS)
           method_unary_ops++;
+        if (grhs_class == GIMPLE_BINARY_RHS)
+        {
+          tree arg1 = gimple_assign_rhs1 (stmt);
+          tree arg2 = gimple_assign_rhs2 (stmt);
+          if (FLOAT_TYPE_P (TREE_TYPE (arg1)))
+            float_operations++;
+          else if (INTEGRAL_TYPE_P (TREE_TYPE (arg2)))
+            int_operations++;
+          //FIXME: Is this correct for detecting pointer arith?
+          if (POINTER_TYPE_P (TREE_TYPE (arg1)) ||
+              POINTER_TYPE_P (TREE_TYPE (arg2)))
+            pointer_arith++;
+        }
       }
+
+      // Phi Analysis
       if (gimple_code (stmt) == GIMPLE_PHI)
       {
         phi_nodes++;
@@ -165,7 +196,38 @@ static unsigned mageec_featextract_exec(void)
         in_phi_header = false;
       if (gimple_code (stmt) == GIMPLE_SWITCH)
         method_switch_stmt++;
-    }
+
+      // Call analysis
+      if (is_gimple_call (stmt))
+      {
+        if (gimple_call_num_args (stmt) > 4)
+          call_gt4_args++;
+        // Check if call has a pointer argument
+        bool call_has_ptr = false;
+        for (unsigned i = 0; i < gimple_call_num_args (stmt); i++)
+        {
+          tree arg = gimple_call_arg (stmt, i);
+          if (POINTER_TYPE_P (TREE_TYPE (arg)))
+            call_has_ptr = true;
+        }
+        if (call_has_ptr)
+          call_ptr_arg++;
+        // Get current statement, if not null, then direct
+        tree call_fn = gimple_call_fndecl (stmt);
+        if (call_fn)
+          call_direct++;
+        else
+          call_indirect++;
+        tree call_ret = gimple_call_lhs (stmt);
+        if (FLOAT_TYPE_P (TREE_TYPE (call_ret)))
+          call_ret_float++;
+        else if (INTEGRAL_TYPE_P (TREE_TYPE (call_ret)))
+          call_ret_int++;
+      }
+
+      if (gimple_code (stmt) == GIMPLE_COND)
+        method_cond_stmt++;
+    } // end gimple iterator
 
     // Successor/predecessor information
     if (EDGE_COUNT(bb->succs) == 1)
@@ -191,6 +253,17 @@ static unsigned mageec_featextract_exec(void)
     if ((EDGE_COUNT(bb->preds) > 2) && (EDGE_COUNT(bb->succs) > 2))
       bb_gt2pred_gt2succ++;
 
+    // CFG information
+    FOR_EACH_EDGE (e, ei, bb->succs)
+    {
+      edges_in_cfg++;
+      if (EDGE_CRITICAL_P (e))
+        edges_critical++;
+      if (e->flags & EDGE_ABNORMAL)
+        edges_abnormal++;
+    }
+
+
     // Store processed data about this block
     insn_counts.push_back(stmt_count);
     if (stmt_count < 15)
@@ -210,7 +283,7 @@ static unsigned mageec_featextract_exec(void)
       bb_phi_args_gt5++;
     else if ((phi_args >= 1) && (phi_args <= 5))
       bb_phi_args_1_to_5++;
-  }
+  } /* end of basic block */
 
   // Calculate averages once totals have been collected
   if (total_phi_nodes > 0)
@@ -234,7 +307,14 @@ static unsigned mageec_featextract_exec(void)
   features.push_back(new basic_feature("ft13", "BB with insn < 15", insn_count_lt15));
   features.push_back(new basic_feature("ft14", "BB with insn [15, 500]", insn_count_15_to_500));
   features.push_back(new basic_feature("ft15", "BB with insn > 500", insn_count_gt500));
+  features.push_back(new basic_feature("ft16", "Edges in CFG", edges_in_cfg));
+  features.push_back(new basic_feature("ft17", "Critical Edges in CFG", edges_critical));
+  features.push_back(new basic_feature("ft18", "Abnormal Edges in CFG", edges_abnormal));
+  features.push_back(new basic_feature("ft19", "Conditional Statements", method_cond_stmt));
+  features.push_back(new basic_feature("ft20", "Direct Calls", call_direct));
   features.push_back(new basic_feature("ft21", "Assignments in method", method_assignments));
+  features.push_back(new basic_feature("ft22", "Integer operations", int_operations));
+  features.push_back(new basic_feature("ft23", "Floating Point Operations", float_operations));
   features.push_back(new basic_feature("ft24", "Total Statement in BB", vector_sum(insn_counts)));
   features.push_back(new basic_feature("ft25", "Avg Statement in BB", vector_sum(insn_counts)/bb_count));
   features.push_back(new basic_feature("ft26", "Avg phis at top of BB", average_phi_node_head));
@@ -246,6 +326,13 @@ static unsigned mageec_featextract_exec(void)
   features.push_back(new basic_feature("ft32", "BB phis with [1,5] arg", bb_phi_args_1_to_5));
   features.push_back(new basic_feature("ft33", "Switch stmts in method", method_switch_stmt));
   features.push_back(new basic_feature("ft34", "Unary ops in method", method_unary_ops));
+  features.push_back(new basic_feature("ft35", "Pointer Arithmetic", pointer_arith));
+  features.push_back(new basic_feature("ft39", "Indirect Calls", call_indirect));
+  features.push_back(new basic_feature("ft42", "Calls with pointer args", call_ptr_arg));
+  features.push_back(new basic_feature("ft43", "Calls with > 4 args", call_gt4_args));
+  features.push_back(new basic_feature("ft44", "Calls that return float", call_ret_float));
+  features.push_back(new basic_feature("ft45", "Calls that return int", call_ret_int));
+  features.push_back(new basic_feature("ft46", "Unconditional branches", uncond_branches));
 
   mageec_inst.take_features(current_function_name(), features);
 
