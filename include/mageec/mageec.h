@@ -101,7 +101,7 @@ public:
  * @param data Data to hash.
  * @param size Size of data.
  */
-uint64_t hash_data(const void *data, int size);
+uint64_t hash_data(const void *data, unsigned long size);
 
 } // End mageec namespace
 

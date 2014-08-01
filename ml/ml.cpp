@@ -37,7 +37,7 @@ int mageec_ml::init (std::string dbfilename)
   /* FIXME: The second parameter should be false, we do not want to be creating
      a new database here */
   db = new database(dbfilename, true);
-  passes = db->get_pass_list();
+  known_passes = db->get_pass_list();
   return 0;
 }
 
@@ -66,7 +66,7 @@ void mageec_ml::finish (void)
 
 std::vector<mageec_pass*> mageec_ml::all_passes (void)
 {
-  return passes;
+  return known_passes;
 }
 
 void mageec_ml::add_result (std::vector<mageec_feature*> features,
@@ -77,10 +77,11 @@ void mageec_ml::add_result (std::vector<mageec_feature*> features,
   if (!db)
     return;
 
-  result res = {.passlist = passes,
-                .featlist = features,
-                .progname = "",
-                .metric = metric};
+  result res;
+  res.passlist = passes,
+  res.featlist = features,
+  res.progname = "",
+  res.metric = metric;
 
   db->add_result(res);
 }
@@ -100,7 +101,7 @@ decision mageec_ml::make_decision (mageec_pass *pass,
   if (!db)
     return NATIVE_DECISION;
 
-  unsigned int featurecount = features.size();
+  unsigned long featurecount = features.size();
   assert(featurecount > 0 && "Empty feature vector.");
   const char *passname = pass->name().c_str();
 
@@ -121,7 +122,7 @@ decision mageec_ml::make_decision (mageec_pass *pass,
   snprintf (namebuf, 1024, "/tmp/%s.names", passname);
   std::ofstream namefile(namebuf);
   namefile << "runpass." << std::endl;
-  for (unsigned int i = 0; i < featurecount; i++)
+  for (unsigned long i = 0; i < featurecount; i++)
     namefile << features[i]->name() << ": continuous." << std::endl;
   namefile << "runpass: t,f" << std::endl;;
   namefile.close();
@@ -164,17 +165,17 @@ void mageec_ml::process_results()
     return;
 
   // Calculate number of features from length of first result's feature vector
-  unsigned int featurecount = results[0].featlist.size();
+  unsigned long featurecount = results[0].featlist.size();
 
   /* Brief note to myself:
      Write out the column file for the pass, using "torun" as the variable to
      find
    */
-  for (unsigned int i = 0, size = passes.size(); i < size; i++)
+  for (unsigned long i = 0, size = known_passes.size(); i < size; i++)
   {
     // namebuf will be used as a buffer to generate file names
     char namebuf[1024];
-    std::string passnamestr = passes[i]->name();
+    std::string passnamestr = known_passes[i]->name();
     const char *passname = passnamestr.c_str();
     std::cerr << "Training for " << passname << std::endl;
 
@@ -182,7 +183,7 @@ void mageec_ml::process_results()
     snprintf (namebuf, 1024, "/tmp/%s.names", passname);
     std::ofstream namefile(namebuf);
     namefile << "runpass." << std::endl;
-    for (unsigned int j = 0; j < featurecount; j++)
+    for (unsigned long j = 0; j < featurecount; j++)
       namefile << results[0].featlist[j]->name()
                << ": continuous." << std::endl;
     namefile << "runpass: t,f" << std::endl;;
@@ -191,12 +192,12 @@ void mageec_ml::process_results()
     // Output test data (.data file)
     snprintf (namebuf, 1024, "/tmp/%s.data", passname);
     std::ofstream testfile(namebuf);
-    for (unsigned int j = 0, jsize = results.size(); j < jsize; j++)
+    for (unsigned long j = 0, jsize = results.size(); j < jsize; j++)
     {
-      for (unsigned int k = 0; k < featurecount; k++)
+      for (unsigned long k = 0; k < featurecount; k++)
         testfile << results[j].featlist[k]->get_feature() << ',';
       bool ran = false;
-      for (unsigned int k = 0, ksize = results[j].passlist.size(); k < ksize; k++)
+      for (unsigned long k = 0, ksize = results[j].passlist.size(); k < ksize; k++)
         if (results[j].passlist[k]->name() == passname)
         {
           ran = true;
@@ -212,7 +213,7 @@ void mageec_ml::process_results()
     // Call the machine learner
     FILE *fpipe;
     snprintf (namebuf, 1024, "%s/c5.0 -f /tmp/%s", LIBEXECDIR, passname);
-    if (!(fpipe = (FILE*)popen(namebuf, "r")))
+    if (!(fpipe = static_cast<FILE *>(popen(namebuf, "r"))))
       std::cerr << "Error Training for " << passname << std::endl;
     else
       while (fgets(namebuf, 1024, fpipe))
@@ -225,7 +226,7 @@ void mageec_ml::process_results()
     if (treefile)
     {
       treefile.seekg (0, treefile.end);
-      int treelength = treefile.tellg();
+      long treelength = treefile.tellg();
       treefile.seekg (0, treefile.beg);
       char *treebuf = new char[treelength];
       treefile.read (treebuf, treelength);
@@ -251,9 +252,9 @@ void mageec_ml::process_results()
 int file_ml::init (std::string dbfilename __attribute__((unused)))
 {
   // Attempt to load the file pointed to by MAGEEC_EXECUTELIST or a default.
-  char *pass_file = getenv("MAGEEC_EXECUTELIST");
+  const char *pass_file = getenv("MAGEEC_EXECUTELIST");
   if (pass_file == NULL)
-    pass_file = (char*)"/tmp/mageec-executelist";
+    pass_file = static_cast<const char *>("/tmp/mageec-executelist");
   std::ifstream input_file(pass_file);
   if (!input_file.is_open())
     return 1;
@@ -280,9 +281,9 @@ decision file_ml::make_decision (mageec_pass *pass,
                                  std::vector<mageec_feature*> features
                                    __attribute__((unused)))
 {
-  int passcount = passlist.size();
+  unsigned long passcount = passlist.size();
   std::string passname = pass->name();
-  for (int i = 0; i < passcount; i++)
+  for (unsigned long i = 0; i < passcount; i++)
     if (passlist[i] == passname)
       return FORCE_EXECUTE;
   return FORCE_NOEXECUTE;

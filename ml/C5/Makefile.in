@@ -314,6 +314,7 @@ top_srcdir = @top_srcdir@
 
 # Compilation Flags
 AM_LDFLAGS = -lm
+AM_CFLAGS = 
 c5_0_SOURCES = global.c\
                c50.c\
                construct.c\

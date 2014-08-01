@@ -33,6 +33,8 @@ namespace mageec
 class mageec_pass
 {
 public:
+  virtual ~mageec_pass();
+
   virtual std::string name() = 0;
   /* FIXME Is an int sufficient? */
   virtual int value() = 0;

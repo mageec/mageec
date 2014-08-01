@@ -51,7 +51,6 @@ bool hashedelf::ignoredsection (char const *sectionname)
   return false;
 }
 
-#pragma GCC diagnostic ignored "-Wpointer-arith"
 int hashedelf::hash (char const *filename)
 {
   Elf *elf;
@@ -95,15 +94,17 @@ int hashedelf::hash (char const *filename)
     if ((sechdr.sh_flags & SHF_ALLOC) && !ignoredsection(name))
     {
       /* Add sectionname */
-      data = realloc (data, datasize + strlen(name));
+      data = static_cast<unsigned char *>(realloc (data, datasize +
+                                                   strlen(name)));
       if (data == NULL)
         return 1;
       memcpy((data+datasize), name, strlen(name));
       datasize += strlen(name);
 
       /* Add size and load address */
-      data = realloc(data, datasize + sizeof(sechdr.sh_size)  +
-                     sizeof(sechdr.sh_addr));
+      data = static_cast<unsigned char *>(realloc (data, datasize +
+                                                   sizeof(sechdr.sh_size) +
+                                                   sizeof(sechdr.sh_addr)));
       if (data == NULL)
         return 1;
       memcpy((data+datasize), &sechdr.sh_size, sizeof(sechdr.sh_size));
@@ -116,7 +117,8 @@ int hashedelf::hash (char const *filename)
       if (elfdata == NULL)
         return 1;
       if (elfdata->d_size > 0 && elfdata->d_buf != NULL) {
-        data = realloc (data, datasize + elfdata->d_size);
+        data = static_cast<unsigned char *>(realloc (data, datasize +
+                                                     elfdata->d_size));
         if (data == NULL)
           return 1;
         memcpy((data+datasize), elfdata->d_buf, elfdata->d_size);

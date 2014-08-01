@@ -20,7 +20,7 @@
 #include "mageec/mageec.h"
 #include "gcrypt.h"
 
-uint64_t mageec::hash_data(const void *data, int size)
+uint64_t mageec::hash_data(const void *data, unsigned long size)
 {
   gcry_md_hd_t handle = NULL;
   gcry_error_t err = 0;
@@ -37,14 +37,14 @@ uint64_t mageec::hash_data(const void *data, int size)
     return 0;
 
   /* XOR each 64-bit block to generate 64-bit hash */
-  finalhash  = (uint64_t)(hash[0] ^ hash[8] ^ hash[16] ^ hash[24]) << 56;
-  finalhash |= (uint64_t)(hash[1] ^ hash[9] ^ hash[17] ^ hash[25]) << 48;
-  finalhash |= (uint64_t)(hash[2] ^ hash[10] ^ hash[18] ^ hash[26]) << 40;
-  finalhash |= (uint64_t)(hash[3] ^ hash[11] ^ hash[19] ^ hash[27]) << 32;
-  finalhash |= (uint64_t)(hash[4] ^ hash[12] ^ hash[20] ^ hash[28]) << 24;
-  finalhash |= (uint64_t)(hash[5] ^ hash[13] ^ hash[21] ^ hash[29]) << 16;
-  finalhash |= (uint64_t)(hash[6] ^ hash[14] ^ hash[22] ^ hash[30]) << 8;
-  finalhash |= (uint64_t)(hash[7] ^ hash[15] ^ hash[23] ^ hash[31]);
+  finalhash  = static_cast<uint64_t>(hash[0] ^ hash[8] ^ hash[16] ^ hash[24]) << 56;
+  finalhash |= static_cast<uint64_t>(hash[1] ^ hash[9] ^ hash[17] ^ hash[25]) << 48;
+  finalhash |= static_cast<uint64_t>(hash[2] ^ hash[10] ^ hash[18] ^ hash[26]) << 40;
+  finalhash |= static_cast<uint64_t>(hash[3] ^ hash[11] ^ hash[19] ^ hash[27]) << 32;
+  finalhash |= static_cast<uint64_t>(hash[4] ^ hash[12] ^ hash[20] ^ hash[28]) << 24;
+  finalhash |= static_cast<uint64_t>(hash[5] ^ hash[13] ^ hash[21] ^ hash[29]) << 16;
+  finalhash |= static_cast<uint64_t>(hash[6] ^ hash[14] ^ hash[22] ^ hash[30]) << 8;
+  finalhash |= static_cast<uint64_t>(hash[7] ^ hash[15] ^ hash[23] ^ hash[31]);
 
   return finalhash;
 }

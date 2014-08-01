@@ -37,8 +37,10 @@ namespace mageec
 class mageec_ml
 {
   database *db;
-  std::vector<mageec_pass*> passes;
+  std::vector<mageec_pass*> known_passes;
 public:
+  virtual ~mageec_ml() {}
+
   /**
    * Initilizes the MAGEEC Machine Learner
    * @param dbfilename Path of database file to open.
@@ -129,7 +131,7 @@ public:
    * Adds a set of result points to machine learner raw database.
    * @param features List of features for program.
    * @param passes List of passes executed during compilation.
-   * @param metric Performance metrics.
+   * @param metrics Performance metrics.
    * @param good Whether the result of compilation was valid (for machine
    * learners that understand bad combinations.)
    */   

@@ -33,6 +33,8 @@ namespace mageec
 class mageec_feature
 {
 public:
+  virtual ~mageec_feature();
+
   virtual std::string name() = 0;
   virtual std::string desc() = 0;
   virtual int get_feature() = 0;
@@ -47,6 +49,11 @@ class basic_feature : public mageec_feature
   std::string feature_desc;
   int feature_value;
 public:
+  // FIXME: This int has been added to avoid warnings about padding.
+  // This causes the same object to be created for 64-bit systems, but a 32-bit
+  // extra hole added for 32-bit issues.
+  int padding_value;
+
   basic_feature (std::string name);
   basic_feature (std::string name, int value);
   basic_feature (std::string name, std::string desc, int value);

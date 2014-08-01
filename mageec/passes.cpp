@@ -21,6 +21,11 @@
 
 using namespace mageec;
 
+// Define default destructor to avoid weak vtables
+mageec_pass::~mageec_pass()
+{
+}
+
 basic_pass::basic_pass(std::string name)
 {
   pass_name = name;

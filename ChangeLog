@@ -1,5 +1,67 @@
 2014-08-01  Simon Cook  <simon.cook@embecosm.com>
 
+	* gcc_plugin/gcc-callbacks.cpp (mageec_pass_gate): Replace fprintf
+	calls using result to use %i instead %hhi.
+	* include/mageec/elfhash.h (hashedelf): Change type of data to
+	unsigned char *.
+	Add newline to end of file.
+	* include/mageec/mageec-decision.h (enum decision): Add newline to
+	end of file.
+	* include/mageec/mageec-features.h: Add newline to end of file.
+	(mageec_feature): Add virtual destructor.
+	(class basic_feature): Add extra int to avoid padding warning.
+	* include/mageec/mageec-ml.h (mageec_ml): Rename passes to
+	known_passes.
+	Add virtual destructor.
+	(mageec_ml::raw_result): Correct @param comment.
+	* include/mageec/mageec-passes.h: Add newline to end of file.
+	(mageec_pass): Add virtual destructor.
+	* include/mageec/mageec-result.h: Add newline to end of file.
+	* include/mageec/mageec.h (hash_data): Change type of size
+	parameter to unsigned long.
+	* mageec/elfhash.cpp (hashedelf::hash): Remove #pragma GCC.
+	static_cast realloc calls.
+	* mageec/features.cpp (pad_string): Change type of length to
+	long long.
+	(dump_vector): Change type of variables that hold vector sizes
+	to unsigned long.
+	(mageec_feature::~mageec_feature): Added default destructor
+	to avoid weak vtables.
+	* mageec/hasher.cpp: Add newline to end of file.
+	(hash_data): Change type of size parameter to unsigned long.
+	Change casting for finalhash to static_cast.
+	* mageec/mageechash.cpp: Add newline to end of file.
+	* mageec/passes.cpp: Add newline to end of file.
+	(mageec_pass::~mageec_pass): Added default destructor to avoid
+	weak vtables.
+	* ml/C5/Makefile.am: Override parent CFLAGS to remove -Werror.
+	* ml/C5/Makefile.in: Regenerated.
+	* ml/database.cpp (database::get_pass_list): Change cast of
+	const char* to reinterpret_cast.
+	(database::add_result): Change type of iterator variable to
+	unsigned long.
+	Change cast of long long to static_cast<int64_t>.
+	(database::get_all_results): Change cast of const char* to
+	reinterpret_cast.
+	Change building of result object to be C++ compliant.
+	(const char *database::get_pass_blob): Change cast of char* to
+	reinterpret_cast.
+	* ml/ml.cpp (mageec_ml::init): Rename passes to known_passes.
+	(mageec_ml::all_passes): Likewise.
+	(mageec_ml::add_result): Change building of result object to be
+	C++ compliant.
+	(mageec_ml::make_decision): Change type of iterator variable to
+	unsigned long.
+	(mageec_ml::process_results): Likewise.
+	Rename passes to known_passes.
+	Change cast of popen to static_cast<FILE *>.
+	(file_ml::init): Mark pass_file as const.
+	Change cast of string to use static_cast.
+	(file_ml::make_decision): Change type of iterator variable and
+	vector length to unsigned long.
+
+2014-08-01  Simon Cook  <simon.cook@embecosm.com>
+
 	* gcc_plugin/feature-extract.cpp (mageec_featextract_exec): Add
 	missing features ft16, ft17, ft18, ft19, ft20, ft22, ft23, ft35,
 	ft39, ft42, ft43, ft44, ft45, ft46.

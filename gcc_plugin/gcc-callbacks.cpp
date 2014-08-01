@@ -100,7 +100,7 @@ void mageec_pass_gate (void *gcc_data,
 {
   short *result = (short *)gcc_data;
   if (mageec_config["print_pass_info"])
-    fprintf (stderr, "Pass: '%s',  Type: %s,  Function: '%s',  Gate: %hhi\n",
+    fprintf (stderr, "Pass: '%s',  Type: %s,  Function: '%s',  Gate: %i\n",
              current_pass->name, pass_type_str(current_pass).c_str(),
              current_function_name(), *result);
 
@@ -123,6 +123,6 @@ void mageec_pass_gate (void *gcc_data,
         *result = (short)0;
     }
     if (mageec_config["print_pass_info"] && mageec_changed)
-      fprintf (stderr, "  New gate: %hhi\n", *result);
+      fprintf (stderr, "  New gate: %i\n", *result);
   }
 }

@@ -28,7 +28,7 @@ namespace mageec
 
 class hashedelf
 {
-    void *data;
+    unsigned char *data;
     size_t datasize;
 public:
     hashedelf ();

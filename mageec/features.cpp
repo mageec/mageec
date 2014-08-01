@@ -21,7 +21,7 @@
 
 using namespace mageec;
 
-static std::string pad_string(std::string input, unsigned length, bool left)
+static std::string pad_string(std::string input, unsigned long length, bool left)
 {
   if (input.length() == length)
     return input;
@@ -40,7 +40,7 @@ void mageec_feature::dump_vector(std::vector<mageec_feature*> features,
   if (json)
   {
     OS << "[";
-    for (unsigned i = 0, size = features.size(); i < size; i++)
+    for (unsigned long i = 0, size = features.size(); i < size; i++)
     {
       OS << "{\"name\":\"" << features[i]->name() << "\",";
       OS << "\"desc\":\"" << features[i]->desc() << "\",";
@@ -50,17 +50,17 @@ void mageec_feature::dump_vector(std::vector<mageec_feature*> features,
     }
     OS << "]\n";
   } else {
-    unsigned maxname = 0;
-    unsigned maxdesc = 0;
+    unsigned long maxname = 0;
+    unsigned long maxdesc = 0;
     // Calculate the length of the longest name and description
-    for (unsigned i = 0, size = features.size(); i < size; i++)
+    for (unsigned long i = 0, size = features.size(); i < size; i++)
     {
       if (maxname < features[i]->name().length())
         maxname = features[i]->name().length();
       if (maxdesc < features[i]->desc().length())
         maxdesc = features[i]->desc().length();
     }
-    for (unsigned i = 0, size = features.size(); i < size; i++)
+    for (unsigned long i = 0, size = features.size(); i < size; i++)
     {
       OS << "  (";
       OS << pad_string(features[i]->name(), maxname, true);
@@ -71,6 +71,11 @@ void mageec_feature::dump_vector(std::vector<mageec_feature*> features,
       OS << '\n';
     }
   }
+}
+
+// Define default destructor to avoid weak vtables
+mageec_feature::~mageec_feature()
+{
 }
 
 basic_feature::basic_feature(std::string feat_name)

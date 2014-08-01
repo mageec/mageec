@@ -117,7 +117,7 @@ std::vector<mageec_pass*> database::get_pass_list()
     retval = sqlite3_step(stmt);
     if(retval == SQLITE_ROW)
     {
-      const char *val = (const char*)sqlite3_column_text(stmt,0);
+      const char *val = reinterpret_cast<const char *>(sqlite3_column_text(stmt,0));
       passes.push_back(new basic_pass(val));
     }
     else if (retval == SQLITE_DONE)
@@ -137,17 +137,18 @@ void database::add_result(result res)
 
   // Calcualte hash
   std::string hashdata;
-  for (int i=0, size=res.passlist.size(); i < size; i++)
+  for (unsigned long i=0, size=res.passlist.size(); i < size; i++)
     hashdata += res.passlist[i]->name();
   uint64_t hash = hash_data (hashdata.c_str(), hashdata.size());
 
   /* For SQLite we can only store signed numbers, therefore we sign transform,
      allowing any sorting to still work */
-  int64_t shash = hash ^ (uint64_t)0x8000000000000000;
+  int64_t shash = static_cast<int64_t>(hash) ^
+                  static_cast<int64_t>(0x8000000000000000);
 
   // Check if hash already exists
   buffer = sqlite3_mprintf ("SELECT seq FROM passorder WHERE seq = %lli "
-                            "GROUP BY seq", (long long int)shash);
+                            "GROUP BY seq", shash);
   if (!buffer)
     return;
   int retval = sqlite3_prepare_v2 (db, buffer, -1, &stmt, 0);
@@ -160,10 +161,10 @@ void database::add_result(result res)
   if (retval != SQLITE_DONE)
   {
     // The hash search has not found any result, add passes to database
-    for (int i=0, size=res.passlist.size(); i < size; i++)
+    for (unsigned long i=0, size=res.passlist.size(); i < size; i++)
     {
       buffer = sqlite3_mprintf ("INSERT INTO passorder VALUES (%lli, %i, %Q)",
-                                (long long int)shash, i,
+                                shash, i,
                                 res.passlist[i]->name().c_str());
       if (!buffer)
         return;
@@ -174,7 +175,7 @@ void database::add_result(result res)
   
   // Add result
   buffer = sqlite3_mprintf ("INSERT INTO results VALUES (%Q, %lli, 0, %i)",
-                            res.progname.c_str(), (long long int)shash,
+                            res.progname.c_str(), shash,
                             res.metric);
   if (!buffer)
     return;
@@ -203,8 +204,8 @@ std::vector<result> database::get_all_results()
     retval = sqlite3_step(stmt);
     if (retval == SQLITE_ROW)
     {
-      const char *progkey = (const char*)sqlite3_column_text(stmt, 0);
-      const char *passkey = (const char*)sqlite3_column_text(stmt, 1);
+      const char *progkey = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
+      const char *passkey = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1));
 
       // Select pass list for test
       std::vector<mageec_pass *> passes;
@@ -219,7 +220,7 @@ std::vector<result> database::get_all_results()
         passretval = sqlite3_step(passstmt);
         if (passretval == SQLITE_ROW)
         {
-          const char *passname = (const char*)sqlite3_column_text(passstmt, 2);
+          const char *passname = reinterpret_cast<const char *>(sqlite3_column_text(passstmt, 2));
           passes.push_back (new basic_pass(passname));
         }
         else if (passretval == SQLITE_DONE)
@@ -239,7 +240,7 @@ std::vector<result> database::get_all_results()
         passretval = sqlite3_step(passstmt);
         if (passretval == SQLITE_ROW)
         {
-          const char *featname = (const char*)sqlite3_column_text(passstmt, 1);
+          const char *featname = reinterpret_cast<const char *>(sqlite3_column_text(passstmt, 1));
           int featdata = sqlite3_column_int(passstmt, 2);
           features.push_back (new basic_feature(featname, featdata));
         }
@@ -249,10 +250,11 @@ std::vector<result> database::get_all_results()
 
       // Build object and add to results
       int energy = sqlite3_column_int(stmt, 3);
-      result res = {.passlist = passes,
-                    .featlist = features,
-                    .progname = progkey,
-                    .metric = energy};
+      result res;
+      res.passlist = passes;
+      res.featlist = features;
+      res.progname = progkey;
+      res.metric = energy;
       results.push_back (res);
     }
     else if (retval == SQLITE_DONE)
@@ -294,7 +296,7 @@ const char *database::get_pass_blob(std::string passname)
   retval = sqlite3_step(stmt);
   if (retval == SQLITE_ROW)
   {
-    const char *data = (const char*)sqlite3_column_text(stmt, 0);
+    const char *data = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
     return data;
   }
 

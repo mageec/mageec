@@ -1,5 +1,6 @@
 # Compilation Flags
 AM_LDFLAGS = -lm
+AM_CFLAGS =
 
 # Build C5.0 trainer
 libexec_PROGRAMS = c5.0
