@@ -288,7 +288,8 @@ static unsigned mageec_featextract_exec(void)
   // Calculate averages once totals have been collected
   if (total_phi_nodes > 0)
     average_phi_args = total_phi_args / total_phi_nodes;
-  average_phi_node_head = phi_header_nodes / bb_count;
+  if (bb_count > 0)
+    average_phi_node_head = phi_header_nodes / bb_count;
 
   /* Build feature vector to pass to machine learner */
   std::vector<mageec::mageec_feature*> features;
@@ -370,7 +371,7 @@ static struct gimple_opt_pass mageec_featextract =
 #else
 namespace {
 
-const pass_data pass_data_mageec_featextract = 
+const pass_data pass_data_mageec_featextract =
 {
   GIMPLE_PASS, /* type */
   "mageec-extractor", /* name */
