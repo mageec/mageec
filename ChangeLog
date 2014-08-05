@@ -1,4 +1,10 @@
 2014-08-05  James Pallister  <james.pallister@bristol.ac.uk>
+	Fix #4,  GCC plugin segfaults when a call does not have a LHS value.
+
+	* gcc_plugin/feature-extract.cpp: Check whether the LHS is a valid
+	    pointer before dereferencing.
+
+2014-08-05  James Pallister  <james.pallister@bristol.ac.uk>
 	Fix divide by zero in the feature extractor
 
 	* gcc_plugin/feature-extract.cpp: Fix divide by zero if bb_count is

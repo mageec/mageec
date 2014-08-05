@@ -219,10 +219,13 @@ static unsigned mageec_featextract_exec(void)
         else
           call_indirect++;
         tree call_ret = gimple_call_lhs (stmt);
-        if (FLOAT_TYPE_P (TREE_TYPE (call_ret)))
-          call_ret_float++;
-        else if (INTEGRAL_TYPE_P (TREE_TYPE (call_ret)))
-          call_ret_int++;
+        if(call_ret)
+        {
+          if (FLOAT_TYPE_P (TREE_TYPE (call_ret)))
+            call_ret_float++;
+          else if (INTEGRAL_TYPE_P (TREE_TYPE (call_ret)))
+            call_ret_int++;
+        }
       }
 
       if (gimple_code (stmt) == GIMPLE_COND)
