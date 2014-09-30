@@ -1,3 +1,11 @@
+2014-09-30  Simon Cook  <simon.cook@embecosm.com>
+
+	* training/evaltool.py: Added.
+	* training/execute-pt2.sh: Added.
+	* training/execute.sh: Added.
+	* training/test-pt2.sh: Added.
+	* training/test.py: Added.
+
 2014-08-05  James Pallister  <james.pallister@bristol.ac.uk>
 	Fix #4,  GCC plugin segfaults when a call does not have a LHS value.
 
