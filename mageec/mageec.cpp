@@ -19,42 +19,56 @@
 /** @file mageec.cpp MAGEEC Main Coordinator. */
 #include "mageec/mageec.h"
 #include "mageec/mageec-ml.h"
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 
 using namespace mageec;
 
 int mageec_framework::init (std::string compiler_version,
                             std::string compiler_target)
-{ 
+{
+  //FIXME: Use parameter for init function instead of environment variable.
+  char *mode = getenv("MAGEEC_MODE");
+  if (mode != NULL && 0 == strncmp(mode, "FILEML", sizeof("FILEML")))
+    ml = new file_ml();
+  else
+    ml = new mageec_ml();
+
   std::cerr << "MAGEEC:  Targetting '" << compiler_version << "' for '"
        << compiler_target << "'" << std::endl;
 
-  return ml.init (compiler_version, compiler_target);
+  return ml->init (compiler_version, compiler_target);
 }
 
 void mageec_framework::new_file (std::string filename)
 {
   std::cerr << "MAGEEC:  New source file " << filename << std::endl;
   featset.clear();
-  ml.new_file();
+  assert(ml != NULL && "MAGEEC Not Initialized");
+  ml->new_file();
 }
 
 void mageec_framework::end_file (void)
 {
   std::cerr << "MAGEEC:  End of source file" << std::endl;
   featset.clear();
-  ml.end_file();
+  assert(ml != NULL && "MAGEEC Not Initialized");
+  ml->end_file();
 }
 
 void mageec_framework::finish (void)
 {
   std::cerr << "MAGEEC:  Finish" << std::endl;
-  ml.finish();
+  assert(ml != NULL && "MAGEEC Not Initialized");
+  ml->finish();
 }
 
 std::vector<mageec_pass*> mageec_framework::all_passes (void)
 {
-  return ml.all_passes();
+  assert(ml != NULL && "MAGEEC Not Initialized");
+  return ml->all_passes();
 }
 
 void mageec_framework::take_features (std::string name,
@@ -73,6 +87,7 @@ decision mageec_framework::make_decision (std::string pass,
   std::vector<mageec_feature*> featureset = featset[function];
   
   mageec_pass *mpass = new basic_pass(pass);
-  decision d = ml.make_decision(mpass, featureset);
+  assert(ml != NULL && "MAGEEC Not Initialized");
+  decision d = ml->make_decision(mpass, featureset);
   return d;
 }

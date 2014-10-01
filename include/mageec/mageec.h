@@ -39,11 +39,7 @@ namespace mageec
  */
 class mageec_framework
 {
-#ifdef MAGEEC_FILEML
-  mageec::file_ml ml;
-#else
-  mageec::mageec_ml ml;
-#endif
+  mageec::mageec_ml *ml;
 
   /**
    * Storage for feature pass set

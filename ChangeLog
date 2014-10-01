@@ -1,3 +1,18 @@
+2014-10-01  Simon Cook  <simon.cook@embecosm.com>
+
+	* include/mageec/mageec.h (ml): Replace with pointer to machine
+	learner.
+	* mageec/mageec.cpp (mageec_framework::init): Create either normal
+	or file machine learner based on MAGEEC_MODE environment variable.
+	Replace ml member references with pointer equivalent.
+	(mageec_framework::new_file): Add assertion to check MAGEEC is
+	initialized.
+	Replace ml member references with pointer equivalent.
+	(mageec_framework::end_file): Likewise.
+	(mageec_framework::finish): Likewise.
+	(mageec_framework::all_passes): Likewise.
+	(mageec_framework::take_features): Likewise.
+
 2014-09-30  Simon Cook  <simon.cook@embecosm.com>
 
 	* training/evaltool.py: Added.
