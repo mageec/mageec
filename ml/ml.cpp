@@ -31,6 +31,15 @@ extern "C" {
   int c5_classify_main(char *filestem);
 }
 
+/**
+ * Generates a temporary filename for using as a machine learning filestem.
+ * It is up to the caller of this function to free the returned buffer.
+ * @returns random file name
+ */
+static char *generate_filename() {
+  return tempnam("/tmp", NULL);
+}
+
 int mageec_ml::init (std::string dbfilename)
 {
   std::cerr << "LEARNER: Hello!" << std::endl;
@@ -103,7 +112,9 @@ decision mageec_ml::make_decision (mageec_pass *pass,
 
   unsigned long featurecount = features.size();
   assert(featurecount > 0 && "Empty feature vector.");
-  const char *passname = pass->name().c_str();
+
+  // Generate filename prefix for machine learner temporaries
+  char *prefix = generate_filename();
 
   // namebuf will be used as a buffer to generate file names
   char namebuf[1024];
@@ -113,13 +124,13 @@ decision mageec_ml::make_decision (mageec_pass *pass,
   if (treedata == NULL)
     return NATIVE_DECISION;
 
-  snprintf (namebuf, 1024, "/tmp/%s.tree", passname);
+  snprintf (namebuf, 1024, "%s.tree", prefix);
   std::ofstream treefile(namebuf);
   treefile << treedata;
   treefile.close();
 
   // "names" file - Columns for classifier
-  snprintf (namebuf, 1024, "/tmp/%s.names", passname);
+  snprintf (namebuf, 1024, "%s.names", prefix);
   std::ofstream namefile(namebuf);
   namefile << "runpass." << std::endl;
   for (unsigned long i = 0; i < featurecount; i++)
@@ -128,7 +139,7 @@ decision mageec_ml::make_decision (mageec_pass *pass,
   namefile.close();
 
   // "cases" file - Data to make decision on (i.e. our function)
-  snprintf (namebuf, 1024, "/tmp/%s.cases", passname);
+  snprintf (namebuf, 1024, "%s.cases", prefix);
   std::ofstream casesfile(namebuf);
   for (unsigned int i = 0; i < featurecount; i++)
     casesfile << features[i]->get_feature() << ',';
@@ -136,17 +147,19 @@ decision mageec_ml::make_decision (mageec_pass *pass,
   casesfile.close();
 
   // Classify program as run/don't run
-  snprintf (namebuf, 1024, "/tmp/%s", passname);
+  snprintf (namebuf, 1024, "%s", prefix);
   int execute = c5_classify_main(namebuf);
 
   // Delete temporary files
-  /*snprintf (namebuf, 1024, "/tmp/%s.cases", passname);
+  /*snprintf (namebuf, 1024, "%s.cases", prefix);
   remove (namebuf);
-  snprintf (namebuf, 1024, "/tmp/%s.names", passname);
+  snprintf (namebuf, 1024, "%s.names", prefix);
   remove (namebuf);
-  snprintf (namebuf, 1024, "/tmp/%s.tree", passname);
+  snprintf (namebuf, 1024, "%s.tree", prefix);
   remove (namebuf);
   */
+
+  free(prefix);
 
   return (execute == 1) ? FORCE_EXECUTE : FORCE_NOEXECUTE;
 }
@@ -164,23 +177,24 @@ void mageec_ml::process_results()
   if (results.size() == 0)
     return;
 
+  // Generate filename prefix for machine learner temporaries
+  char *prefix = generate_filename();
+
   // Calculate number of features from length of first result's feature vector
   unsigned long featurecount = results[0].featlist.size();
 
-  /* Brief note to myself:
-     Write out the column file for the pass, using "torun" as the variable to
+  /* Write out the column file for the pass, using "torun" as the variable to
      find
    */
   for (unsigned long i = 0, size = known_passes.size(); i < size; i++)
   {
     // namebuf will be used as a buffer to generate file names
     char namebuf[1024];
-    std::string passnamestr = known_passes[i]->name();
-    const char *passname = passnamestr.c_str();
+    std::string passname = known_passes[i]->name();
     std::cerr << "Training for " << passname << std::endl;
 
     // Output names file (columns for classifier)
-    snprintf (namebuf, 1024, "/tmp/%s.names", passname);
+    snprintf (namebuf, 1024, "%s.names", prefix);
     std::ofstream namefile(namebuf);
     namefile << "runpass." << std::endl;
     for (unsigned long j = 0; j < featurecount; j++)
@@ -190,7 +204,7 @@ void mageec_ml::process_results()
     namefile.close();
 
     // Output test data (.data file)
-    snprintf (namebuf, 1024, "/tmp/%s.data", passname);
+    snprintf (namebuf, 1024, "%s.data", prefix);
     std::ofstream testfile(namebuf);
     for (unsigned long j = 0, jsize = results.size(); j < jsize; j++)
     {
@@ -212,7 +226,7 @@ void mageec_ml::process_results()
 
     // Call the machine learner
     FILE *fpipe;
-    snprintf (namebuf, 1024, "%s/c5.0 -f /tmp/%s", LIBEXECDIR, passname);
+    snprintf (namebuf, 1024, "%s/c5.0 -f %s", LIBEXECDIR, prefix);
     if (!(fpipe = static_cast<FILE *>(popen(namebuf, "r"))))
       std::cerr << "Error Training for " << passname << std::endl;
     else
@@ -221,7 +235,7 @@ void mageec_ml::process_results()
     pclose(fpipe);
 
     // Store Machine Learnt Tree
-    snprintf (namebuf, 1024, "/tmp/%s.tree", passname);
+    snprintf (namebuf, 1024, "%s.tree", prefix);
     std::ifstream treefile(namebuf, std::ifstream::binary);
     if (treefile)
     {
@@ -231,21 +245,22 @@ void mageec_ml::process_results()
       char *treebuf = new char[treelength];
       treefile.read (treebuf, treelength);
 
-      db->store_pass_blob (passnamestr, treebuf);
+      db->store_pass_blob (passname, treebuf);
 
       delete[] treebuf;
     }
 
     // Delete temporary files (namebuf holds tree file for storing)
     /*remove (namebuf);
-    snprintf (namebuf, 1024, "/tmp/%s.names", passname);
+    snprintf (namebuf, 1024, "%s.names", prefix);
     remove (namebuf);
-    snprintf (namebuf, 1024, "/tmp/%s.data", passname);
+    snprintf (namebuf, 1024, "%s.data", prefix);
     remove (namebuf);
-    snprintf (namebuf, 1024, "/tmp/%s.tmp", passname);
+    snprintf (namebuf, 1024, "%s.tmp", prefix);
     remove (namebuf);*/
 
   }
+  free(prefix);
 }
 
 // Initilizer for file based machine learner

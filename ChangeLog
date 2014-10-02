@@ -1,3 +1,10 @@
+2014-10-02  Simon Cook  <simon.cook@embecosm.com>
+
+	* ml/ml.cpp (generate_filename): Added to create filename.
+	(mageec_ml::make_decision): Use generated filename for temporaries
+	instead of passnames.
+	(mageec_ml::process_results): Likewise.
+
 2014-10-01  Simon Cook  <simon.cook@embecosm.com>
 
 	* include/mageec/mageec.h (ml): Replace with pointer to machine
