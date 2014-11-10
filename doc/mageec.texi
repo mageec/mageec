@@ -1,20 +1,23 @@
-\input texinfo
+\input texinfo 
 @setfilename mageec.info
 @afourpaper
 @settitle MAGEEC
 @paragraphindent 0
+@comment @include version.texi
+
+@set VERSION 0.1
 
 @copying
 This manual is for MAGEEC.
 
 Copyright @copyright{} 2013, 2014 Embecosm Limited and University of Bristol.
 @quotation
-Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.3 or
-any later version published by the Free Software Foundation; with no
-Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
-Texts. A copy of the license is included in the section entitled
-``GNU Free Documentation License''.
+Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts. A copy of
+the license is included in the section entitled ``GNU Free Documentation
+License''. 
 @end quotation
 @end copying
 
@@ -22,6 +25,7 @@ Texts. A copy of the license is included in the section entitled
 @title MAGEEC
 @subtitle MAchine Guided Energy Efficient Compilation
 @author Simon Cook
+@author Edward Jones
 @page
 @vskip 0pt plus 1filll
 @insertcopying
@@ -37,6 +41,7 @@ Efficient Compilation} project.
 @menu
 * Building MAGEEC::
 * GCC Plugin::
+* Training MAGEEC::
 * GNU Free Documentation License::
 @end menu
 
@@ -52,7 +57,7 @@ separate to the source.
 tar xjf mageec-@value{VERSION}.tar.bz2
 mkdir build-mageec
 cd build-mageec
-../mageec-@value{VERSION}/configure ...
+../mageec-@value{VERSION}/configure ... 
 @end example
 
 Available configuration options can be found by providing @code{--help} to
@@ -72,11 +77,176 @@ It can then be installed using:
 make install
 @end example
 
+@section MAGEEC for LLVM
+
+If the LLVM version of MAGEEC is being used, there needs to be a copy of MAGEEC
+installed in the default install directory prior to the building of LLVM, as
+this is where LLVM expects to find the MAGEEC headers. This also means that
+MAGEEC must be built prior to LLVM.
+
 @node GCC Plugin
 @chapter GCC Plugin
+
+
+@node Training MAGEEC
+@chapter Training MAGEEC
+
+To use MAGEEC it must first be trained on a representative dataset
+and for this purpose we use the Bristol/Embecosm Embedded Benchmark Suite
+(BEEBS) as well as a number of scripts in the training subdirectory of the
+MAGEEC source.  The scripts are used to generate, build and run a large number
+of configurations of BEEBS to then subsequently train the machine learner.
+
+@section Matrix Generation
+
+The script @code{training/matrixgen} is an R script used to generate a matrix
+of binary values. Each line in the matrix corresponds to a separate set of
+flags BEEBS will be configured with, which will be handled by the script
+@code{training/test.py}. To generate a matrix, the following command should be
+executed:
+
+@example
+R --no-save < matrixgen > matrix
+@end example
+
+Before using the generated matrix it must be cleaned up by manually removing
+the header and footer leaving just the lines which contain an entry number
+followed by a bit string. There must be no trailing empty lines.
+
+@section BEEBS Configuration
+
+@code{training/test.py} is responsible for configuring, building and testing
+multiple versions of BEEBS based on entries in the matrix. Each binary value in
+the matrix toggles a specific optimization flag or pass to be passed to the
+compiler, where the flag or pass being toggled depends on the index of the
+value in the line and the corresponding entry in the @code{_MAYBE_RUN_PASSES}
+list in the script.
+
+The @code{_MAYBE_RUN_PASSES} list and @code{_ALWAYS_RUN_PASSES} string should
+be set as appropriate for either GCC or LLVM. For GCC these should be set to
+the passes to be run, and for LLVM they should be set to flags which may be
+provided to @command{opt}. @code{_ALWAYS_RUN_PASSES} is a newline separated
+string, and contains the passes which should always be run.
+
+The script creates a new directory suffixed with the binary values used to
+determine the flags, and creates a file in this newly created directory called
+@code{PASSES_TO_RUN} containing a string of these flags. To configure, build
+and run the tests, it calls another script @code{training/test-exec.sh} for
+each setup.
+
+The environment variable @code{BEEBSBASE} must be set to the base directory of
+BEEBS for this script to run, and the script should be run from the same
+directory as the previously generated matrix.
+
+The first task of the following script @code{training/test-exec.sh} is to
+@command{configure} BEEBS for the provided set of optimization flags.
+Internally, the script holds a number of flags provided to the configure which
+need to be set as appropriate. @code{--host} and @code{-target} should both be
+set to the triple of the board being used , and @code{--with-board} and
+@code{--with-chip} should be set to the appropriate board/chip configuration
+found in the @code{config} subdirectory of BEEBS. For more detailed information
+on the BEEBS configuration you can use the @code{--help} flag.
+
+If the compiler being used is GCC, @code{CFLAGS} should be set in the configure
+to @code{"-O3 -fplugin=mageec"}. @code{-O3} is required as the plugin works by
+beginning with these passes and turning them off as appropriate.
+
+If the compiler being used is Clang/LLVM, @code{CC} should be set in the
+configure to point to the Clang driver script @code{training/clang.py} which is
+used to coordinate optimizations using LLVM's @command{opt}. This is described
+in more detail later.
+
+Once BEEBS is built and prior to running the whole benchmark, two tests of the
+executable @command{basic-2dfir} are run to calibrate the board. The whole
+benchmark is run and then this test is repeated one more time.
+@command{platformrun} is used to run the tests, and the results are compiled
+into @code{execute.log} in the base directory of each individual run.
+
+For the LLVM workflow, @code{PATH} must be set as appropriate so that
+@code{clang.py} can find @command{clang}, @command{opt} and @command{llc}.
+
+@section The Clang Driver Script
+
+@code{clang.py} is a script which acts like @command{clang}, but highjacks the
+compile process in order to control the flags passed to the optimizer.
+Effectively, the script emulates the behaviour of @command{clang} but runs the
+front end, middle end and back end separately. This allows the script to pass
+the flags from @code{PASSES_TO_RUN} to the optimizer @command{opt} allowing
+fine-grained control over the passes run and their order without the concern of
+pass dependencies.
+
+@section Extracting BEEBS results
+
+Once all of the tests have run, the results need to be extracted from the
+execution log and placed into a database to be used by the machine learner.
+@code{training/evaltool.py} parses the execute logs in turn and uses them to
+populate a database in the base of the test directory. It also extracts the
+actual passes run by the pass manager as this is what the machine learner is
+trained against.
+
+As well as parsing the log, @code{evaltool.py} also calibrates the energy and
+time values. There are two separate steps of calibration to be done; one to
+normalize values between different configurations of BEEBS, and one to
+normalize values between each individual benchmark. The latter is required as
+benchmarks vary in runtime considerably and therefore some must be run many
+times to get meaningful results. The number of times a given benchmark file is
+run is defined in each individual benchmark file itself through the
+@code{SCALE_FACTOR} preprocessor definition.
+
+The basic test runs at the beginning and end of the benchmark run are used to
+normalize between each build of BEEBS and these are extracted as part of the
+parsing operation. The benchmark @code{SCALE_FACTOR}s are used to normalize
+between individual benchmarks and these are exposed through the
+@code{test_factor} dictionary at the top of the script. This dictionary itself
+is generated through a separate script described below.
+
+@code{evaltool.py} should be run from the base directory of all of the runs in
+order to find them, and it will create the resultant database @code{result.db},
+in this directory.
+
+@section Extracing scale factors used in BEEBS
+
+In order to normalize the test results, the repeat scale factors used in the
+testsuite need to be extracted. To do this a version of beebs must be manully
+configured with @code{-save-temps} set in the @code{CFLAGS} environment
+variable to be used by the compiler. First a build directory should be created
+to store this temporary build and then the configure can be run with flags set
+as desired.
+
+@example
+CFLAGS="-save-temps" PATH_TO_BEEBS/configure --with-board=BOARD_NAME
+--with-chip=CHIP_NAME
+@end example
+
+This means that a temp file is saved with the extension @code{.i} alongside its
+source containing preprocessed C. BEEBS is laid out such that there is a
+duplicated main function used by all of the benchmarks which runs that
+benchmark a number of time. Each benchmark defines @code{SCALE_FACTOR} which
+dictates this value.
+
+We extract the @code{SCALE_FACTOR} token using the script
+@code{tools/grab_scale_factor.sh} which iterates over every @code{main.i} file
+in BEEBS. The script searches for the loop which repeats the benchmark,
+extracts the expanded preprocessor token and then evaluates this as an
+expression using python to get its resultant value. The resultant output is a
+python fragment which constructs a dictionary of these scale factor values.
+
+This script should be run from the build directory of the version of BEEBS
+configured with save-temps.
+
+@section Using the Machine Learner
+
+Once the database of calibrated results has been created, it can be used by
+MAGEEC to create a trained database. This is a simple operation done by running
+the installed @command{mageecdb} with the database as an argument. Once
+trained, the database can then be used by LLVM MAGEEC. In order for
+@command{clang} to use the database it should be copied into the directory
+@command{clang} is run from and given the name '-.db'
+
 
 @node GNU Free Documentation License
 @chapter GNU Free Documentation License
 @include fdl-1.3.texi
+
 
 @bye

@@ -23,261 +23,136 @@
 
 import subprocess, sys, os, re
 
-# Size of our matrix
-_ENTRIES=120
+# Size of our matrix, this should equal the number of entries in
+# _MAYBE_RUN_PASSES as these are the passes which can be toggled
+_N_ENTRIES = 54
 
 # Index for resuming
 _startfrom = 0
 
+
+# Pass setup
+#
+# _ALWAYS_RUN_PASSES is only relevant to GCC and contains a newline separated
+# string of passes which should always be run
+#
+# _MAYBE_RUN_PASSES contains a list of passes (for gcc) or flags (for llvm)
+# which may be toggled on or off by the compiler.
+
 # Passes to always run
-# (some of these are important and needed each time)
-_PASSES_ALWAYS="""*warn_unused_result
-*omplower
-lower
-eh
-cfg
-*warn_function_return
-*build_cgraph_edges
-*free_lang_data
-visibility
-early_local_cleanups
-*free_cfg_annotations
-*init_datastrucutres
-ssa
-mageec-extractor
-*all_optimizations
-*clean_state
-*rebuild_cgraph_edges
-*remove_cgraph_callee_edges
-*rebuild_cgraph_edges
-*free_inline_summary
-*free_cfg_annotations
-*all_optimizations
-*remove_cgraph_callee_edges
-*strip_predict_hints
-*record_bounds
-*rest_of_compilation
-*stack_ptr_mod
-*all-postreload
-*leaf_regs
-*free_cfg
-veclower
-inline_param
-cplxlower
+_ALWAYS_RUN_PASSES="""
 """
 
-# This array should have ENTRIES elements
-_ROUND1_POSSIBILITIES = [
-'inline_param',
-'einline',
-'early_optimizations',
-'copyrename',
-'ccp',
-'forwprop',
-'ealias',
-'esra',
-'fre',
-'copyprop',
-'mergephi',
-'cddce',
-'eipa_sra',
-'tailr',
-'switchconv',
-'ehcleanup',
-'profile_estimate',
-'local-pure-const',
-'fnsplit',
-'release_ssa',
-'inline_param',
-'profile',
-'increase_alignment',
-'tmipa',
-'emutls',
-'whole-program',
-'profile_estimate',
-'devirt',
-'cp',
-'cdtor',
-'inline',
-'pure-const',
-'static-var',
-'pta',
-'simdclone',
-'ehdisp',
-'copyrename',
-'ccp',
-'copyprop',
-'cunrolli',
-'phiprop',
-'forwprop',
-'objsz',
-'alias',
-'retslot',
-'fre',
-'copyprop',
-'mergephi',
-'vrp',
-'dce',
-'cdce',
-'cselim',
-'ifcombine',
-'phiopt',
-'tailr',
-'ch',
-'stdarg',
-'', #cplxlower
-'sra',
-'copyrename',
-'dom',
-'isolate-paths',
-'phicprop',
-'dse',
-'reassoc',
-'dce',
-'forwprop',
-'phiopt',
-'strlen',
-'ccp',
-'copyprop',
-'sincos',
-'bswap',
-'crited',
-'pre',
-'sink',
-'', #asan
-'', #tsan
-'loop',
-'loopinit',
-'lim',
-'copyprop',
-'dceloop',
-'unswitch',
-'sccp',
-'ckdd',
-'ldist',
-'copyprop',
-'graphite0',
-'ivcanon',
-'parloops',
-'ifcvt',
-'vect',
-'dceloop',
-'pcom',
-'cunroll',
-'slp',
-'aprefetch',
-'ivopts',
-'lim',
-'loopdone',
-'veclower2',
-'recip',
-'reassoc',
-'slsr',
-'dom',
-'phicprop',
-'vrp',
-'cddce',
-'tracer',
-'dse',
-'forwprop',
-'phiopt',
-'fab',
-'widening_mul',
-'tailc',
-'copyrename',
-'crited',
-'uninit',
-'uncprop',
+# Passes that may be toggled on or off to produce a training configuration
+_MAYBE_RUN_PASSES = [
+'-adce',
+'-always-inline',
+'-argpromotion',
+'-bb-vectorize',
+'-break-crit-edges',
+'-codegenprepare',
+'-constmerge',
+'-constprop',
+'-dce',
+'-deadargelim',
+'-die',
+'-dse',
+'-functionattrs',
+'-globaldce',
+'-globalopt',
+'-gvn',
+'-indvars',
+'-inline',
+'-instcombine',
+'-internalize',
+'-ipconstprop',
+'-ipsccp',
+'-jump-threading',
+'-lcssa',
+'-licm',
+'-loop-deletion',
+'-loop-extract',
+'-loop-extract-single',
+'-loop-reduce',
+'-loop-rotate',
+'-loop-simplify',
+'-loop-unroll',
+'-loop-unswitch',
+'-loweratomic',
+'-lowerinvoke',
+'-lowerswitch',
+'-mem2reg',
+'-memcpyopt',
+'-mergefunc',
+'-mergereturn',
+'-partial-inliner',
+'-prune-eh',
+'-reassociate',
+'-reg2mem',
+'-scalarrepl',
+'-sccp',
+'-simplifycfg',
+'-sink',
+'-strip',
+'-strip-dead-debug-info',
+'-strip-dead-prototypes',
+'-strip-debug-declare',
+'-strip-nondebug',
+'-tailcallelim'
 ]
 
-# This string uses the left over tests that we want to run.
-_ROUND1_EXTRAS = """local-pure-const
-nrv
-optimized
-expand
-vregs
-into_cfglayout
-jump
-subreg1
-dfinit
-cse1
-fwprop1
-cprop
-rtl pre
-cprop
-ce1
-reginfo
-loop2
-loop2_init
-loop2_invariant
-loop2_unswitch
-loop2_done
-cprop
-cse2
-dse1
-fwprop2
-auto_inc_dec
-init-regs
-ud_dce
-combine
-ce2
-outof_cfglayout
-split1
-subreg2
-asmcons
-ira
-reload
-postreload
-gcse2
-split2
-pro_and_epilogue
-dse2
-csa
-jump2
-peephole2
-ce3
-cprop_hardreg
-rtl_dce
-compgotos
-bbro
-alignments
-mach
-barriers
-split5
-shorten
-nothrow
-final
-dfinish
-"""
+# BEEBSBASE should be set to the base directory of BEEBS
+if not os.getenv('BEEBSBASE', None):
+    sys.stderr.write('Environment variable BEEBSBASE not set, exiting\n')
+    sys.exit(1)
 
+# Should be a matrix to use in the current directory
+try:
+    _inputfile = open('matrix','r')
+except:
+    sys.stderr.write('Unable to open matrix of pass configurations\n')
+    sys.exit(1)
+
+EXECDIR  = os.path.dirname(os.path.realpath(__file__))
 STARTDIR = os.getcwd()
-_inputfile = open('matrix1','r')
 
-# We use this as a guard to prevent accidental execution of test-pt2, so
+# We use this as a guard to prevent accidental execution of test-exec, so
 # set this here.
 os.environ['INMAGEEC'] = "TRUE"
 
-if len(_ROUND1_POSSIBILITIES) != _ENTRIES:
-  sys.err.write("Entires != Possibilities")
+if len(_MAYBE_RUN_PASSES) != _N_ENTRIES:
+  sys.stderr.write("Number of entries != Number of possible passes\n")
   sys.exit(1)
 
 for line in _inputfile:
+  # Remove newline
+  if line[-1] == '\n':
+    line = line[:-1]
+  
   test = re.split(' *', line)
   print ' * Running test set %s' % test[0]
   if int(test[0]) < _startfrom:
     continue
-  os.mkdir(STARTDIR + '/run-' + test[0])
-  os.chdir(STARTDIR + '/run-' + test[0])
-  testlist = open('PASSES_TO_RUN','w')
-  testlist.write(_PASSES_ALWAYS)
-  for i in range(1, _ENTRIES+1):
-    if test[i] == '1':
-      testlist.write(_ROUND1_POSSIBILITIES[i-1])
-      testlist.write('\n')
-  testlist.write(_ROUND1_EXTRAS)
-  testlist.close()
+  dirname = ''
+  for i in range(1, _N_ENTRIES + 1):
+    dirname = dirname + test[i]
 
-  # Execute
-  proc = subprocess.call(['ts', STARTDIR + '/test-pt2.sh', test[0]])
+  # Try and run this test if it doesnt already exist
+  try:
+    os.mkdir(STARTDIR + '/run-' + dirname)
+    os.chdir(STARTDIR + '/run-' + dirname)
 
+    # Save the newline separated string of passes/flags to be run
+    testlist = open('PASSES_TO_RUN','w')
+    testlist.write(_ALWAYS_RUN_PASSES)
+    for i in range(1, _N_ENTRIES + 1):
+      if test[i] == '1':
+        testlist.write(_MAYBE_RUN_PASSES[i - 1])
+        testlist.write('\n')
+    testlist.close()
+
+    # Configure, build and execute
+    subprocess.call([EXECDIR + '/test-exec.sh', dirname])
+  except:
+    print '   FAILED! %s' % dirname
 

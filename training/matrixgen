@@ -1,0 +1,15 @@
+# R script
+# invoke with R --no-save < tablegen > matrix
+
+# Install packages
+#install.packages("FrF2")
+
+# Settings
+options(width = 1000) 
+options(max.print = 1000000)
+
+# Generate data (100 seems to be the most we can make)
+require(FrF2)
+#FrF2Large(54,nruns=8192, default.levels = c("0","1"))
+FrF2(54,nruns=4096, default.levels = c("0","1"))
+#pb(100, nfactors = 54, default.levels = c("0","1"))
