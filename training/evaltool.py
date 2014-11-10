@@ -129,7 +129,7 @@ def refloat(number):
 
 """ Function to parse buildlog to get features and passes. """
 def getPassesFeatures(filename, result):
-  filename = filename.replace('beebs.log', 'build.log')
+  filename = filename.replace('execute.log', 'build.log')
   file2 = open(filename)
   file2 = file2.read()
 
@@ -205,7 +205,7 @@ if __name__ == '__main__':
   con = sqlite3.connect('result.db')
   cur = con.cursor()
 
-  files = glob.glob('run-*/beebs.log')
+  files = glob.glob('run-*/execute.log')
   #files = glob.glob('run-597/beebs.log')
   #files = sorted(files, key=lambda s: int(s[4:-10]))
   #FIXME: Only care about the first execution
