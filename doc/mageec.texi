@@ -84,6 +84,10 @@ installed in the default install directory prior to the building of LLVM, as
 this is where LLVM expects to find the MAGEEC headers. This also means that
 MAGEEC must be built prior to LLVM.
 
+Also, by default the MAGEEC configuration will attempt to find GCC plugin
+headers. These are not necessary for LLVM and can be disabled in the
+configuration by providing the flag @code{--disable-gcc-plugin}.
+
 @node GCC Plugin
 @chapter GCC Plugin
 
@@ -94,7 +98,7 @@ MAGEEC must be built prior to LLVM.
 To use MAGEEC it must first be trained on a representative dataset
 and for this purpose we use the Bristol/Embecosm Embedded Benchmark Suite
 (BEEBS) as well as a number of scripts in the training subdirectory of the
-MAGEEC source.  The scripts are used to generate, build and run a large number
+MAGEEC source. The scripts are used to generate, build and run a large number
 of configurations of BEEBS to then subsequently train the machine learner.
 
 @section Matrix Generation
