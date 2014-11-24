@@ -1,5 +1,5 @@
 # R script
-# invoke with R --no-save < tablegen > matrix
+# invoke with R --no-save < matrixgen > matrix
 
 # Install packages
 #install.packages("FrF2")
