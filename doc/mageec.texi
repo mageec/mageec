@@ -7,7 +7,7 @@
 @copying
 This manual is for MAGEEC.
 
-Copyright @copyright{} 2013, 2014 Embecosm Limited and University of Bristol.
+Copyright @copyright{} 2013-2015 Embecosm Limited and University of Bristol.
 @quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -22,6 +22,7 @@ Texts. A copy of the license is included in the section entitled
 @title MAGEEC
 @subtitle MAchine Guided Energy Efficient Compilation
 @author Simon Cook
+@author Edward Jones
 @page
 @vskip 0pt plus 1filll
 @insertcopying
@@ -36,31 +37,32 @@ Efficient Compilation} project.
 
 @menu
 * Building MAGEEC::
-* GCC Plugin::
 * GNU Free Documentation License::
 @end menu
 
 @node Building MAGEEC
 @chapter Building MAGEEC
-MAGEEC uses a standard GNU Autotools based build and installation system.
+MAGEEC uses the CMake build system.
 
-The build and installation can be configured using the @command{configure}
-script in the main source directory. The build should take place in a directory
-separate to the source.
+The build and installation can be configured using @command{cmake} provided
+with the path of the main source directory. The build should take place in a
+directory separate to the source.
 
 @example
-tar xjf mageec-@value{VERSION}.tar.bz2
-mkdir build-mageec
-cd build-mageec
-../mageec-@value{VERSION}/configure ...
+cd path/to/mageec
+cd ../
+mkdir build
+cd build
+cmake ../mageec ...
 @end example
 
-Available configuration options can be found by providing @code{--help} to
-@command{configure}. The most useful of these is the @code{--prefix=PREFIX}
-option which is used to set the installation location; tools will be installed
-into @code{PREFIX/bin} and libraries installed in @code{PREFIX/lib}.
+Available configuration options can be discovered by provided @code{--help} to
+@command{cmake}. The most useful of these is the
+@code{-DCMAKE_INSTALL_PREFIX=PREFIX} options which is used to set the
+installation location; tools will be installed into @code{PREFIX/bin},
+libraries into @code{PREFIX/lib} and headers into @code{PREFIX/include}.
 
-Once configured, MAGEEC can be built using:
+Once configured, MAGEEC can be build using:
 
 @example
 make all
@@ -71,9 +73,6 @@ It can then be installed using:
 @example
 make install
 @end example
-
-@node GCC Plugin
-@chapter GCC Plugin
 
 @node GNU Free Documentation License
 @chapter GNU Free Documentation License
