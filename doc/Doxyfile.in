@@ -45,7 +45,7 @@ PROJECT_BRIEF          = "MAchine Guided Energy Efficient Compilation"
 # exceed 55 pixels and the maximum width should not exceed 200 pixels.
 # Doxygen will copy the logo to the output directory.
 
-PROJECT_LOGO           = @top_srcdir@/doc/mageec_logo.png
+PROJECT_LOGO           = @CMAKE_CURRENT_SOURCE_DIR@/mageec_logo.png
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute)
 # base path where the generated documentation will be put.
@@ -668,7 +668,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = @top_srcdir@
+INPUT                  = @PROJECT_SOURCE_DIR@
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is

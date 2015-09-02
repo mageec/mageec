@@ -1,4 +1,12 @@
 2015-09-02  Edward Jones  <ed.jones@embecosm.com>
+	Added support for the cmake build system.
+
+	* CMakeLists.txt: Added file.
+	* doc/CMakeLists.txt: Likewise.
+	* doc/Doxyfile.in: Added support for cmake.
+	* doc/mageec-design.texi: Added file, work in progress design documentation.
+
+2015-09-02  Edward Jones  <ed.jones@embecosm.com>
 	Redesign of MAGEEC interfaces
 
 	* AUTHORS: Updated authors.
