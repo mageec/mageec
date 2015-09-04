@@ -40,6 +40,11 @@
 #include "sqlite3.h"
 
 
+#define MAGEEC_DATABASE_VERSION_MAJOR 1
+#define MAGEEC_DATABASE_VERSION_MINOR 0
+#define MAGEEC_DATABASE_VERSION_PATCH 0
+
+
 namespace mageec {
 
 
@@ -50,7 +55,13 @@ class ParameterBase;
 
 class Database {
 public:
+  /// \brief Version of the database interface. A newly created database will
+  /// have this version number.
+  static const util::Version version;
+
+
   Database(void) = delete;
+  ~Database(void);
 
   /// \brief Construct a database from the provided database path.
   ///
@@ -61,11 +72,20 @@ public:
   /// then the database will be created.
   /// \param mls  Map of the machine learner interfaces available to the
   /// database.
+  /// \param create  True if this database does not exist and should be
+  /// created.
   Database(std::string db_path,
-           std::map<util::UUID, IMachineLearner*> mls);
+           std::map<util::UUID, IMachineLearner*> mls,
+           bool create);
 
   /// \brief Get the version of the database
-  util::Version getVersion(void) const;
+  util::Version getVersion(void);
+
+  /// \brief Check whether the version of the database is compatible with the
+  /// provided code.
+  ///
+  /// \return True if the database is compatible
+  bool isCompatible(void);
 
   /// \brief Get a metadata field of the database
   ///
@@ -73,7 +93,7 @@ public:
   /// exist
   /// \return The string value of the retrieved field. This may be the empty
   /// string if the field does not exist.
-  std::string getMetadata(MetadataField field) const;
+  std::string getMetadata(MetadataField field);
 
   /// \brief Set a metadata field of the database
   ///
@@ -84,9 +104,6 @@ public:
   /// \brief Get all of the trained machine learners in the database
   /// \return All machine learners in the database which are trained.
   std::vector<TrainedML> getTrainedMachineLearners(void);
-
-
-  // TODO: Database validation?
 
 
 //===------------------- Feature extractor interface-----------------------===//
@@ -196,6 +213,22 @@ public:
 private:
   /// Handle to the underlying sqlite3 database
   sqlite3 *m_db;
+
+  /// Mapping of machine learner uuids to machine learners
+  std::map<util::UUID, IMachineLearner*> m_mls;
+
+  /// \brief Initialize a new empty database
+  ///
+  /// The provided handle should point at a valid, empty sqlite3 database
+  ///
+  /// \param db  The database to be initialized
+  static void init_db(sqlite3 &m_db);
+
+  /// \brief Validate the contents of the database
+  ///
+  /// This is used to check that a database is valid and well formed, and to
+  /// check constraints which cannot be handled by sqlite
+  void validate(void);
 };
 
 

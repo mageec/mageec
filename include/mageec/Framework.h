@@ -33,6 +33,11 @@
 #include "mageec/Util.h"
 
 
+#define MAGEEC_FRAMEWORK_VERSION_MAJOR 2
+#define MAGEEC_FRAMEWORK_VERSION_MINOR 0
+#define MAGEEC_FRAMEWORK_VERSION_PATCH 0
+
+
 namespace mageec {
 
 
@@ -42,6 +47,10 @@ class IMachineLearner;
 
 class Framework {
 public:
+  /// \brief Version of the mageec framework
+  static const util::Version version;
+
+
   /// \brief Create the framework
   Framework();
 

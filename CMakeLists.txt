@@ -25,9 +25,9 @@ set (EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 # Set compiler options depending on the compiler used
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  set (CMAKE_CXXFLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -Werror -Weverything -Wno-c++98-compat")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -Werror -Weverything -Wno-c++98-compat")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  set (CMAKE_CXXFLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -Werror -Wall -Wextra")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -Werror -Wall -Wextra")
 else ()
   message (WARNING "Unrecognized compiler, CXXFLAGS unmodified")
 endif ()
@@ -35,6 +35,18 @@ endif ()
 
 # Install header files
 install (DIRECTORY include/mageec DESTINATION include)
+
+
+include_directories(include)
+
+add_executable (tmp
+  lib/Database.cpp
+  lib/DatabaseQuery.cpp
+  lib/TrainedML.cpp
+)
+
+target_link_libraries(tmp sqlite3)
+
 
 if (MAGEEC_WITH_ALL_DOCS)
   set (MAGEEC_WITH_USER_DOCS True)
@@ -45,4 +57,3 @@ endif()
 if (MAGEEC_WITH_USER_DOCS OR MAGEEC_WITH_DESIGN_DOCS OR MAGEEC_WITH_DOXYGEN)
   add_subdirectory (doc)
 endif ()
-

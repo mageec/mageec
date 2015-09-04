@@ -1,3 +1,37 @@
+2015-09-04  Edward Jones  <ed.jones@embecosm.com>
+	Beginning of implementation of database functionality.
+
+	* CMakeLists.txt: Added target for testing, fixed CMAKE_CXX_FLAGS.
+	* include/mageec/Database.h (Database::version): Added version number.
+	(Database::~Database()): Added function.
+	(Database::Database): Added bool 'create' argument.
+	(Database::m_mls): Added member.
+	(Database::init_db, Database::validate): Added functions.
+	* include/mageec/DatabaseQuery.h: Added file
+	(DatabaseQuery, DatabaseQueryBuilder)
+	(DatabaseQueryIterator): New classes.
+	* include/mageec/Feature.h (FeatureBase::~FeatureBase)
+	(FeatureBase::getName, FeatureBase::toBlob): New functions.
+	(FeatureBase::FeatureBase): Added 'name' arg.
+	(FeatureBase::m_name): Added member.
+	(Feature::~Feature, Feature::toBlob, Feature::fromBlob): New functions.
+	* include/mageec/Framework.h (Framework::version): Added version.
+	* include/mageec/TrainedML.h (TrainedML::TrainedML): Added blob
+	argument.
+	(TrainedML::makeDecision): Removed const.
+	(TrainedML::m_metric, TrainedML::m_blob): Added members.
+	* include/mageec/Util.h (Version::operator std::string): Added function.
+	(UUID::operator==, UUID::operator!=): Added const.
+	(UUID::m_data): Made member const.
+	* lib/Database.cpp: Added placeholders for all functions.
+	(Database::Database, Database::~Database, Database::~init_db)
+	(Database::validate, Database::isCompatible, Database::getVersion)
+	(Database::getMetadata, Database::setMetadata)
+	(Database::getTrainedMachineLearners, Database::NewFeatureSet):
+	Added initial implementations.
+	* lib/DatabaseQuery.cpp: Added implementation of all functions.
+	* lib/TrainedML.cpp: Added placeholders for all functions.
+
 2015-09-02  Edward Jones  <ed.jones@embecosm.com>
 	Added support for the cmake build system.
 

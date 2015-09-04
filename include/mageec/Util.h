@@ -51,6 +51,12 @@ public:
             (m_patch == other.m_patch));
   }
 
+  operator std::string(void) const {
+    return std::to_string(m_major) + "." +
+           std::to_string(m_minor) + "." +
+           std::to_string(m_patch);
+  }
+
   unsigned getMajor() const { return m_major; }
   unsigned getMinor() const { return m_minor; }
   unsigned getPatch() const { return m_patch; }
@@ -73,11 +79,14 @@ public:
     : m_data(data)
   {}
 
-  bool operator==(const UUID& other) { return m_data == other.m_data; }
-  bool operator<(const UUID& other) { return m_data < other.m_data; }
+  bool operator==(const UUID& other) const { return m_data == other.m_data; }
+  bool operator<(const UUID& other) const { return m_data < other.m_data; }
+
+  std::array<uint8_t, 16> data(void) const { return m_data; }
+  unsigned size(void) const { return m_data.size(); }
 
 private:
-  std::array<uint8_t, 16> m_data;
+  const std::array<uint8_t, 16> m_data;
 };
 
 

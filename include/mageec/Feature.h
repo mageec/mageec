@@ -30,6 +30,8 @@
 
 #include "mageec/Types.h"
 
+#include <string>
+
 
 namespace mageec {
 
@@ -41,17 +43,26 @@ class FeatureBase {
 public:
   FeatureBase() = delete;
 
+  virtual ~FeatureBase();
+
   /// \brief Get the type of the feature
   FeatureType getType() const { return m_feature_type; }
 
   /// \brief Get the compiler-specific identifier associated with a feature
   unsigned getFeatureID() const { return m_feature_id; }
 
+  /// \brief Get the string identifier associated with a feature
+  std::string getName() const { return m_name; }
+
+  /// \brief Get the value of the feature as a blob of bytes
+  virtual std::vector<uint8_t> toBlob() const = 0;
+
 protected:
   /// \brief Create a feature with the provided type and identifier
-  FeatureBase(FeatureType feature_type, unsigned feature_id)
+  FeatureBase(FeatureType feature_type, unsigned feature_id, std::string name)
     : m_feature_type(feature_type),
-      m_feature_id(feature_id)
+      m_feature_id(feature_id),
+      m_name(name)
   {}
 
 private:
@@ -60,6 +71,9 @@ private:
 
   /// Compiler-dependent identifier of the specific feature
   unsigned m_feature_id;
+
+  /// String identifier of the specific feature, used for debug purposed
+  std::string m_name;
 };
 
 
@@ -76,13 +90,42 @@ public:
 
   Feature() = delete;
 
-  Feature(unsigned feature_id, const T& value)
-    : FeatureBase(feature_type, feature_id),
+  ~Feature()
+  {}
+
+  Feature(unsigned feature_id, const T& value, std::string name)
+    : FeatureBase(feature_type, feature_id, name),
       m_value(value)
   {}
 
   /// \brief Get the value associated with this feature.
   const T& getValue() const { return m_value; }
+
+  /// \brief Convert the held feature type to a binary blob
+  std::vector<uint8_t> toBlob(void) const {
+    static_assert(std::is_integral<T>::value,
+                  "Only integral types handled for now");
+
+    std::vector<uint8_t> blob;
+    blob.reserve(sizeof(T));
+
+    const uint8_t *value = reinterpret_cast<const uint8_t *>(&m_value);
+    for (unsigned i = 0; i < sizeof(T); ++i) {
+      blob.push_back(value[i]);
+    }
+    return blob;
+  }
+
+  /// \brief Create a feature of this type given the provided id and blob
+  static Feature fromBlob(unsigned feature_id, std::vector<uint8_t> blob)
+  {
+    static_assert(std::is_integral<T>::value,
+                  "Only integral types handled for now");
+    assert(blob.size() == sizeof(T));
+
+    const T *value = reinterpret_cast<const T *>(blob.data());
+    return Feature(feature_id, *value);
+  }
 
 private:
   const T m_value;

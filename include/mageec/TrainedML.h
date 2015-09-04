@@ -59,7 +59,12 @@ public:
   /// an entry for this machine learner in the database for the provided
   /// metric.
   /// \param metric  The metric this machine learner has been trained against
-  TrainedML(const sqlite3& db, const IMachineLearner& ml, Metric metric);
+  /// \param blob  A blob of training data to be passed to the machine
+  /// learner when making a decision
+  TrainedML(sqlite3& db,
+            const IMachineLearner& ml,
+            Metric metric,
+            const std::vector<uint8_t> blob);
 
   /// \brief Get the name of the underlying machine learner interface
   std::string getName(void) const;
@@ -81,17 +86,20 @@ public:
   /// make a decision, this will be the native decision.
   std::unique_ptr<DecisionBase>
   makeDecision(const DecisionRequestBase& request,
-               const std::vector<FeatureBase*> features) const;
+               const std::vector<FeatureBase*> features);
 
 private:
   /// Database containing this trained machine learner.
-  const sqlite3& m_db;
-
-  /// Metric which this machine learner is trained for.
-  const Metric metric;
+  sqlite3& m_db;
 
   /// Interface to the underlying machine learner.
   const IMachineLearner& m_ml;
+
+  /// Metric which this machine learner is trained for.
+  const Metric m_metric;
+
+  /// Blob of training data for this machine learner
+  const std::vector<uint8_t> m_blob;
 };
 
 
