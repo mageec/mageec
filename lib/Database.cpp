@@ -134,13 +134,17 @@ static const char * const create_parameter_set_parameter_table =
 
 // pass and pass sequence table creation strings
 static const char * const create_pass_sequence_table =
-"CREATE TABLE PassSequence("
+"CREATE TABLE PassSequence(pass_sequence_id INTEGER PRIMARY KEY)";
+
+static const char * const create_pass_sequence_pass_table =
+"CREATE TABLE PassSequencePass("
   "pass_instance_id INTEGER PRIMARY KEY, "
   "pass_sequence_id INTEGER NOT NULL, "
   "pass_pos         INTEGER NOT NULL, "
   "pass_id          TEXT NOT NULL, "
   "UNIQUE(pass_sequence_id, pass_instance_id), "
-  "UNIQUE(pass_instance_id, pass_pos)"
+  "UNIQUE(pass_instance_id, pass_pos), "
+  "FOREIGN KEY(pass_sequence_id) REFERENCES PassSequence(pass_sequence_id)"
 ")";
 
 static const char * const create_pass_parameter_table =
@@ -284,6 +288,7 @@ void Database::init_db(sqlite3 &db)
 
   // Pass sequences
   DatabaseQuery(db, create_pass_sequence_table).execute().assertDone();
+  DatabaseQuery(db, create_pass_sequence_pass_table).execute().assertDone();
   DatabaseQuery(db, create_pass_parameter_table).execute().assertDone();
 
   // Compilation

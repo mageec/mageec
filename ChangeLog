@@ -1,5 +1,13 @@
 2015-09-08  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/Database.cpp (create_pass_sequence_table): Added sql query to
+	create a new pass sequence table.
+	(Database::init_db): Construct the new table.
+	* lib/Main.cpp (main): More elaborate sanity check of implemented
+	functionality.
+
+2015-09-08  Edward Jones  <ed.jones@embecosm.com>
+
 	* CMakeLists.txt (CMAKE_CXX_FLAGS): Disable -Wweak-vtables warning.
 	* include/mageec/DatabaseQuery.h
 	(DatabaseQueryIterator::DatabaseQueryIterator): Add database handle
