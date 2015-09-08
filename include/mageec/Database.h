@@ -156,11 +156,17 @@ public:
   /// \param features  The group of features for the initial program unit
   /// \param parameters  Set of parameters which apply to the overall
   /// compilation
+  /// \param pass_sequence  Optional sequence of passes which were applied to
+  /// this compilation
+  /// \param parent  Optional parent of this compilation. For example the
+  /// encapsulating module for a function. (debug)
   ///
   /// \return An identifier for the compilation of the program unit
   CompilationID newCompilation(std::string name, std::string type,
                                FeatureGroupID features,
-                               ParameterSetID parameters);
+                               ParameterSetID parameters,
+                               util::Option<PassSequenceID> pass_sequence,
+                               util::Option<CompilationID> parent);
 
   /// \brief Create a new set of parameters
   ///

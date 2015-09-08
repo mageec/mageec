@@ -144,8 +144,8 @@ static const char * const create_compilation_table =
 "CREATE TABLE Compilation("
   "compilation_id   INTEGER PRIMARY KEY, "
   "feature_group_id INTEGER NOT NULL, "
-  "pass_sequence_id INTEGER NOT NULL, "
   "parameter_set_id INTEGER NOT NULL, "
+  "pass_sequence_id INTEGER, "
   "FOREIGN KEY(feature_group_id) REFERENCES FeatureGroup(feature_group_id), "
   "FOREIGN KEY(pass_sequence_id) REFERENCES PassSequence(pass_sequence_id), "
   "FOREIGN KEY(parameter_set_id) REFERENCES ParameterSet(parameter_set_id)"
@@ -539,15 +539,75 @@ void Database::addFeaturesAfterPass(FeatureGroupID features,
 //===----------------------- Compiler interface ---------------------------===//
 
 
-CompilationID Database::newCompilation(std::string name, std::string type,
-                                       FeatureGroupID features,
-                                       ParameterSetID parameters)
+CompilationID Database::
+newCompilation(std::string name, std::string type,
+               FeatureGroupID features,
+               ParameterSetID parameters,
+               util::Option<PassSequenceID> pass_sequence,
+               util::Option<CompilationID> parent)
 {
-  (void)name;
-  (void)type;
-  (void)features;
-  (void)parameters;
-  return static_cast<CompilationID>(0);
+  DatabaseQuery start_transaction(*m_db, "BEGIN TRANSACTION");
+  DatabaseQuery commit_transaction(*m_db, "COMMIT");
+
+  DatabaseQuery select_compilation_id(
+    *m_db, "SELECT MAX(compilation_id) FROM Compilation");
+
+  DatabaseQuery insert_into_compilation = DatabaseQueryBuilder(*m_db)
+    << "INSERT INTO Compilation VALUES ("
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kInteger << ")";
+
+  DatabaseQuery insert_compilation_debug = DatabaseQueryBuilder(*m_db)
+    << "INSERT INTO ProgramUnitDebug VALUES("
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kText << ", "
+      << QueryParamType::kText << ", "
+      << QueryParamType::kInteger << ")";
+
+  // add in a single transaction
+  start_transaction.execute().assertDone();
+
+  // Get the next compilation id
+  auto res = select_compilation_id.execute();
+  uint64_t compilation_id = 0;
+  if (res.numColumns() != 0) {
+    assert(res.numColumns() == 1);
+    compilation_id = static_cast<uint64_t>(res.getInteger(0)) + 1;
+    assert(compilation_id != 0 && "compilation_id overflow");
+  }
+  res.next().assertDone();
+
+  // Add the compilation
+  insert_into_compilation
+    << static_cast<int64_t>(compilation_id)
+    << static_cast<int64_t>(features)
+    << static_cast<int64_t>(parameters);
+  if (pass_sequence) {
+    insert_into_compilation << static_cast<int64_t>(pass_sequence.get());
+  }
+  else {
+    insert_into_compilation << nullptr;
+  }
+  insert_into_compilation.execute().assertDone();
+
+  // Add debug information
+  insert_compilation_debug
+    << static_cast<int64_t>(compilation_id)
+    << name << type;
+  if (parent) {
+    insert_compilation_debug << static_cast<int64_t>(parent.get());
+  }
+  else {
+    insert_compilation_debug << nullptr;
+  }
+  insert_compilation_debug.execute().assertDone();
+
+  // commit the changes
+  commit_transaction.execute().assertDone();
+
+  return static_cast<CompilationID>(compilation_id);
 }
 
 ParameterSetID

@@ -1,4 +1,12 @@
 2015-09-08  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Database.h (Database::newCompilation): Added
+	optional pass_sequence and parent parameters.
+	* lib/Database.cpp (create_compilation_table): pass_sequence_id
+	is optional (may be null).
+	(Database::newCompilation): Added implementation.
+
+2015-09-08  Edward Jones  <ed.jones@embecosm.com>
 	Added further database functionality. The project now compiles a
 	test program.
 
