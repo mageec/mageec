@@ -33,7 +33,7 @@ set (EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 # Set compiler options depending on the compiler used
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Werror -Weverything -Wno-c++98-compat -Wno-global-constructors -Wno-padded")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Werror -Weverything -Wno-c++98-compat -Wno-global-constructors -Wno-padded -Wno-weak-vtables")
   if (MAGEEC_DEBUG)
     set (CMAKE_CXX_FLAGS "-g3 ${CMAKE_CXX_FLAGS}")
   endif ()

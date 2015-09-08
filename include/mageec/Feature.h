@@ -43,7 +43,8 @@ class FeatureBase {
 public:
   FeatureBase() = delete;
 
-  virtual ~FeatureBase();
+  // vtable may be emitted multiple times
+  virtual ~FeatureBase() {}
 
   /// \brief Get the type of the feature
   FeatureType getType() const { return m_feature_type; }
@@ -89,9 +90,7 @@ public:
   typedef T value_type;
 
   Feature() = delete;
-
-  ~Feature()
-  {}
+  ~Feature() {}
 
   Feature(unsigned feature_id, const T& value, std::string name)
     : FeatureBase(feature_type, feature_id, name),
@@ -102,7 +101,7 @@ public:
   const T& getValue() const { return m_value; }
 
   /// \brief Convert the held feature type to a binary blob
-  std::vector<uint8_t> toBlob(void) const {
+  std::vector<uint8_t> toBlob(void) const override {
     static_assert(std::is_integral<T>::value,
                   "Only integral types handled for now");
 

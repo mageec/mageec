@@ -30,6 +30,8 @@
 
 #include "mageec/Types.h"
 
+#include <string>
+
 
 namespace mageec {
 
@@ -41,24 +43,38 @@ class ParameterBase {
 public:
   ParameterBase() = delete;
 
+  // vtable may be emitted multiple times
+  virtual ~ParameterBase() {}
+
   /// \brief Get the type of the parameter
   ParameterType getType() const { return m_param_type; }
 
   /// \brief Get the compiler-specific identifier associated with a parameter
   unsigned getParameterID() const { return m_param_id; }
 
+  /// \brief Get the string identifier associated with a parameter
+  std::string getName() const { return m_name; }
+
+  /// \brief Get the value of the parameter as a blob of bytes
+  virtual std::vector<uint8_t> toBlob() const = 0;
+
 protected:
   /// \brief Create a parameter with the provided type and identifier
-  ParameterBase(ParameterType param_type, unsigned param_id)
+  ParameterBase(ParameterType param_type, unsigned param_id, std::string name)
     : m_param_type(param_type),
-      m_param_id(param_id)
+      m_param_id(param_id),
+      m_name(name)
   {}
 
 private:
+  /// The MAGEEC name of the type of the parameter
   ParameterType m_param_type;
 
   /// Compiler-dependent identifier of the specific feature
   unsigned m_param_id;
+
+  /// String identifier of the specific parameter, used for debug purposed
+  std::string m_name;
 };
 
 
@@ -74,14 +90,41 @@ public:
   typedef T value_type;
 
   Parameter() = delete;
+  ~Parameter() {}
 
-  Parameter(unsigned param_id, const T& value)
-    : ParameterBase(param_type, param_id),
+  Parameter(unsigned param_id, const T& value, std::string name)
+    : ParameterBase(param_type, param_id, name),
       m_value(value)
   {}
 
   /// \brief Get the value associated with this parameter.
   const T& getValue() const { return m_value; }
+
+  /// \brief Convert the held parameter type to a binary blob
+  std::vector<uint8_t> toBlob(void) const override {
+    static_assert(std::is_integral<T>::value,
+                  "Only integral types handled for now");
+
+    std::vector<uint8_t> blob;
+    blob.reserve(sizeof(T));
+
+    const uint8_t *value = reinterpret_cast<const uint8_t *>(&m_value);
+    for (unsigned i = 0; i < sizeof(T); ++i) {
+      blob.push_back(value[i]);
+    }
+    return blob;
+  }
+
+  /// \brief Create a parameter of this type given the provided id and blob
+  static Parameter fromBlob(unsigned parameter_id, std::vector<uint8_t> blob)
+  {
+    static_assert(std::is_integral<T>::value,
+                  "Only integral types handled for now");
+    assert(blob.size() == sizeof(T));
+
+    const T *value = reinterpret_cast<const T *>(blob.data());
+    return Parameter(parameter_id, *value);
+  }
 
 private:
   const T m_value;

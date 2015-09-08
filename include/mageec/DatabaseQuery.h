@@ -114,7 +114,7 @@ public:
   ~DatabaseQueryIterator(void);
 
   /// \brief Construct an iterator to iterate through result for a query
-  DatabaseQueryIterator(DatabaseQuery& query);
+  DatabaseQueryIterator(sqlite3& db, DatabaseQuery& query);
 
   /// \brief Start the execution of the query from the beginning
   void restart(void);
@@ -162,6 +162,9 @@ private:
 
   /// Dictates whether this iterator has completed execution
   bool m_done;
+
+  /// Handle to the database for the query
+  sqlite3& m_db;
 
   /// The query being executed
   DatabaseQuery* m_query;

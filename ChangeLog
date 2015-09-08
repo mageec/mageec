@@ -1,5 +1,33 @@
 2015-09-08  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt (CMAKE_CXX_FLAGS): Disable -Wweak-vtables warning.
+	* include/mageec/DatabaseQuery.h
+	(DatabaseQueryIterator::DatabaseQueryIterator): Add database handle
+	parameter.
+	(DatabaseQueryIterator::m_db): Add database handle member.
+	* include/mageec/Feature.h
+	(FeatureBase::~FeatureBase): Add destructor definition so that vtable
+	is emitted.
+	(Feature::toBlob): Mark override.
+	* include/mageec/Parameter.h
+	(ParameterBase::~ParameterBase): Added function.
+	(ParameterBase::getName): Likewise.
+	(ParameterBase::toBlob): Likewise.
+	(ParameterBase::m_name): Added new member to store name for debug.
+	(Parameter::~Parameter): Added destructor.
+	(Parameter::toBlob): Added function.
+	* lib/Database.cpp: Bug fixing of database.
+	(create_feature_set_table): Added sql query, creates a new table.
+	(create_feature_group_table): Likewise.
+	(create_parameter_set_table): Likewise.
+	(Database::init_db): Create the newly added tables.
+	(Database::newParameterSet): Added implementation.
+	* lib/DatabaseQuery.cpp: Pass database handle through to
+	DatabaseQueryIterator. Add debug, and minor bug fixes.
+	* lib/Main.cpp: Updated to experiment with new functionality.
+
+2015-09-08  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/DatabaseQuery.h
 	(DatabaseQueryIterator::isNull): Added method to check if a result
 	column is of null type.

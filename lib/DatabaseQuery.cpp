@@ -197,7 +197,7 @@ DatabaseQuery::iterator DatabaseQuery::execute(void)
   validate();
   assert(allBindingsPopulated() &&
          "Cannot execute query with unbound parameters");
-  return iterator(*this);
+  return iterator(m_db, *this);
 }
 
 bool DatabaseQuery::allBindingsPopulated(void) const
@@ -306,6 +306,7 @@ DatabaseQueryIterator::~DatabaseQueryIterator(void)
 
 DatabaseQueryIterator::DatabaseQueryIterator(DatabaseQueryIterator &&other)
   : m_done(std::move(other.m_done)),
+    m_db(other.m_db),
     m_query(std::move(other.m_query)),
     m_stmt(std::move(other.m_stmt))
 {
@@ -313,8 +314,8 @@ DatabaseQueryIterator::DatabaseQueryIterator(DatabaseQueryIterator &&other)
   other.m_stmt = nullptr;
 }
 
-DatabaseQueryIterator::DatabaseQueryIterator(DatabaseQuery& query)
-  : m_done(false), m_query(&query), m_stmt(&query.lockQuery())
+DatabaseQueryIterator::DatabaseQueryIterator(sqlite3& db, DatabaseQuery& query)
+  : m_done(false), m_db(db), m_query(&query), m_stmt(&query.lockQuery())
 {
   *this = next();
 }
@@ -357,6 +358,11 @@ DatabaseQueryIterator DatabaseQueryIterator::next(void)
     m_done = true;
   }
   else {
+#ifdef MAGEEC_DEBUG
+    std::cerr << "Error executing query:" << std::endl
+      << sqlite3_errmsg(&m_db) << std::endl;
+    assert(0);
+#endif // MAGEEC_DEBUG
     assert(0 && "Error executing query");
   }
   return std::move(*this);
@@ -374,12 +380,13 @@ bool DatabaseQueryIterator::done() const
 
 int DatabaseQueryIterator::numColumns(void)
 {
-  return sqlite3_column_count(m_stmt);
+  return sqlite3_data_count(m_stmt);
 }
 
 bool DatabaseQueryIterator::isNull(int index)
 {
   validate();
+  assert(!done());
   assert(index < numColumns());
 
   return sqlite3_column_type(m_stmt, index) == SQLITE_NULL;
@@ -388,6 +395,7 @@ bool DatabaseQueryIterator::isNull(int index)
 std::vector<uint8_t> DatabaseQueryIterator::getBlob(int index)
 {
   validate();
+  assert(!done());
   assert(index < numColumns());
   assert(sqlite3_column_type(m_stmt, index == SQLITE_BLOB));
    
@@ -407,6 +415,7 @@ std::vector<uint8_t> DatabaseQueryIterator::getBlob(int index)
 std::string DatabaseQueryIterator::getText(int index)
 {
   validate();
+  assert(!done());
   assert(index < numColumns());
   assert(sqlite3_column_type(m_stmt, index) == SQLITE_TEXT);
 
@@ -417,6 +426,7 @@ std::string DatabaseQueryIterator::getText(int index)
 int64_t DatabaseQueryIterator::getInteger(int index)
 {
   validate();
+  assert(!done());
   assert(index < numColumns());
   assert(sqlite3_column_type(m_stmt, index) == SQLITE_INTEGER);
 

@@ -82,18 +82,26 @@ static const char * const create_feature_instance_table =
 ")";
 
 static const char * const create_feature_set_table =
-"CREATE TABLE FeatureSet("
-  "feature_set_id INTEGER, "
-  "feature_id     INTEGER, "
+"CREATE TABLE FeatureSet(feature_set_id INTEGER PRIMARY KEY)";
+
+static const char * const create_feature_set_feature_table =
+"CREATE TABLE FeatureSetFeature("
+  "feature_set_id INTEGER NOT NULL, "
+  "feature_id     INTEGER NOT NULL, "
   "UNIQUE(feature_set_id, feature_id), "
+  "FOREIGN KEY(feature_set_id) REFERENCES FeatureSet(feature_set_id), "
   "FOREIGN KEY(feature_id) REFERENCES FeatureInstance(feature_id)"
 ")";
 
 static const char * const create_feature_group_table =
-"CREATE TABLE FeatureGroup("
-  "feature_group_id INTEGER, "
-  "feature_set_id   INTEGER, "
+"CREATE TABLE FeatureGroup(feature_group_id INTEGER PRIMARY KEY)";
+
+static const char * const create_feature_group_set_table =
+"CREATE TABLE FeatureGroupSet("
+  "feature_group_id INTEGER NOT NULL, "
+  "feature_set_id   INTEGER NOT NULL, "
   "UNIQUE(feature_group_id, feature_set_id), "
+  "FOREIGN KEY(feature_group_id) REFERENCES FeatureGroup(feature_group_id), "
   "FOREIGN KEY(feature_set_id) REFERENCES FeatureSet(feature_set_id)"
 ")";
 
@@ -113,10 +121,14 @@ static const char * const create_parameter_instance_table =
 ")";
 
 static const char * const create_parameter_set_table =
-"CREATE TABLE ParameterSet("
-  "parameter_set_id INTEGER, "
-  "parameter_id     INTEGER, "
+"CREATE TABLE ParameterSet(parameter_set_id INTEGER PRIMARY KEY)";
+
+static const char * const create_parameter_set_parameter_table =
+"CREATE TABLE ParameterSetParameter("
+  "parameter_set_id INTEGER NOT NULL, "
+  "parameter_id     INTEGER NOT NULL, "
   "UNIQUE(parameter_set_id, parameter_id), "
+  "FOREIGN KEY(parameter_set_id) REFERENCES ParameterSet(parameter_set_id), "
   "FOREIGN KEY(parameter_id) REFERENCES ParameterInstance(parameter_id)"
 ")";
 
@@ -259,12 +271,16 @@ void Database::init_db(sqlite3 &db)
   DatabaseQuery(db, create_feature_type_table).execute().assertDone();
   DatabaseQuery(db, create_feature_instance_table).execute().assertDone();
   DatabaseQuery(db, create_feature_set_table).execute().assertDone();
+  DatabaseQuery(db, create_feature_set_feature_table).execute().assertDone();
   DatabaseQuery(db, create_feature_group_table).execute().assertDone();
+  DatabaseQuery(db, create_feature_group_set_table).execute().assertDone();
 
   // Tables to hold parameters
   DatabaseQuery(db, create_parameter_type_table).execute().assertDone();
   DatabaseQuery(db, create_parameter_instance_table).execute().assertDone();
   DatabaseQuery(db, create_parameter_set_table).execute().assertDone();
+  DatabaseQuery(db, create_parameter_set_parameter_table)
+    .execute().assertDone();
 
   // Pass sequences
   DatabaseQuery(db, create_pass_sequence_table).execute().assertDone();
@@ -288,7 +304,7 @@ void Database::init_db(sqlite3 &db)
 
   // Manually insert the version into the metadata table
   DatabaseQuery query = DatabaseQueryBuilder(db)
-    << "INSERT INTO Metadata VALUES("
+    << "INSERT INTO Metadata(field, value) VALUES("
       << QueryParamType::kInteger << ", "
       << QueryParamType::kText
     << ")";
@@ -385,7 +401,7 @@ void Database::setMetadata(MetadataField field, std::string value)
   assert(isCompatible());
 
   DatabaseQuery query = DatabaseQueryBuilder(*m_db)
-    << "INSERT INTO Metadata VALUE("
+    << "INSERT INTO Metadata(field, value) VALUES("
       << QueryParamType::kText << ", "
       << QueryParamType::kInteger
     << ")";
@@ -404,16 +420,16 @@ FeatureSetID Database::newFeatureSet(const std::vector<FeatureBase*> features)
   DatabaseQuery start_transaction(*m_db, "BEGIN TRANSACTION");
   DatabaseQuery commit_transaction(*m_db, "COMMIT");
 
-  DatabaseQuery select_feature_set_id(
-    *m_db, "SELECT MAX(feature_set_id) FROM FeatureSet");
+  DatabaseQuery add_feature_set = DatabaseQueryBuilder(*m_db)
+    << "INSERT INTO FeatureSet DEFAULT VALUES";
 
+  // FIXME: This should check that the keys are identical if a conflict
+  // arises.
   DatabaseQuery insert_feature_type = DatabaseQueryBuilder(*m_db)
-    << "INSERT INTO FeatureType VALUES ("
+    << "INSERT OR IGNORE INTO FeatureType(feature_type_id, feature_type) "
+    << "VALUES ("
       << QueryParamType::kInteger << ", "
-      << QueryParamType::kInteger << ")"
-    << "WHERE NOT EXISTS ("
-      << "SELECT * FROM FeatureType WHERE "
-        << "feature_type_id = " << QueryParamType::kInteger << ")";
+      << QueryParamType::kInteger << ")";
 
   DatabaseQuery insert_feature = DatabaseQueryBuilder(*m_db)
     << "INSERT INTO FeatureInstance(feature_type_id, value) VALUES ("
@@ -421,29 +437,24 @@ FeatureSetID Database::newFeatureSet(const std::vector<FeatureBase*> features)
       << QueryParamType::kBlob << ")";
 
   DatabaseQuery insert_into_feature_set = DatabaseQueryBuilder(*m_db)
-    << "INSERT INTO FeatureSet VALUES ("
+    << "INSERT INTO FeatureSetFeature(feature_set_id, feature_id) VALUES ("
       << QueryParamType::kInteger << ", "
       << QueryParamType::kInteger << ")";
 
+  // FIXME: This should check that the keys are identical if a conflict
+  // arises.
   DatabaseQuery insert_feature_debug = DatabaseQueryBuilder(*m_db)
-    << "INSERT INTO FeatureDebug VALUES ("
+    << "INSERT OR IGNORE INTO FeatureDebug(feature_type_id, name) VALUES ("
       << QueryParamType::kInteger << ", "
       << QueryParamType::kText << ")";
 
   // Add all features in a single transaction
   start_transaction.execute().assertDone();
 
-  // The next feature set id is the current max +1
-  // sql MAX may become inefficient with large numbers of feature sets
-  auto res = select_feature_set_id.execute();
-
-  uint64_t feature_set_id = 0;
-  if (res.numColumns() != 0) {
-    assert(res.numColumns() == 1);
-    feature_set_id = static_cast<uint64_t>(res.getInteger(0)) + 1;
-    assert(feature_set_id != 0 && "feature_set_id overflow");
-  }
-  res.next().assertDone();
+  // Add the new feature set, retrieving its id (equal to the row id)
+  add_feature_set.execute().assertDone();
+  int64_t feature_set_id = sqlite3_last_insert_rowid(m_db);
+  assert(feature_set_id != 0 && "feature_set_id overflow");
 
   for (auto I : features) {
     // clear parameters bindings for all queries
@@ -454,9 +465,8 @@ FeatureSetID Database::newFeatureSet(const std::vector<FeatureBase*> features)
 
     // add feature type first if not present
     insert_feature_type
-      << static_cast<int64_t>(I->getType())
       << static_cast<int64_t>(I->getFeatureID())
-      << static_cast<int64_t>(I->getFeatureID());
+      << static_cast<int64_t>(I->getType());
     insert_feature_type.execute().assertDone();
 
     // feature insertion
@@ -468,13 +478,11 @@ FeatureSetID Database::newFeatureSet(const std::vector<FeatureBase*> features)
     int64_t feature_id = sqlite3_last_insert_rowid(m_db);
 
     // feature set
-    insert_into_feature_set
-      << static_cast<int64_t>(feature_set_id)
-      << feature_id;
+    insert_into_feature_set << feature_set_id << feature_id;
     insert_into_feature_set.execute().assertDone();
 
     // debug table
-    insert_feature_debug << feature_id << I->getName();
+    insert_feature_debug << I->getFeatureID() << I->getName();
     insert_feature_debug.execute().assertDone();
   }
 
@@ -489,34 +497,27 @@ FeatureGroupID Database::newFeatureGroup(std::vector<FeatureSetID> features)
   DatabaseQuery start_transaction(*m_db, "BEGIN TRANSACTION");
   DatabaseQuery commit_transaction(*m_db, "COMMIT");
 
-  DatabaseQuery select_feature_group_id(
-    *m_db, "SELECT MAX(feature_group_id) FROM FeatureGroup");
+  DatabaseQuery add_feature_group = DatabaseQueryBuilder(*m_db)
+    << "INSERT INTO FeatureGroup DEFAULT VALUES";
 
   DatabaseQuery insert_into_feature_group = DatabaseQueryBuilder(*m_db)
-    << "INSERT INTO FeatureGroup VALUES ("
-      << QueryParamType::kInteger << ") "
-    << "WHERE feature_group_id = "
+    << "INSERT INTO FeatureGroupSet(feature_group_id, feature_set_id) "
+    << "VALUES ("
+      << QueryParamType::kInteger << ", "
       << QueryParamType::kInteger << ")";
 
   // add in a single transaction
   start_transaction.execute().assertDone();
 
-  // Get the next feature group id
-  auto res = select_feature_group_id.execute();
-  uint64_t feature_group_id = 0;
-  if (res.numColumns() != 0) {
-    assert(res.numColumns() == 1);
-    feature_group_id = static_cast<uint64_t>(res.getInteger(0)) + 1;
-    assert(feature_group_id != 0 && "feature_group_id overflow");
-  }
-  res.next().assertDone();
+  // Add the new feature group, retrieving its id (equal to the row id)
+  add_feature_group.execute().assertDone();
+  int64_t feature_group_id = sqlite3_last_insert_rowid(m_db);
+  assert(feature_group_id != 0 && "feature_group_id overflow");
 
   // Add all of the feature sets to the group
   for (auto I : features) {
     insert_into_feature_group.clearAllBindings();
-    insert_into_feature_group
-      << static_cast<int64_t>(I)
-      << static_cast<int64_t>(feature_group_id);
+    insert_into_feature_group << feature_group_id << static_cast<int64_t>(I);
     insert_into_feature_group.execute().assertDone();
   }
 
@@ -549,18 +550,17 @@ newCompilation(std::string name, std::string type,
   DatabaseQuery start_transaction(*m_db, "BEGIN TRANSACTION");
   DatabaseQuery commit_transaction(*m_db, "COMMIT");
 
-  DatabaseQuery select_compilation_id(
-    *m_db, "SELECT MAX(compilation_id) FROM Compilation");
-
   DatabaseQuery insert_into_compilation = DatabaseQueryBuilder(*m_db)
-    << "INSERT INTO Compilation VALUES ("
-      << QueryParamType::kInteger << ", "
+    << "INSERT INTO Compilation("
+      << "feature_group_id, parameter_set_id, pass_sequence_id) "
+    << "VALUES ("
       << QueryParamType::kInteger << ", "
       << QueryParamType::kInteger << ", "
       << QueryParamType::kInteger << ")";
 
   DatabaseQuery insert_compilation_debug = DatabaseQueryBuilder(*m_db)
-    << "INSERT INTO ProgramUnitDebug VALUES("
+    << "INSERT INTO ProgramUnitDebug("
+      << "compilation_id, name, type, parent_id) VALUES("
       << QueryParamType::kInteger << ", "
       << QueryParamType::kText << ", "
       << QueryParamType::kText << ", "
@@ -569,19 +569,8 @@ newCompilation(std::string name, std::string type,
   // add in a single transaction
   start_transaction.execute().assertDone();
 
-  // Get the next compilation id
-  auto res = select_compilation_id.execute();
-  uint64_t compilation_id = 0;
-  if (res.numColumns() != 0) {
-    assert(res.numColumns() == 1);
-    compilation_id = static_cast<uint64_t>(res.getInteger(0)) + 1;
-    assert(compilation_id != 0 && "compilation_id overflow");
-  }
-  res.next().assertDone();
-
   // Add the compilation
   insert_into_compilation
-    << static_cast<int64_t>(compilation_id)
     << static_cast<int64_t>(features)
     << static_cast<int64_t>(parameters);
   if (pass_sequence) {
@@ -592,10 +581,12 @@ newCompilation(std::string name, std::string type,
   }
   insert_into_compilation.execute().assertDone();
 
+  // The rowid of the insert is the compilation_id, retrieve it
+  int64_t compilation_id = sqlite3_last_insert_rowid(m_db);
+  assert(compilation_id != 0 && "compilation_id overflow");
+
   // Add debug information
-  insert_compilation_debug
-    << static_cast<int64_t>(compilation_id)
-    << name << type;
+  insert_compilation_debug << compilation_id << name << type;
   if (parent) {
     insert_compilation_debug << static_cast<int64_t>(parent.get());
   }
@@ -613,8 +604,81 @@ newCompilation(std::string name, std::string type,
 ParameterSetID
 Database::newParameterSet(const std::vector<ParameterBase*> parameters)
 {
-  (void)parameters;
-  return static_cast<ParameterSetID>(0);
+  DatabaseQuery start_transaction(*m_db, "BEGIN TRANSACTION");
+  DatabaseQuery commit_transaction(*m_db, "COMMIT");
+
+  DatabaseQuery add_parameter_set = DatabaseQueryBuilder(*m_db)
+    << "INSERT INTO ParameterSet DEFAULT VALUES";
+
+  // FIXME: This should check that the keys are identical if a conflict
+  // arises.
+  DatabaseQuery insert_parameter_type = DatabaseQueryBuilder(*m_db)
+    << "INSERT OR IGNORE INTO ParameterType(parameter_type_id, parameter_type) "
+    << "VALUES ("
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kInteger << ")";
+
+  DatabaseQuery insert_parameter = DatabaseQueryBuilder(*m_db)
+    << "INSERT INTO ParameterInstance(parameter_type_id, value) VALUES ("
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kBlob << ")";
+
+  DatabaseQuery insert_into_parameter_set = DatabaseQueryBuilder(*m_db)
+    << "INSERT INTO ParameterSetParameter(parameter_set_id, parameter_id) "
+    << "VALUES ("
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kInteger << ")";
+
+  // FIXME: This should check that the keys are identical if a conflict
+  // arises.
+  DatabaseQuery insert_parameter_debug = DatabaseQueryBuilder(*m_db)
+    << "INSERT OR IGNORE INTO ParameterDebug(parameter_type_id, name) VALUES ("
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kText << ")";
+
+  // Add all parameters in a single transaction
+  start_transaction.execute().assertDone();
+
+  // Add the new parameter set, retrieving its id (equal to the row id)
+  add_parameter_set.execute().assertDone();
+  int64_t parameter_set_id = sqlite3_last_insert_rowid(m_db);
+  assert(parameter_set_id != 0 && "parameter_set_id overflow");
+
+  for (auto I : parameters) {
+    // clear parameters bindings for all queries
+    insert_parameter_type.clearAllBindings();
+    insert_parameter.clearAllBindings();
+    insert_into_parameter_set.clearAllBindings();
+    insert_parameter_debug.clearAllBindings();
+
+    // add parameter type first if not present
+    insert_parameter_type
+      << static_cast<int64_t>(I->getParameterID())
+      << static_cast<int64_t>(I->getType());
+    insert_parameter_type.execute().assertDone();
+
+    // parameter insertion
+    insert_parameter 
+      << static_cast<int64_t>(I->getParameterID())
+      << I->toBlob();
+    insert_parameter.execute().assertDone();
+
+    // The parameter_id is an integer primary key, and so it is equal to the
+    // rowid. We use this to add the parameter to the set
+    int64_t parameter_id = sqlite3_last_insert_rowid(m_db);
+
+    // parameter set
+    insert_into_parameter_set << parameter_set_id << parameter_id;
+    insert_into_parameter_set.execute().assertDone();
+
+    // debug table
+    insert_parameter_debug << I->getParameterID() << I->getName();
+    insert_parameter_debug.execute().assertDone();
+  }
+
+  commit_transaction.execute().assertDone();
+
+  return static_cast<ParameterSetID>(parameter_set_id);
 }
 
 PassSequenceID Database::newPassSequence(void)
