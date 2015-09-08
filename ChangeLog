@@ -1,4 +1,23 @@
 2015-09-08  Edward Jones  <ed.jones@embecosm.com>
+	Added functionality to create pass sequences and results in the
+	database.
+
+	* include/mageec/Database.h (Database::addPass): Make parameters
+	an optional parameter.
+	* include/mageec/Util.h (Option::Option): Added nullptr constructor.
+	* lib/Database.cpp
+	(create_pass_parameter_table): Removed, pass parameters are stored
+	in the PassSequencePass table instead.
+	(create_compilation_feature_table, create_result_table): Make
+	all fields 'NOT NULL'.
+	(Database::init_db): Create database in a single transaction.
+	(Database::addFeaturesAfterPass): Added implementation.
+	(Database::newPassSequence): Likewise.
+	(Database::addPass): Likewise.
+	(Database::addResult): Likewise.
+	* lib/Main.cpp (main): Sanity check of new functionality.
+
+2015-09-08  Edward Jones  <ed.jones@embecosm.com>
 
 	* lib/Database.cpp (create_pass_sequence_table): Added sql query to
 	create a new pass sequence table.

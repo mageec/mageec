@@ -138,20 +138,14 @@ static const char * const create_pass_sequence_table =
 
 static const char * const create_pass_sequence_pass_table =
 "CREATE TABLE PassSequencePass("
-  "pass_instance_id INTEGER PRIMARY KEY, "
+  "pass_id          INTEGER PRIMARY KEY, "
   "pass_sequence_id INTEGER NOT NULL, "
   "pass_pos         INTEGER NOT NULL, "
-  "pass_id          TEXT NOT NULL, "
-  "UNIQUE(pass_sequence_id, pass_instance_id), "
-  "UNIQUE(pass_instance_id, pass_pos), "
-  "FOREIGN KEY(pass_sequence_id) REFERENCES PassSequence(pass_sequence_id)"
-")";
-
-static const char * const create_pass_parameter_table =
-"CREATE TABLE PassParameter("
-  "pass_instance_id INTEGER PRIMARY KEY, "
-  "parameter_set_id INTEGER NOT NULL, "
-  "FOREIGN KEY(pass_instance_id) REFERENCES PassSequence(pass_instance_id), "
+  "pass_name_id     TEXT NOT NULL, "
+  "parameter_set_id INTEGER, "
+  "UNIQUE(pass_sequence_id, pass_id), "
+  "UNIQUE(pass_id, pass_pos), "
+  "FOREIGN KEY(pass_sequence_id) REFERENCES PassSequence(pass_sequence_id), "
   "FOREIGN KEY(parameter_set_id) REFERENCES ParameterSet(parameter_set_id)"
 ")";
 
@@ -169,20 +163,20 @@ static const char * const create_compilation_table =
 
 static const char * const create_compilation_feature_table =
 "CREATE TABLE CompilationFeature("
-  "compilation_id   INTEGER, "
-  "pass_instance_id INTEGER, "
+  "compilation_id   INTEGER NOT NULL, "
+  "pass_id          INTEGER NOT NULL, "
   "feature_group_id INTEGER NOT NULL, "
-  "UNIQUE(compilation_id, pass_instance_id), "
-  "FOREIGN KEY(compilation_id)   REFERENCES Compilation(compilation_id), "
-  "FOREIGN KEY(pass_instance_id) REFERENCES PassSequence(pass_instance_id), "
+  "UNIQUE(compilation_id, pass_id), "
+  "FOREIGN KEY(compilation_id) REFERENCES Compilation(compilation_id), "
+  "FOREIGN KEY(pass_id)        REFERENCES PassSequencePass(pass_id), "
   "FOREIGN KEY(feature_group_id) REFERENCES FeatureGroup(feature_group_id)"
 ")";
 
 // result table creation strings
 static const char * const create_result_table =
 "CREATE TABLE Result("
-  "compilation_id INTEGER, "
-  "metric         INTEGER, "
+  "compilation_id INTEGER NOT NULL, "
+  "metric         INTEGER NOT NULL, "
   "result         INTEGER NOT NULL, "
   "UNIQUE(compilation_id, metric), "
   "FOREIGN KEY(compilation_id) REFERENCES Compilation(compilation_id)"
@@ -268,6 +262,12 @@ Database::~Database(void)
 
 void Database::init_db(sqlite3 &db)
 {
+  DatabaseQuery start_transaction(db, "BEGIN TRANSACTION");
+  DatabaseQuery commit_transaction(db, "COMMIT");
+
+  // Create the entire database in a single transaction
+  start_transaction.execute().assertDone();
+
   // Create table to hold database metadata
   DatabaseQuery(db, create_metadata_table).execute().assertDone();
 
@@ -289,7 +289,6 @@ void Database::init_db(sqlite3 &db)
   // Pass sequences
   DatabaseQuery(db, create_pass_sequence_table).execute().assertDone();
   DatabaseQuery(db, create_pass_sequence_pass_table).execute().assertDone();
-  DatabaseQuery(db, create_pass_parameter_table).execute().assertDone();
 
   // Compilation
   DatabaseQuery(db, create_compilation_table).execute().assertDone();
@@ -315,8 +314,10 @@ void Database::init_db(sqlite3 &db)
     << ")";
   query << static_cast<int64_t>(MetadataField::kDatabaseVersion);
   query << std::string(Database::version);
-
   query.execute().assertDone();
+
+  // commit changes
+  commit_transaction.execute().assertDone();
 
   // Add other metadata now that the database is in a valid state
   // setMetadata();
@@ -536,9 +537,19 @@ void Database::addFeaturesAfterPass(FeatureGroupID features,
                                     CompilationID compilation,
                                     PassID after_pass)
 {
-  (void)features;
-  (void)compilation;
-  (void)after_pass;
+  DatabaseQuery add_feature_group_after_pass = DatabaseQueryBuilder(*m_db)
+    << "INSERT INTO CompilationFeature("
+      << "compilation_id, pass_id, feature_group_id) "
+    << "VALUES ("
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kInteger << ")";
+
+  add_feature_group_after_pass
+    << static_cast<int64_t>(compilation)
+    << static_cast<int64_t>(after_pass)
+    << static_cast<int64_t>(features);
+  add_feature_group_after_pass.execute().assertDone();
 }
 
 
@@ -688,16 +699,67 @@ Database::newParameterSet(const std::vector<ParameterBase*> parameters)
 
 PassSequenceID Database::newPassSequence(void)
 {
-  return static_cast<PassSequenceID>(0);
+  DatabaseQuery add_pass_sequence(
+    *m_db,"INSERT INTO PassSequence DEFAULT VALUES");
+
+  add_pass_sequence.execute().assertDone();
+  int64_t pass_sequence_id = sqlite3_last_insert_rowid(m_db);
+  assert(pass_sequence_id != 0 && "pass_sequence_id overflow");
+
+  return static_cast<PassSequenceID>(pass_sequence_id);
 }
 
-PassID Database::addPass(std::string name, PassSequenceID pass_seq,
-                         ParameterSetID parameters)
+PassID Database::addPass(std::string pass_name, PassSequenceID sequence_id,
+                         util::Option<ParameterSetID> parameters)
 {
-  (void)name;
-  (void)pass_seq;
-  (void)parameters;
-  return static_cast<PassID>(0);
+  DatabaseQuery start_transaction(*m_db, "BEGIN TRANSACTION");
+  DatabaseQuery commit_transaction(*m_db, "COMMIT");
+
+  DatabaseQuery select_pass_sequence_pos = DatabaseQueryBuilder(*m_db)
+    << "SELECT MAX(pass_pos) FROM PassSequencePass "
+    << "WHERE pass_sequence_id = " << QueryParamType::kInteger;
+
+  DatabaseQuery insert_pass_into_sequence = DatabaseQueryBuilder(*m_db)
+    << "INSERT INTO PassSequencePass("
+      << "pass_sequence_id, pass_pos, pass_name_id, parameter_set_id) "
+    << "VALUES("
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kText << ", "
+      << QueryParamType::kInteger << ")";
+
+  // Complete in a single transaction
+  start_transaction.execute().assertDone();
+
+  // The next pass index is the current maximum for this sequence +1
+  select_pass_sequence_pos << static_cast<int64_t>(sequence_id);
+
+  auto res = select_pass_sequence_pos.execute();
+  int64_t pass_pos = 0;
+  assert(res.numColumns() == 1);
+  if (!res.isNull(0)) {
+    pass_pos = res.getInteger(0) + 1;
+    assert(pass_pos != 0 && "pass_pos overflowed");
+  }
+
+  insert_pass_into_sequence
+    << static_cast<int64_t>(sequence_id)
+    << pass_pos << pass_name;
+  if (parameters) {
+    insert_pass_into_sequence << static_cast<int64_t>(parameters.get());
+  }
+  else {
+    insert_pass_into_sequence << nullptr;
+  }
+  insert_pass_into_sequence.execute().assertDone();
+
+  // The pass id is the primary key, and equal to the row id.
+  int64_t pass_id = sqlite3_last_insert_rowid(m_db);
+
+  // Commit the transaction
+  commit_transaction.execute().assertDone();
+
+  return static_cast<PassID>(pass_id);
 }
 
 
@@ -708,9 +770,16 @@ void Database::addResult(CompilationID compilation,
                          Metric metric,
                          uint64_t result)
 {
-  (void)compilation;
-  (void)metric;
-  (void)result;
+  DatabaseQuery insert_result = DatabaseQueryBuilder(*m_db)
+    << "INSERT INTO Result(compilation_id, metric, result) VALUES("
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kInteger << ")";
+  insert_result
+    << static_cast<int64_t>(compilation)
+    << static_cast<int64_t>(metric)
+    << static_cast<int64_t>(result);
+  insert_result.execute().assertDone();
 }
 
 

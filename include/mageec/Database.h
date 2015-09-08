@@ -191,7 +191,7 @@ public:
   ///
   /// \return The identifier of the pass instance
   PassID addPass(std::string name, PassSequenceID pass_seq,
-                 ParameterSetID parameters);
+                 util::Option<ParameterSetID> parameters = nullptr);
 
 
 //===------------------------ Results interface ---------------------------===//

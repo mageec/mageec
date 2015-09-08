@@ -108,6 +108,11 @@ public:
     if (m_populated) { m_value.~T(); }
   }
 
+  Option(std::nullptr_t nullp) : m_populated(false)
+  {
+    (void)nullp;
+  }
+
   Option(T obj) : m_populated(true), m_value(obj) {}
 
   Option(const Option& other)
