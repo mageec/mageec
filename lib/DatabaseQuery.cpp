@@ -26,6 +26,7 @@
 #include "mageec/DatabaseQuery.h"
 
 #include <cassert>
+#include <cstddef>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -165,6 +166,27 @@ DatabaseQuery& DatabaseQuery::operator<<(std::vector<uint8_t> blob)
   }
 #endif // MAGEEC_DEBUG
   assert(res == SQLITE_OK && "Error binding blob value to database query");
+
+  m_curr_param++;
+  return *this;
+}
+
+DatabaseQuery& DatabaseQuery::operator<<(std::nullptr_t nullp)
+{
+  (void)nullp;
+  validate();
+
+  // bind positions index from 1
+  int res = sqlite3_bind_null(m_stmt, static_cast<int>(m_curr_param) + 1);
+
+#ifdef MAGEEC_DEBUG
+  if (res != SQLITE_OK) {
+    std::cerr << "Error binding null value to database query:" << std::endl
+      << sqlite3_errmsg(&m_db) << std::endl;
+    assert(0);
+  }
+#endif // MAGEEC_DEBUG
+  assert(res == SQLITE_OK && "Error binding null value to database query");
 
   m_curr_param++;
   return *this;
@@ -353,6 +375,14 @@ bool DatabaseQueryIterator::done() const
 int DatabaseQueryIterator::numColumns(void)
 {
   return sqlite3_column_count(m_stmt);
+}
+
+bool DatabaseQueryIterator::isNull(int index)
+{
+  validate();
+  assert(index < numColumns());
+
+  return sqlite3_column_type(m_stmt, index) == SQLITE_NULL;
 }
 
 std::vector<uint8_t> DatabaseQueryIterator::getBlob(int index)

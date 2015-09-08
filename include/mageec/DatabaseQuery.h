@@ -26,6 +26,7 @@
 #ifndef MAGEEC_DATABASE_QUERY_H
 #define MAGEEC_DATABASE_QUERY_H
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -130,6 +131,12 @@ public:
   /// \brief Return the number of columns in the results table
   int numColumns(void);
 
+
+  /// \brief Check whether the given value in the results table is null
+  /// \param index  Index of the column containing the potential null value
+  /// \return True if the value is null
+  bool isNull(int index);
+
   /// \brief Retrieve a blob from the results table
   ///
   /// \param index  Index of the column containing the blob
@@ -213,6 +220,9 @@ public:
 
   /// \brief Bind a blob to the next available parameter
   DatabaseQuery& operator<<(std::vector<uint8_t> blob);
+
+  /// \brief Bind a null to the next available parameter
+  DatabaseQuery& operator<<(std::nullptr_t nullp);
 
   /// \brief Execute the query, retrieving an iterator which provides access
   /// to the results.
