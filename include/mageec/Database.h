@@ -63,6 +63,9 @@ public:
   Database(void) = delete;
   ~Database(void);
 
+  Database(const Database &other) = default;
+  Database(Database &&other) = default;
+
   /// \brief Construct a database from the provided database path.
   ///
   /// If the database does not exist then an empty database is created and
@@ -75,7 +78,7 @@ public:
   /// \param create  True if this database does not exist and should be
   /// created.
   Database(std::string db_path,
-           std::map<util::UUID, IMachineLearner*> mls,
+           std::map<util::UUID, const IMachineLearner*> mls,
            bool create);
 
   /// \brief Get the version of the database
@@ -87,6 +90,12 @@ public:
   /// \return True if the database is compatible
   bool isCompatible(void);
 
+  /// \brief Get all of the trained machine learners in the database
+  /// \return All machine learners in the database which are trained.
+  std::vector<TrainedML> getTrainedMachineLearners(void);
+
+
+private:
   /// \brief Get a metadata field of the database
   ///
   /// \param field  The field to retrieve from the database, which may not
@@ -101,9 +110,7 @@ public:
   /// \param value  The string value which that field should take
   void setMetadata(MetadataField field, std::string value);
 
-  /// \brief Get all of the trained machine learners in the database
-  /// \return All machine learners in the database which are trained.
-  std::vector<TrainedML> getTrainedMachineLearners(void);
+public:
 
 
 //===------------------- Feature extractor interface-----------------------===//
@@ -115,7 +122,7 @@ public:
   /// with the same identifier in this set.
   ///
   /// \return The identifier of the new feature set in the database
-  FeatureSetID newFeatureSet(std::vector<FeatureBase*> features);
+  FeatureSetID newFeatureSet(const std::vector<FeatureBase*> features);
 
   /// \brief Create a new group of features from a number of feature sets
   ///
@@ -161,7 +168,7 @@ public:
   /// no parameters with the same identifier
   ///
   /// \return The identifier of the new parameter set in the database
-  ParameterSetID newParameterSet(std::vector<ParameterBase*> parameters);
+  ParameterSetID newParameterSet(const std::vector<ParameterBase*> parameters);
 
   /// \brief Create a new empty pass sequence
   /// \return The identifier of the new pass sequence
@@ -215,14 +222,14 @@ private:
   sqlite3 *m_db;
 
   /// Mapping of machine learner uuids to machine learners
-  std::map<util::UUID, IMachineLearner*> m_mls;
+  std::map<util::UUID, const IMachineLearner*> m_mls;
 
   /// \brief Initialize a new empty database
   ///
   /// The provided handle should point at a valid, empty sqlite3 database
   ///
   /// \param db  The database to be initialized
-  static void init_db(sqlite3 &m_db);
+  static void init_db(sqlite3 &db);
 
   /// \brief Validate the contents of the database
   ///

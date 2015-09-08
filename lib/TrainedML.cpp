@@ -45,7 +45,9 @@ TrainedML::TrainedML(sqlite3 &db,
                      Metric metric,
                      const std::vector<uint8_t> blob)
   : m_db(db), m_ml(ml), m_metric(metric), m_blob(blob)
-{}
+{
+  (void)m_db;
+}
 
 
 std::string TrainedML::getName(void) const
@@ -59,7 +61,7 @@ Metric TrainedML::getMetric(void) const
 }
 
 std::unique_ptr<DecisionBase>
-makeDecision(const DecisionRequestBase& request,
+TrainedML::makeDecision(const DecisionRequestBase& request,
              const std::vector<FeatureBase*> features)
 {
   (void)request;

@@ -1,3 +1,31 @@
+2015-09-08  Edward Jones  <ed.jones@embecosm.com>
+	Added further database functionality. The project now compiles a
+	test program.
+
+	* CMakeLists.txt: Added new source dependencies.
+	(MAGEEC_DEBUG): Added option to toggle debug.
+	(CMAKE_CXX_FLAGS): Disabled some unnecessary clang warnings.
+	* include/mageec/Database.h: Fixed warnings.
+	(Database::Database): Made mls const.
+	(Database::m_mls): Made member const.
+	(Database::getMetadata, Database::setMetadata): Made methods const.
+	(Database::newFeatureSet, Database::newParameterSet): Made feature/
+	parameter vector arguments const.
+	* include/mageec/DatabaseQuery.h: Fixed warnings.
+	(DatabaseQueryIterator::assertDone): Added function.
+	(DatabaseQuery::m_db): Added member with handle to database.
+	* include/mageec/Framework.h (Framework::getDatabase): Added create
+	argument.
+	(Framework::m_mls): Made m_mls const.
+	* include/mageec/Util.h: Fixed warnings, added missing cassert include.
+	* lib/Database.cpp: Fixed warnings and errors, added debug.
+	(Database::newFeatureGroup): Added implementation.
+	* lib/DatabaseQuery.cpp: Fixed warnings, added debug.
+	(DatabaseQueryIterator::assertDone): Added function implementation.
+	* lib/Framework.cpp: New file.
+	* lib/Main.cpp: Likewise.
+	* lib/TrainedML.cpp (makeDecision): Fixed function signature.
+
 2015-09-04  Edward Jones  <ed.jones@embecosm.com>
 	Beginning of implementation of database functionality.
 

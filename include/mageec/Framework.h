@@ -52,7 +52,7 @@ public:
 
 
   /// \brief Create the framework
-  Framework();
+  Framework(void);
 
   /// \brief Get the version of the mageec framework
   util::Version getVersion(void) const;
@@ -80,13 +80,14 @@ public:
   /// has an interface for.
   ///
   /// \param db_path  Path to the database to be loaded or created
-  Database getDatabase(std::string db_path) const;
+  /// \param create  Dictates whether the database should be loaded or created
+  Database getDatabase(std::string db_path, bool create) const;
 
 
 private:
   /// A map of machine learner interfaces registers with the framework, keyed
   /// based on their uuids.
-  std::map<util::UUID, IMachineLearner*> m_mls;
+  std::map<util::UUID, const IMachineLearner*> m_mls;
 };
 
 

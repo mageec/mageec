@@ -26,6 +26,7 @@
 #define MAGEEC_UTIL_H
 
 #include <array>
+#include <cassert>
 
 
 namespace mageec {
@@ -83,7 +84,9 @@ public:
   bool operator<(const UUID& other) const { return m_data < other.m_data; }
 
   std::array<uint8_t, 16> data(void) const { return m_data; }
-  unsigned size(void) const { return m_data.size(); }
+  unsigned size(void) const {
+    return static_cast<unsigned>(m_data.size());
+  }
 
 private:
   const std::array<uint8_t, 16> m_data;

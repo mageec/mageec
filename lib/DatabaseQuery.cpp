@@ -30,6 +30,10 @@
 #include <string>
 #include <vector>
 
+#ifdef MAGEEC_DEBUG
+  #include <iostream>
+#endif // MAGEEC_DEBUG
+
 #include "sqlite3.h"
 
 
@@ -43,38 +47,63 @@ DatabaseQuery::~DatabaseQuery(void)
 {
   validate();
   int res = sqlite3_finalize(m_stmt);
+
+#ifdef MAGEEC_DEBUG
+  if (res != SQLITE_OK) {
+    std::cerr << "Error destroying database query:" << std::endl
+      << sqlite3_errmsg(&m_db) << std::endl;
+    assert(0);
+  }
+#endif
+
   assert(res == SQLITE_OK && "Error destroying query statement!");
 }
 
 DatabaseQuery::DatabaseQuery(sqlite3 &db, std::string str)
-  : m_is_locked(false), m_stmt(),
-    m_curr_param(0), m_param_count(0),
-    m_substrs(1, str), m_param_types()
+  : m_db(db), m_is_locked(false), m_stmt(),
+    m_curr_param(0), m_param_count(0), m_param_types()
 {
-  int res = sqlite3_prepare_v2(&db, str.c_str(), -1, &m_stmt, NULL);
-  assert(res == SQLITE_OK && m_stmt && "Error creating query statement!");
+  int res = sqlite3_prepare_v2(&m_db, str.c_str(), -1, &m_stmt, NULL);
+
+#ifdef MAGEEC_DEBUG
+  if (res != SQLITE_OK) {
+    std::cerr << "Error creating database query:" << std::endl
+      << sqlite3_errmsg(&m_db) << std::endl;
+    assert(0);
+  }
+#endif // MAGEEC_DEBUG
+
+  assert(res == SQLITE_OK && m_stmt && "Error creating database query!");
 }
 
 DatabaseQuery::DatabaseQuery(sqlite3 &db,
                              std::vector<std::string> substrs,
                              std::vector<QueryParamType> params)
-  : m_is_locked(false), m_stmt(),
-    m_curr_param(0), m_param_count(params.size()),
-    m_substrs(substrs), m_param_types(params)
+  : m_db(db), m_is_locked(false), m_stmt(),
+    m_curr_param(0), m_param_count(params.size()), m_param_types(params)
 {
-  assert(substrs.size() == (params.size() + 0) ||
-         substrs.size() == (params.size() + 1));
+  assert(substrs.size() == (m_param_count + 0) ||
+         substrs.size() == (m_param_count + 1));
 
   std::stringstream query;
-  for (unsigned i = 0; i < params.size(); ++i) {
-    query << substrs[i] << "? ";
+  for (unsigned i = 0; i < m_param_count; ++i) {
+    query << substrs[i] << "?";
   }
-  if (substrs.size() == (params.size() + 1)) {
+  if (substrs.size() == (m_param_count + 1)) {
     query << substrs[substrs.size() - 1];
   }
 
-  int res = sqlite3_prepare_v2(&db, query.str().c_str(), -1, &m_stmt, NULL);
-  assert(res == SQLITE_OK && m_stmt && "Error creating query statement!");
+  int res = sqlite3_prepare_v2(&m_db, query.str().c_str(), -1, &m_stmt, NULL);
+
+#ifdef MAGEEC_DEBUG
+  if (res != SQLITE_OK) {
+    std::cerr << "Error creating database query:" << std::endl
+      << sqlite3_errmsg(&m_db) << std::endl;
+    assert(0);
+  }
+#endif // MAGEEC_DEBUG
+
+  assert(res == SQLITE_OK && m_stmt && "Error creating database query!");
 }
 
 DatabaseQuery& DatabaseQuery::operator<<(int64_t i)
@@ -83,8 +112,16 @@ DatabaseQuery& DatabaseQuery::operator<<(int64_t i)
   assert(m_param_types[m_curr_param] == QueryParamType::kInteger);
 
   // bind positions index from 1
-  int res = sqlite3_bind_int64(m_stmt, m_curr_param + 1, i);
-  assert(res == SQLITE_OK && "Error binding to query");
+  int res = sqlite3_bind_int64(m_stmt, static_cast<int>(m_curr_param) + 1, i);
+
+#ifdef MAGEEC_DEBUG
+  if (res != SQLITE_OK) {
+    std::cerr << "Error binding integer value to database query:" << std::endl
+      << sqlite3_errmsg(&m_db) << std::endl;
+    assert(0);
+  }
+#endif // MAGEEC_DEBUG
+  assert(res == SQLITE_OK && "Error binding integer value to database query");
 
   m_curr_param++;
   return *this;
@@ -96,9 +133,16 @@ DatabaseQuery& DatabaseQuery::operator<<(std::string str)
   assert(m_param_types[m_curr_param] == QueryParamType::kText);
 
   // bind positions index from 1
-  int res = sqlite3_bind_text(m_stmt, m_curr_param + 1, str.c_str(),
-                              -1, SQLITE_TRANSIENT);
-  assert(res == SQLITE_OK && "Error binding to query");
+  int res = sqlite3_bind_text(m_stmt, static_cast<int>(m_curr_param) + 1,
+                              str.c_str(), -1, SQLITE_TRANSIENT);
+#ifdef MAGEEC_DEBUG
+  if (res != SQLITE_OK) {
+    std::cerr << "Error binding text value to database query:" << std::endl
+      << sqlite3_errmsg(&m_db) << std::endl;
+    assert(0);
+  }
+#endif // MAGEEC_DEBUG
+  assert(res == SQLITE_OK && "Error binding text value to database query");
 
   m_curr_param++;
   return *this;
@@ -110,9 +154,17 @@ DatabaseQuery& DatabaseQuery::operator<<(std::vector<uint8_t> blob)
   assert(m_param_types[m_curr_param] == QueryParamType::kBlob);
 
   // bind positions index from 1
-  int res = sqlite3_bind_blob(m_stmt, m_curr_param + 1, blob.data(),
-                              blob.size(), SQLITE_TRANSIENT);
-  assert(res == SQLITE_OK && "Error binding to query");
+  int res = sqlite3_bind_blob(m_stmt, static_cast<int>(m_curr_param) + 1,
+                              blob.data(), static_cast<int>(blob.size()),
+                              SQLITE_TRANSIENT);
+#ifdef MAGEEC_DEBUG
+  if (res != SQLITE_OK) {
+    std::cerr << "Error binding blob value to database query:" << std::endl
+      << sqlite3_errmsg(&m_db) << std::endl;
+    assert(0);
+  }
+#endif // MAGEEC_DEBUG
+  assert(res == SQLITE_OK && "Error binding blob value to database query");
 
   m_curr_param++;
   return *this;
@@ -136,6 +188,14 @@ void DatabaseQuery::clearAllBindings(void)
   validate();
 
   int res = sqlite3_clear_bindings(m_stmt);
+
+#ifdef MAGEEC_DEBUG
+  if (res != SQLITE_OK) {
+    std::cerr << "Failed to clear bindings on database query:" << std::endl
+      << sqlite3_errmsg(&m_db) << std::endl;
+    assert(0);
+  }
+#endif // MAGEEC_DEBUG
   assert(res == SQLITE_OK && "Failed to clear bindings on query!");
   m_curr_param = 0;
 }
@@ -151,8 +211,14 @@ sqlite3_stmt& DatabaseQuery::lockQuery(void)
   return *m_stmt;
 }
 
-void DatabaseQuery::validate(void) const {
-  assert(m_curr_param < m_param_types.size());
+void DatabaseQuery::validate(void) const
+{
+  if (m_param_types.size() != 0) {
+    assert(m_curr_param <= m_param_types.size());
+  }
+  else {
+    assert(m_curr_param == 0);
+  }
   assert(m_stmt != nullptr);
   assert(!m_is_locked);
 }
@@ -202,13 +268,18 @@ DatabaseQueryBuilder& DatabaseQueryBuilder::operator<<(QueryParamType param)
 
 DatabaseQueryIterator::~DatabaseQueryIterator(void)
 {
-  validate();
+  if (m_query && m_stmt) {
+    validate();
 
-  int res = sqlite3_reset(m_stmt);
-  assert(res == SQLITE_OK && "Failed to reset query after execution!");
+    int res = sqlite3_reset(m_stmt);
+    assert(res == SQLITE_OK && "Failed to reset query after execution!");
 
-  // Finished executing the query, so unlock it so that it can be used again
-  m_query->unlockQuery();
+    // Finished executing the query, so unlock it so that it can be used again
+    m_query->unlockQuery();
+  }
+  else {
+    assert(!m_query && !m_stmt && "Query or statement has been moved");
+  }
 }
 
 DatabaseQueryIterator::DatabaseQueryIterator(DatabaseQueryIterator &&other)
@@ -223,7 +294,7 @@ DatabaseQueryIterator::DatabaseQueryIterator(DatabaseQueryIterator &&other)
 DatabaseQueryIterator::DatabaseQueryIterator(DatabaseQuery& query)
   : m_done(false), m_query(&query), m_stmt(&query.lockQuery())
 {
-  next();
+  *this = next();
 }
 
 DatabaseQueryIterator& DatabaseQueryIterator::
@@ -246,7 +317,7 @@ void DatabaseQueryIterator::restart(void)
   assert(res == SQLITE_OK && "Failed to restart query execution");
   m_done = false;
 
-  next();
+  *this = next();
 }
 
 DatabaseQueryIterator DatabaseQueryIterator::next(void)
@@ -269,36 +340,41 @@ DatabaseQueryIterator DatabaseQueryIterator::next(void)
   return std::move(*this);
 }
 
+void DatabaseQueryIterator::assertDone() const
+{
+  assert(done() && "Query execution incomplete!");
+}
+
 bool DatabaseQueryIterator::done() const
 {
   return m_done;
 }
 
-unsigned DatabaseQueryIterator::numColumns(void)
+int DatabaseQueryIterator::numColumns(void)
 {
   return sqlite3_column_count(m_stmt);
 }
 
-std::vector<uint8_t> DatabaseQueryIterator::getBlob(unsigned index)
+std::vector<uint8_t> DatabaseQueryIterator::getBlob(int index)
 {
   validate();
   assert(index < numColumns());
-  assert(sqlite3_column_type(m_stmt, index) == SQLITE_BLOB);
+  assert(sqlite3_column_type(m_stmt, index == SQLITE_BLOB));
    
   const uint8_t *data =
     static_cast<const uint8_t *>(sqlite3_column_blob(m_stmt, index));
-  const unsigned blob_size = sqlite3_column_bytes(m_stmt, index);
+  const int blob_size = sqlite3_column_bytes(m_stmt, index);
 
   std::vector<uint8_t> blob;
-  blob.reserve(blob_size);
+  blob.reserve(static_cast<std::vector<uint8_t>::size_type>(blob_size));
 
-  for (unsigned i = 0; i < blob_size; ++i) {
+  for (int i = 0; i < blob_size; ++i) {
     blob.push_back(data[i]);
   }
   return blob;
 }
 
-std::string DatabaseQueryIterator::getText(unsigned index)
+std::string DatabaseQueryIterator::getText(int index)
 {
   validate();
   assert(index < numColumns());
@@ -308,7 +384,7 @@ std::string DatabaseQueryIterator::getText(unsigned index)
   return std::string(reinterpret_cast<const char *>(text));
 }
 
-int64_t DatabaseQueryIterator::getInteger(unsigned index)
+int64_t DatabaseQueryIterator::getInteger(int index)
 {
   validate();
   assert(index < numColumns());

@@ -34,6 +34,10 @@
 #include <string>
 #include <vector>
 
+#ifdef MAGEEC_DEBUG
+  #include <iostream>
+#endif // MAGEEC_DEBUG
+
 #include "mageec/DatabaseQuery.h"
 #include "mageec/TrainedML.h"
 #include "mageec/Types.h"
@@ -203,92 +207,23 @@ static const char * const create_parameter_debug_table =
 ")";
 
 
-//===------------------- Database feature queries -------------------------===//
-
-
-static const char * const max_feature_set_id_query =
-"SELECT MAX(feature_set_id) from FeatureSet";
-
-static const char * const max_feature_group_id_query =
-"SELECT MAX(feature_group_id) from FeatureGroup";
-
-static const char * const insert_feature_type_query =
-"INSERT INTO FeatureType VALUES(@feature_type_id, @feature_type)";
-
-static const char * const insert_feature_instance_query =
-"INSERT INTO FeatureInstance VALUES(@feature_id, @feature_type_id, @value)";
-
-static const char * const insert_feature_to_set_query =
-"INSERT INTO FeatureSet VALUES(@feature_set_id, @feature_id)";
-
-static const char * const insert_feature_set_to_group_query =
-"INSERT INTO FeatureGroup VALUES(@feature_group_id, @feature_set_id)";
-
-// debug
-static const char * const insert_feature_debug_query =
-"INSERT INTO FeatureDebug VALUES(@feature_type_id, @name)";
-
-
-//===------------------- Database parameter queries -----------------------===//
-
-
-static const char * const max_parameter_set_id_query =
-"SELECT MAX(parameter_set_id) from ParameterSet";
-
-static const char * const insert_parameter_type_query =
-"INSERT INTO ParameterType VALUES(@parameter_type_id, @parameter_type)";
-
-static const char * const insert_parameter_instance_query =
-"INSERT INTO ParameterInstance "
-  "VALUES(@parameter_id, @parameter_type_id, @value)";
-
-static const char * const insert_parameter_to_set_query =
-"INSERT INTO ParameterSet VALUES(@parameter_set_id, @parameter_id)";
-
-// debug
-static const char * const insert_parameter_debug_query =
-"INSERT INTO ParameterDebug VALUES(@parameter_type_id, @name)";
-
-
-//===--------------------- Pass Sequence queries --------------------------===//
-
-
-static const char * const max_pass_sequence_query =
-"SELECT MAX(pass_sequence_id) from PassSequence";
-
-static const char * const max_pass_pos_query =
-"SELECT MAX(pass_pos) from PassSequence WHERE "
-  "pass_sequence_id = @pass_sequence_id";
-
-static const char * const insert_pass_to_sequence_query =
-"INSERT INTO PassSequence "
-  "VALUES(@pass_instance_id, @pass_sequence_id, @pass_pos, @pass_id)";
-
-static const char * const insert_pass_parameter_query =
-"INSERT INTO PassParameters VALUES(@pass_instance_id, @parameter_set_id)";
-
-
-
-
 //===-------------------- Database implementation -------------------------===//
 
 
 Database::Database(std::string db_path,
-                   std::map<util::UUID, IMachineLearner*> mls,
+                   std::map<util::UUID, const IMachineLearner*> mls,
                    bool create)
   : m_db(nullptr), m_mls(mls)
 {
   int res = sqlite3_open (db_path.c_str(), &m_db);
   
-  assert(res == SQLITE_OK && "Unable to load or create mageec database!");
+  assert(res == SQLITE_OK && "Unable to load or create mageec database");
   assert(m_db != nullptr);
 
   // Enable foreign keys (requires sqlite 3.6.19 or above)
   // If foreign keys are not available the database is still usable, but no
   // foreign key checking will do done.
-  bool success = DatabaseQuery(*m_db, "PRAGMA foreign_keys = ON")
-    .execute().done();
-  assert(success);
+  DatabaseQuery(*m_db, "PRAGMA foreign_keys = ON").execute().assertDone();
 
   if (create) {
     init_db(*m_db);
@@ -306,59 +241,49 @@ Database::Database(std::string db_path,
 Database::~Database(void)
 {
   int res = sqlite3_close(m_db);
+#ifdef MAGEEC_DEBUG
+  if (res != SQLITE_OK) {
+    std::cerr << "Unable to close mageec database" << std::endl
+      << sqlite3_errmsg(m_db) << std::endl;
+  }
+#endif // MAGEEC_DEBUG
   assert(res == SQLITE_OK && "Unable to close mageec database!");
 }
 
 void Database::init_db(sqlite3 &db)
 {
-  bool success;
+  // Create table to hold database metadata
+  DatabaseQuery(db, create_metadata_table).execute().assertDone();
 
   // Create tables to hold features
-  success = DatabaseQuery(db, create_feature_type_table).execute().done();
-  assert(success);
-  success = DatabaseQuery(db, create_feature_instance_table).execute().done();
-  assert(success);
-  success = DatabaseQuery(db, create_feature_set_table).execute().done();
-  assert(success);
-  success = DatabaseQuery(db, create_feature_group_table).execute().done();
-  assert(success);
+  DatabaseQuery(db, create_feature_type_table).execute().assertDone();
+  DatabaseQuery(db, create_feature_instance_table).execute().assertDone();
+  DatabaseQuery(db, create_feature_set_table).execute().assertDone();
+  DatabaseQuery(db, create_feature_group_table).execute().assertDone();
 
   // Tables to hold parameters
-  success = DatabaseQuery(db, create_parameter_type_table).execute().done();
-  assert(success);
-  success = DatabaseQuery(db, create_parameter_instance_table).execute().done();
-  assert(success);
-  success = DatabaseQuery(db, create_parameter_set_table).execute().done();
-  assert(success);
+  DatabaseQuery(db, create_parameter_type_table).execute().assertDone();
+  DatabaseQuery(db, create_parameter_instance_table).execute().assertDone();
+  DatabaseQuery(db, create_parameter_set_table).execute().assertDone();
 
   // Pass sequences
-  success = DatabaseQuery(db, create_pass_sequence_table).execute().done();
-  assert(success);
-  success = DatabaseQuery(db, create_pass_parameter_table).execute().done();
-  assert(success);
+  DatabaseQuery(db, create_pass_sequence_table).execute().assertDone();
+  DatabaseQuery(db, create_pass_parameter_table).execute().assertDone();
 
   // Compilation
-  success = DatabaseQuery(db, create_compilation_table).execute().done();
-  assert(success);
-  success = DatabaseQuery(db, create_compilation_feature_table)
-    .execute().done();
-  assert(success);
+  DatabaseQuery(db, create_compilation_table).execute().assertDone();
+  DatabaseQuery(db, create_compilation_feature_table) .execute().assertDone();
 
   // Results
-  success = DatabaseQuery(db, create_result_table).execute().done();
-  assert(success);
+  DatabaseQuery(db, create_result_table).execute().assertDone();
 
   // Machine learner
-  success = DatabaseQuery(db, create_machine_learner_table).execute().done();
-  assert(success);
+  DatabaseQuery(db, create_machine_learner_table).execute().assertDone();
 
   // Debug tables
-  success = DatabaseQuery(db, create_program_unit_debug_table).execute().done();
-  assert(success);
-  success = DatabaseQuery(db, create_feature_debug_table).execute().done();
-  assert(success);
-  success = DatabaseQuery(db, create_parameter_debug_table).execute().done();
-  assert(success);
+  DatabaseQuery(db, create_program_unit_debug_table).execute().assertDone();
+  DatabaseQuery(db, create_feature_debug_table).execute().assertDone();
+  DatabaseQuery(db, create_parameter_debug_table).execute().assertDone();
 
 
   // Manually insert the version into the metadata table
@@ -367,11 +292,10 @@ void Database::init_db(sqlite3 &db)
       << QueryParamType::kInteger << ", "
       << QueryParamType::kText
     << ")";
-  query << static_cast<unsigned>(MetadataField::kDatabaseVersion);
+  query << static_cast<int64_t>(MetadataField::kDatabaseVersion);
   query << std::string(Database::version);
 
-  success = query.execute().done();
-  assert(success);
+  query.execute().assertDone();
 
   // Add other metadata now that the database is in a valid state
   // setMetadata();
@@ -386,8 +310,8 @@ void Database::validate(void)
 
 bool Database::isCompatible(void)
 {
-  util::Version version = getVersion();
-  return (version == Database::version);
+  util::Version db_version = getVersion();
+  return (db_version == Database::version);
 }
 
 
@@ -402,43 +326,6 @@ util::Version Database::getVersion(void)
   return util::Version(major, minor, patch);
 }
 
-
-
-std::string Database::getMetadata(MetadataField field)
-{
-  std::string value;
-
-  DatabaseQuery query = DatabaseQueryBuilder(*m_db)
-    << "SELECT value FROM Metadata WHERE field = "
-      << QueryParamType::kInteger;
-  query << static_cast<int64_t>(field);
-
-  DatabaseQueryIterator res = query.execute();
-  if (!res.done()) {
-    assert(res.numColumns() == 1);
-    value = res.getText(0);
-
-    res.next();
-    assert(res.done());
-  }
-  return value;
-}
-
-void Database::setMetadata(MetadataField field, std::string value)
-{
-  assert(isCompatible());
-
-  DatabaseQuery query = DatabaseQueryBuilder(*m_db)
-    << "INSERT INTO Metadata VALUE("
-      << QueryParamType::kText << ", "
-      << QueryParamType::kInteger
-    << ")";
-
-  query << static_cast<int64_t>(field) << value;
-
-  auto res = query.execute();
-  assert(res.done());
-}
 
 std::vector<TrainedML> Database::getTrainedMachineLearners(void)
 {
@@ -460,7 +347,7 @@ std::vector<TrainedML> Database::getTrainedMachineLearners(void)
     query << std::vector<uint8_t>(uuid.data().begin(), uuid.data().end());
 
     auto res = query.execute();
-    assert(!res.done());
+    res.assertDone();
     assert(res.numColumns() == 2);
 
     Metric metric = static_cast<Metric>(res.getInteger(0));
@@ -474,13 +361,46 @@ std::vector<TrainedML> Database::getTrainedMachineLearners(void)
 }
 
 
+std::string Database::getMetadata(MetadataField field)
+{
+  std::string value;
+
+  DatabaseQuery query = DatabaseQueryBuilder(*m_db)
+    << "SELECT value FROM Metadata WHERE field="
+      << QueryParamType::kInteger;
+  query << static_cast<int64_t>(field);
+
+  DatabaseQueryIterator res = query.execute();
+  if (!res.done()) {
+    assert(res.numColumns() == 1);
+    value = res.getText(0);
+
+    res.next().assertDone();
+  }
+  return value;
+}
+
+void Database::setMetadata(MetadataField field, std::string value)
+{
+  assert(isCompatible());
+
+  DatabaseQuery query = DatabaseQueryBuilder(*m_db)
+    << "INSERT INTO Metadata VALUE("
+      << QueryParamType::kText << ", "
+      << QueryParamType::kInteger
+    << ")";
+  query << static_cast<int64_t>(field) << value;
+
+  query.execute().assertDone();
+}
+
+
 //===------------------- Feature extractor interface-----------------------===//
 
 
 
-FeatureSetID Database::newFeatureSet(std::vector<FeatureBase*> features)
+FeatureSetID Database::newFeatureSet(const std::vector<FeatureBase*> features)
 {
-  // SQL statements that are about to be used
   DatabaseQuery start_transaction(*m_db, "BEGIN TRANSACTION");
   DatabaseQuery commit_transaction(*m_db, "COMMIT");
 
@@ -510,56 +430,55 @@ FeatureSetID Database::newFeatureSet(std::vector<FeatureBase*> features)
       << QueryParamType::kInteger << ", "
       << QueryParamType::kText << ")";
 
-  // Add the entire feature set in a single transaction
-  auto res = start_transaction.execute();
-  assert(res.done());
+  // Add all features in a single transaction
+  start_transaction.execute().assertDone();
 
-  // Get the next feature set id
-  res = select_feature_set_id.execute();
-  assert(res.numColumns() == 1);
+  // The next feature set id is the current max +1
+  // sql MAX may become inefficient with large numbers of feature sets
+  auto res = select_feature_set_id.execute();
 
-  int64_t feature_set_id = res.getInteger(0) + 1;
-  assert(res.next().done());
+  uint64_t feature_set_id = 0;
+  if (res.numColumns() != 0) {
+    assert(res.numColumns() == 1);
+    feature_set_id = static_cast<uint64_t>(res.getInteger(0)) + 1;
+    assert(feature_set_id != 0 && "feature_set_id overflow");
+  }
+  res.next().assertDone();
 
-  // Insert each feature in turn
   for (auto I : features) {
-    // clear parameter bindings for all the queries we're about to use
+    // clear parameters bindings for all queries
     insert_feature_type.clearAllBindings();
     insert_feature.clearAllBindings();
     insert_into_feature_set.clearAllBindings();
     insert_feature_debug.clearAllBindings();
 
-    // first insert the feature type if it isn't present already
+    // add feature type first if not present
     insert_feature_type
       << static_cast<int64_t>(I->getType())
       << static_cast<int64_t>(I->getFeatureID())
       << static_cast<int64_t>(I->getFeatureID());
-    res = insert_feature_type.execute();
-    assert(res.done());
+    insert_feature_type.execute().assertDone();
 
-    // now insert the feature
+    // feature insertion
     insert_feature << static_cast<int64_t>(I->getFeatureID()) << I->toBlob();
-    res = insert_feature.execute();
-    assert(res.done());
+    insert_feature.execute().assertDone();
 
     // The feature_id is an integer primary key, and so it is equal to the
     // rowid. We use this to add the feature to the feature set
     int64_t feature_id = sqlite3_last_insert_rowid(m_db);
 
-    // Add the feature to the feature set
-    insert_into_feature_set << feature_set_id << feature_id;
-    res = insert_into_feature_set.execute();
-    assert(res.done());
+    // feature set
+    insert_into_feature_set
+      << static_cast<int64_t>(feature_set_id)
+      << feature_id;
+    insert_into_feature_set.execute().assertDone();
 
-    // Add the feature to the debug table
+    // debug table
     insert_feature_debug << feature_id << I->getName();
-    res = insert_feature_debug.execute();
-    assert(res.done());
+    insert_feature_debug.execute().assertDone();
   }
 
-  // commit the changes
-  res = commit_transaction.execute();
-  assert(res.done());
+  commit_transaction.execute().assertDone();
 
   return static_cast<FeatureSetID>(feature_set_id);
 }
@@ -567,8 +486,44 @@ FeatureSetID Database::newFeatureSet(std::vector<FeatureBase*> features)
 
 FeatureGroupID Database::newFeatureGroup(std::vector<FeatureSetID> features)
 {
-  (void)features;
-  return static_cast<FeatureGroupID>(0);
+  DatabaseQuery start_transaction(*m_db, "BEGIN TRANSACTION");
+  DatabaseQuery commit_transaction(*m_db, "COMMIT");
+
+  DatabaseQuery select_feature_group_id(
+    *m_db, "SELECT MAX(feature_group_id) FROM FeatureGroup");
+
+  DatabaseQuery insert_into_feature_group = DatabaseQueryBuilder(*m_db)
+    << "INSERT INTO FeatureGroup VALUES ("
+      << QueryParamType::kInteger << ") "
+    << "WHERE feature_group_id = "
+      << QueryParamType::kInteger << ")";
+
+  // add in a single transaction
+  start_transaction.execute().assertDone();
+
+  // Get the next feature group id
+  auto res = select_feature_group_id.execute();
+  uint64_t feature_group_id = 0;
+  if (res.numColumns() != 0) {
+    assert(res.numColumns() == 1);
+    feature_group_id = static_cast<uint64_t>(res.getInteger(0)) + 1;
+    assert(feature_group_id != 0 && "feature_group_id overflow");
+  }
+  res.next().assertDone();
+
+  // Add all of the feature sets to the group
+  for (auto I : features) {
+    insert_into_feature_group.clearAllBindings();
+    insert_into_feature_group
+      << static_cast<int64_t>(I)
+      << static_cast<int64_t>(feature_group_id);
+    insert_into_feature_group.execute().assertDone();
+  }
+
+  // commit the changes
+  commit_transaction.execute().assertDone();
+
+  return static_cast<FeatureGroupID>(feature_group_id);
 }
 
 void Database::addFeaturesAfterPass(FeatureGroupID features,
@@ -596,7 +551,7 @@ CompilationID Database::newCompilation(std::string name, std::string type,
 }
 
 ParameterSetID
-Database::newParameterSet(std::vector<ParameterBase*> parameters)
+Database::newParameterSet(const std::vector<ParameterBase*> parameters)
 {
   (void)parameters;
   return static_cast<ParameterSetID>(0);

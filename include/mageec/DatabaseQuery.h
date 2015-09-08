@@ -121,29 +121,32 @@ public:
   /// \brief Step to the next row of results
   DatabaseQueryIterator next(void);
 
+  /// \brief Assert that the query has completed execution
+  void assertDone() const;
+
   /// \brief Return whether the query has completed execution
   bool done() const;
 
   /// \brief Return the number of columns in the results table
-  unsigned numColumns(void);
+  int numColumns(void);
 
   /// \brief Retrieve a blob from the results table
   ///
   /// \param index  Index of the column containing the blob
   /// \return A vector of bytes holding the blob
-  std::vector<uint8_t> getBlob(unsigned index);
+  std::vector<uint8_t> getBlob(int index);
 
   /// \brief Retrieve text from the results table
   ///
   /// \param index  Index of the column containing the text
   /// \return A string containing the text
-  std::string getText(unsigned index);
+  std::string getText(int index);
 
   /// \brief Retrieve an integer from the results table
   ///
   /// \param index  Index of column containing the text
   /// \return The integer value
-  int64_t getInteger(unsigned index);
+  int64_t getInteger(int index);
 
 private:
   /// \brief Validate the state of the iterator
@@ -178,6 +181,9 @@ public:
 
   /// \brief Destructor releases sqlite resources
   ~DatabaseQuery(void);
+
+  DatabaseQuery(const DatabaseQuery &other) = default;
+  DatabaseQuery(DatabaseQuery &&other) = default;
 
   /// \brief Construct a simple query with no parameters
   ///
@@ -233,7 +239,10 @@ private:
 
   /// \brief Check that the query is in a usable state
   void validate(void) const;
+  
 
+  /// Handle to the underlying database connection
+  sqlite3& m_db;
 
   /// Records whether the query is locked (and therefore should not be used)
   bool m_is_locked;
@@ -242,14 +251,14 @@ private:
   sqlite3_stmt *m_stmt;
 
   /// The current parameter for a value to be binded to
-  unsigned m_curr_param;
+  std::vector<QueryParamType>::size_type m_curr_param;
   
   /// Number of parameters in the query
-  const unsigned m_param_count;
+  const std::vector<QueryParamType>::size_type m_param_count;
 
   /// A vector of the strings which make up the query, these are interleaved
   /// with the provided parameters.
-  const std::vector<std::string>    m_substrs;
+  const std::vector<std::string> m_substrs;
 
   /// A vector of the parameter types which make up the query.
   const std::vector<QueryParamType> m_param_types;
