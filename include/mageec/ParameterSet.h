@@ -26,6 +26,8 @@
 #ifndef MAGEEC_PARAMETER_SET_H
 #define MAGEEC_PARAMETER_SET_H
 
+#include <cassert>
+#include <memory>
 #include <set>
 #include <utility>
 
@@ -36,75 +38,48 @@
 namespace mageec {
 
 
-class ParameterBase;
-
-
 class ParameterSet {
 private:
   /// \brief Function object to sort parameters by comparing their ids
   struct ParameterIDComparator {
-    bool operator() (ParameterBase* const &lhs,
-                     ParameterBase* const &rhs) const {
+    bool operator() (std::shared_ptr<ParameterBase> const &lhs,
+                     std::shared_ptr<ParameterBase> const &rhs) const {
       return lhs->getParameterID() < rhs->getParameterID();
     }
   };
 
 public:
   /// \brief constant iterator to parameters in the set
-  typedef std::set<ParameterBase*,
+  typedef std::set<std::shared_ptr<ParameterBase>,
                    ParameterIDComparator>::const_iterator const_iterator;
 
 
   /// \brief Construct a new empty parameter set
   ParameterSet() : m_parameters() {}
-
-  ParameterSet(const ParameterSet& other) = default;
-  ParameterSet(ParameterSet&& other) = default;
-
-  ParameterSet& operator=(const ParameterSet& other) {
-    for (ParameterBase* param : m_parameters) {
-      delete param;
-    }
-    m_parameters = other.m_parameters;
-    return *this;
-  }
-  ParameterSet& operator=(ParameterSet&& other) {
-    for (ParameterBase* param : m_parameters) {
-      delete param;
-    }
-    m_parameters = std::move(other.m_parameters);
-    return *this;
-  }
-
-  /// \brief Delete a parameter set
-  ~ParameterSet() {
-    // Delete the parameters which we took ownership of
-    for (ParameterBase* param : m_parameters) {
-      delete param;
-    }
-  }
+  ParameterSet(std::initializer_list<std::shared_ptr<ParameterBase>> l)
+    : m_parameters(l)
+  {}
 
   /// \brief Add a new parameter to a parameter set
   ///
   /// The ParameterSet takes ownership of the provided parameter
   ///
   /// \param param  The parameter to be added to the set
-  void addParameter(std::unique_ptr<ParameterBase> param) {
+  void addParameter(std::shared_ptr<ParameterBase> param) {
     assert (param != nullptr && "Cannot add null parameter to parameter set");
 
-    // The set takes ownership of the provided parameter
-    const auto& result = m_parameters.emplace(param.release());
+    const auto& result = m_parameters.emplace(param);
     assert (result.second && "Added parameter already present in the set!");
   }
 
   /// \brief Get a constant iterator to the beginning of the parameter set
-  const_iterator cbegin() const { return m_parameters.cbegin(); }
+  const_iterator begin() const { return m_parameters.cbegin(); }
 
   /// \brief Get a constant iterator to the end of the parameter set
-  const_iterator cend() const { return m_parameters.cend(); }
+  const_iterator end() const { return m_parameters.cend(); }
 
 private:
-  std::set<ParameterBase*, ParameterIDComparator> m_parameters;
+  std::set<std::shared_ptr<ParameterBase>, ParameterIDComparator> m_parameters;
 };
 
 

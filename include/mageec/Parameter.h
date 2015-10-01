@@ -30,6 +30,8 @@
 
 #include "mageec/Types.h"
 
+#include <cassert>
+#include <memory>
 #include <string>
 
 
@@ -115,15 +117,18 @@ public:
     return blob;
   }
 
-  /// \brief Create a parameter of this type given the provided id and blob
-  static Parameter fromBlob(unsigned parameter_id, std::vector<uint8_t> blob)
+  /// \brief Create a parameter of this type given the provided id, blob and
+  /// name
+  static std::unique_ptr<Parameter>
+  fromBlob(unsigned parameter_id, std::vector<uint8_t> blob, std::string name)
   {
     static_assert(std::is_integral<T>::value,
                   "Only integral types handled for now");
     assert(blob.size() == sizeof(T));
 
     const T *value = reinterpret_cast<const T *>(blob.data());
-    return Parameter(parameter_id, *value);
+    return std::unique_ptr<Parameter>(
+        new Parameter(parameter_id, *value, name));
   }
 
 private:

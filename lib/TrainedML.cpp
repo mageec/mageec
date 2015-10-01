@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "mageec/Feature.h"
+#include "mageec/FeatureSet.h"
 #include "mageec/Decision.h"
 #include "mageec/ML.h"
 #include "mageec/Types.h"
@@ -62,11 +63,9 @@ Metric TrainedML::getMetric(void) const
 
 std::unique_ptr<DecisionBase>
 TrainedML::makeDecision(const DecisionRequestBase& request,
-             const std::vector<FeatureBase*> features)
+                        const FeatureSet& features)
 {
-  (void)request;
-  (void)features;
-  return std::unique_ptr<DecisionBase>();
+  return m_ml.makeDecision(request, features, m_blob);
 }
 
 

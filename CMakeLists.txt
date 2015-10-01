@@ -46,6 +46,8 @@ else ()
   message (WARNING "Unrecognized compiler, CXXFLAGS unmodified")
 endif ()
 
+# Pass the mageec version number into the compile
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMAGEEC_VERSION_MAJOR=${MAGEEC_VERSION_MAJOR} -DMAGEEC_VERSION_MINOR=${MAGEEC_VERSION_MINOR} -DMAGEEC_VERSION_PATCH=${MAGEEC_VERSION_PATCH}")
 
 # Install header files
 install (DIRECTORY include/mageec DESTINATION include)

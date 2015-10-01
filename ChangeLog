@@ -1,3 +1,37 @@
+2015-10-01  Edward Jones  <ed.jones@embecosm.com>
+	Added ability to train and retrieve results, updated various
+	interfaces.
+
+	* CMakeLists.txt: Define MAGEEC version macros.
+	* include/mageec/Database.h (Database::newFeatureSet):
+	Update feature argument.
+	(Database::newParameterSet): Update parameter argument.
+	(Database::trainMachineLearner): Remove return.
+	(ResultIterator::ResultIterator): Remove unnecessary constructors.
+	(ResultIterator::operator*): Wrap return in util::Option type.
+	(ResultIterator::m_result_iter): Added private member.
+	* include/mageec/Feature.h (Feature::fromBlob):
+	Wrap return in std::unique_ptr, add 'name' argument.
+	* include/mageec/FeatureSet.h (FeatureSet): Use std::shared_ptr
+	for the features, add std::initializer_list constructor.
+	* include/mageec/Framework.h: Check for version defines.
+	* include/mageec/ML.h (IMachineLearner::makeDecision): Pass
+	features by const reference.
+	(IMachineLearner::trainMachineLearner): Rename method to 'train'.
+	* include/mageec/Parameter.h (Parameter::fromBlob):
+	Wrap return in std::unique_ptr, add 'name' argument.
+	* include/mageec/ParameterSet.h (ParameterSet): Use std::shared_ptr
+	for parameters, add std::initializer_list constructor.
+	* include/mageec/TrainedML.h (TrainedML::makeDecision):
+	Make 'features' argument a FeatureSet.
+	* lib/Database.cpp (create_compilation_table): parameter_set_id
+	may be NULL.
+	(Database::trainMachineLearner): Added implemention.
+	(ResultIterator): Likewise.
+	* lib/Framework.cpp: Use version defines provided by build system.
+	* lib/Main.cpp: use namespace mageec, update to match new interfaces.
+	* lib/TrainedML.cpp (TrainedML::makeDecision): Added implementation.
+
 2015-09-08  Edward Jones  <ed.jones@embecosm.com>
 	Added functionality to create pass sequences and results in the
 	database.

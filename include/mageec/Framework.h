@@ -33,9 +33,16 @@
 #include "mageec/Util.h"
 
 
-#define MAGEEC_FRAMEWORK_VERSION_MAJOR 2
-#define MAGEEC_FRAMEWORK_VERSION_MINOR 0
-#define MAGEEC_FRAMEWORK_VERSION_PATCH 0
+#if !defined(MAGEEC_VERSION_MAJOR) || \
+    !defined(MAGEEC_VERSION_MINOR) || \
+    !defined(MAGEEC_VERSION_PATCH)
+#error "MAGEEC version not defined by the build system"
+#endif
+
+static_assert(MAGEEC_VERSION_MAJOR == 2 &&
+              MAGEEC_VERSION_MINOR == 0 &&
+              MAGEEC_VERSION_PATCH == 0,
+              "MAGEEC version does not match");
 
 
 namespace mageec {

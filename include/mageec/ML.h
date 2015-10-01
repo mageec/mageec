@@ -78,7 +78,7 @@ public:
   /// a decision could not be made.
   virtual std::unique_ptr<DecisionBase>
   makeDecision(const DecisionRequestBase& request,
-               FeatureSet features,
+               const FeatureSet& features,
                const std::vector<uint8_t>& blob) const = 0;
 
   // TODO: machine learner training should be allowed to error
@@ -98,10 +98,10 @@ public:
   ///
   /// \return A blob of training data. 
   virtual const std::vector<uint8_t>
-  trainMachineLearner(std::vector<FeatureDesc> feature_descs,
-                      std::vector<ParameterDesc> parameter_descs,
-                      std::vector<std::string> passes,
-                      ResultIterator results) const = 0;
+  train(std::vector<FeatureDesc> feature_descs,
+        std::vector<ParameterDesc> parameter_descs,
+        std::vector<std::string> passes,
+        ResultIterator results) const = 0;
 
   /// \brief Incrementally train the machine learner, using a partial set of
   /// results, and the previously constructed blob.
@@ -119,11 +119,11 @@ public:
   ///
   /// \return A new blob of training data.
   virtual std::vector<uint8_t>
-  trainMachineLearner(std::vector<FeatureDesc> feature_descs,
-                      std::vector<ParameterDesc> parameter_descs,
-                      std::vector<std::string> passes,
-                      ResultIterator results,
-                      std::vector<uint8_t> old_blob) const = 0;
+  train(std::vector<FeatureDesc> feature_descs,
+        std::vector<ParameterDesc> parameter_descs,
+        std::vector<std::string> passes,
+        ResultIterator results,
+        std::vector<uint8_t> old_blob) const = 0;
 };
 
 

@@ -40,6 +40,7 @@ namespace mageec {
 
 
 class FeatureBase;
+class FeatureSet;
 class IMachineLearner;
 
 
@@ -85,8 +86,7 @@ public:
   /// \return The decision made. If for any reason the machine learner cannot
   /// make a decision, this will be the native decision.
   std::unique_ptr<DecisionBase>
-  makeDecision(const DecisionRequestBase& request,
-               const std::vector<FeatureBase*> features);
+  makeDecision(const DecisionRequestBase& request, const FeatureSet& features);
 
 private:
   /// Database containing this trained machine learner.

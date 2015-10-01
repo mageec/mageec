@@ -32,6 +32,9 @@
 #include <string>
 #include <vector>
 
+#include "mageec/DatabaseQuery.h"
+#include "mageec/FeatureSet.h"
+#include "mageec/ParameterSet.h"
 #include "mageec/Result.h"
 #include "mageec/TrainedML.h"
 #include "mageec/Types.h"
@@ -122,7 +125,7 @@ public:
   /// with the same identifier in this set.
   ///
   /// \return The identifier of the new feature set in the database
-  FeatureSetID newFeatureSet(const std::vector<FeatureBase*> features);
+  FeatureSetID newFeatureSet(FeatureSet features);
 
   /// \brief Create a new group of features from a number of feature sets
   ///
@@ -174,7 +177,7 @@ public:
   /// no parameters with the same identifier
   ///
   /// \return The identifier of the new parameter set in the database
-  ParameterSetID newParameterSet(const std::vector<ParameterBase*> parameters);
+  ParameterSetID newParameterSet(ParameterSet parameters);
 
   /// \brief Create a new empty pass sequence
   /// \return The identifier of the new pass sequence
@@ -217,9 +220,7 @@ public:
   /// this must be the UUID of a machine learner for which we have a
   /// corresponding interface.
   /// \param metric  The metric to train against.
-  ///
-  /// \return The trained blob for the machine learner
-  std::vector<uint8_t> trainMachineLearner(util::UUID ml, Metric metric);
+  void trainMachineLearner(util::UUID ml, Metric metric);
 
   // TODO: Incremental training interface
 
@@ -257,15 +258,17 @@ public:
   /// \param metric  Metric of the results
   ResultIterator(sqlite3 &db, Metric metric);
 
-  Result operator*();
-  ResultIterator operator++();
+  ResultIterator() = delete;
+  ResultIterator(const ResultIterator &other) = delete;
+  ResultIterator(ResultIterator &&other);
 
-  bool operator==(const ResultIterator& other) const;
-  bool operator!=(const ResultIterator& other) const;
+  util::Option<Result> operator*();
+  ResultIterator operator++();
 
 private:
   sqlite3 &m_db;
   Metric   m_metric;
+  std::unique_ptr<DatabaseQueryIterator> m_result_iter;
 };
 
 

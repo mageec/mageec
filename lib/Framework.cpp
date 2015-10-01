@@ -38,9 +38,9 @@ namespace mageec {
 
 
 const util::Version
-Framework::version(MAGEEC_FRAMEWORK_VERSION_MAJOR,
-                   MAGEEC_FRAMEWORK_VERSION_MINOR,
-                   MAGEEC_FRAMEWORK_VERSION_PATCH);
+Framework::version(MAGEEC_VERSION_MAJOR,
+                   MAGEEC_VERSION_MINOR,
+                   MAGEEC_VERSION_PATCH);
 
 
 Framework::Framework(void)

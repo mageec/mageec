@@ -26,6 +26,7 @@
 #ifndef MAGEEC_FEATURE_SET_H
 #define MAGEEC_FEATURE_SET_H
 
+#include <cassert>
 #include <memory>
 #include <set>
 #include <utility>
@@ -37,75 +38,49 @@
 namespace mageec {
 
 
-class FeatureBase;
-
-
 class FeatureSet {
 private:
   /// \brief Function object to sort features by comparing their ids
   struct FeatureIDComparator {
-    bool operator() (FeatureBase* const &lhs,
-                     FeatureBase* const &rhs) const {
+    bool operator() (std::shared_ptr<FeatureBase> const &lhs,
+                     std::shared_ptr<FeatureBase> const &rhs) const {
       return lhs->getFeatureID() < rhs->getFeatureID();
     }
   };
 
 public:
   /// \brief constant iterator to features in the set
-  typedef std::set<FeatureBase*,
+  typedef std::set<std::shared_ptr<FeatureBase>,
                    FeatureIDComparator>::const_iterator const_iterator;
 
 
   /// \brief Construct a new empty feature set
   FeatureSet() : m_features() {}
-
-  FeatureSet(const FeatureSet& other) = default;
-  FeatureSet(FeatureSet&& other) = default;
-
-  FeatureSet& operator=(const FeatureSet& other) {
-    for (FeatureBase* feature : m_features) {
-      delete feature;
-    }
-    m_features = other.m_features;
-    return *this;
-  }
-  FeatureSet& operator=(FeatureSet&& other) {
-    for (FeatureBase* feature : m_features) {
-      delete feature;
-    }
-    m_features = std::move(other.m_features);
-    return *this;
-  }
-
-  /// \brief Delete a feature set
-  ~FeatureSet() {
-    // Delete the features which we took ownership of
-    for (FeatureBase* feature : m_features) {
-      delete feature;
-    }
-  }
+  FeatureSet(std::initializer_list<std::shared_ptr<FeatureBase> > l)
+    : m_features(l)
+  {}
 
   /// \brief Add a new feature to a feature set
   ///
   /// The FeatureSet takes ownership of the provided feature
   ///
   /// \param feature  The feature to be added to the set
-  void addFeature(std::unique_ptr<FeatureBase> feature) {
+  void addFeature(std::shared_ptr<FeatureBase> feature) {
     assert (feature != nullptr && "Cannot add null feature to feature set");
 
     // The set takes ownership of the provided feature
-    const auto& result = m_features.emplace(feature.release());
+    const auto& result = m_features.emplace(feature);
     assert (result.second && "Added feature already present in the set!");
   }
 
   /// \brief Get a constant iterator to the beginning of the feature set
-  const_iterator cbegin() const { return m_features.cbegin(); }
+  const_iterator begin() const { return m_features.cbegin(); }
 
   /// \brief Get a constant iterator to the end of the feature set
-  const_iterator cend() const { return m_features.cend(); }
+  const_iterator end() const { return m_features.cend(); }
 
 private:
-  std::set<FeatureBase*, FeatureIDComparator> m_features;
+  std::set<std::shared_ptr<FeatureBase>, FeatureIDComparator> m_features;
 };
 
 
