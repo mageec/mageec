@@ -28,6 +28,7 @@
 
 #include <cassert>
 #include <memory>
+#include <ostream>
 #include <set>
 #include <utility>
 
@@ -65,7 +66,7 @@ public:
   /// The FeatureSet takes ownership of the provided feature
   ///
   /// \param feature  The feature to be added to the set
-  void addFeature(std::shared_ptr<FeatureBase> feature) {
+  void add(std::shared_ptr<FeatureBase> feature) {
     assert (feature != nullptr && "Cannot add null feature to feature set");
 
     // The set takes ownership of the provided feature
@@ -78,6 +79,15 @@ public:
 
   /// \brief Get a constant iterator to the end of the feature set
   const_iterator end() const { return m_features.cend(); }
+
+  /// \brief Print out the held features to the provided output stream
+  void print(std::ostream &os, std::string prefix) const {
+    for (auto I : m_features) {
+      os << prefix;
+      I->print(os);
+      os << std::endl;
+    }
+  }
 
 private:
   std::set<std::shared_ptr<FeatureBase>, FeatureIDComparator> m_features;

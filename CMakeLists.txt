@@ -2,17 +2,27 @@ cmake_minimum_required(VERSION 3.2.2)
 
 project(MAGEEC)
 
-# default to having debug enabled
-set (MAGEEC_DEBUG True)
+# Debug enabled by default, all features disabled.
+set (MAGEEC_DEBUG            True)
+set (MAGEEC_WITH_ALL_DOCS    False)
+set (MAGEEC_WITH_DESIGN_DOCS False)
+set (MAGEEC_WITH_DOXYGEN     False)
+set (MAGEEC_WITH_GCC_PLUGIN  False)
 
 
-# Documentation options
-option (MAGEEC_WITH_ALL_DOCS    "Generate all documentation")
-option (MAGEEC_WITH_USER_DOCS   "Build MAGEEC user documentation")
-option (MAGEEC_WITH_DESIGN_DOCS "Build MAGEEC with design documentation")
-option (MAGEEC_WITH_DOXYGEN     "Generate MAGEEC API documentation with Doxygen")
-
-option (MAGEEC_DEBUG "Enable debug for MAGEEC" True)
+# MAGEEC options
+option (MAGEEC_DEBUG
+        "Enable debug for MAGEEC")
+option (MAGEEC_WITH_ALL_DOCS
+        "Generate all documentation")
+option (MAGEEC_WITH_USER_DOCS
+        "Build MAGEEC user documentation")
+option (MAGEEC_WITH_DESIGN_DOCS
+        "Build MAGEEC with design documentation")
+option (MAGEEC_WITH_DOXYGEN
+        "Generate MAGEEC API documentation with Doxygen")
+option (MAGEEC_WITH_GCC_PLUGIN
+        "Build the GCC plugin as well as MAGEEC")
 
 
 # This should match the version number found in the mageec framework source
@@ -28,47 +38,67 @@ endif()
 set (PACKAGE_NAME MAGEEC)
 set (PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 
+set (LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 set (EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 
 # Set compiler options depending on the compiler used
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Werror -Weverything -Wno-c++98-compat -Wno-global-constructors -Wno-padded -Wno-weak-vtables")
+  # Clang compiler options
+  set (CMAKE_CXX_FLAGS "\
+-fPIC -std=c++11 -Werror -Weverything -Wno-c++98-compat \
+-Wno-global-constructors -Wno-padded -Wno-weak-vtables")
   if (MAGEEC_DEBUG)
     set (CMAKE_CXX_FLAGS "-g3 ${CMAKE_CXX_FLAGS}")
   endif ()
+
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Werror -Wall -Wextra")
+  # GCC compiler options
+  set (CMAKE_CXX_FLAGS "-fPIC -std=c++11 -Werror -Wall -Wextra")
   if (MAGEEC_DEBUG)
     set (CMAKE_CXX_FLAGS "-g3 ${CMAKE_CXX_FLAGS}")
   endif ()
+
 else ()
+  # Unknown compiler
   message (WARNING "Unrecognized compiler, CXXFLAGS unmodified")
 endif ()
 
+
 # Pass the mageec version number into the compile
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMAGEEC_VERSION_MAJOR=${MAGEEC_VERSION_MAJOR} -DMAGEEC_VERSION_MINOR=${MAGEEC_VERSION_MINOR} -DMAGEEC_VERSION_PATCH=${MAGEEC_VERSION_PATCH}")
-
-# Install header files
-install (DIRECTORY include/mageec DESTINATION include)
-
-
-# Main executable
-include_directories(include)
-
+add_definitions(
+  -DMAGEEC_VERSION_MAJOR=${MAGEEC_VERSION_MAJOR}
+  -DMAGEEC_VERSION_MINOR=${MAGEEC_VERSION_MINOR}
+  -DMAGEEC_VERSION_PATCH=${MAGEEC_VERSION_PATCH}
+)
+# Add debug flag
 if (MAGEEC_DEBUG)
   add_definitions (-DMAGEEC_DEBUG)
 endif ()
 
-add_executable (tmp
+# Install header files
+install (DIRECTORY include/mageec DESTINATION include)
+
+include_directories(include)
+
+
+### Targets ###
+
+
+# MAGEEC library
+add_library (mageec
   lib/Database.cpp
   lib/DatabaseQuery.cpp
   lib/Framework.cpp
-  lib/Main.cpp
   lib/TrainedML.cpp
 )
-target_link_libraries(tmp sqlite3)
+target_link_libraries(mageec sqlite3)
 
+# Standalone tool executable
+add_executable (tmp
+  lib/Main.cpp
+)
+target_link_libraries(tmp mageec)
 
 # Documentation
 if (MAGEEC_WITH_ALL_DOCS)
@@ -80,3 +110,8 @@ endif()
 if (MAGEEC_WITH_USER_DOCS OR MAGEEC_WITH_DESIGN_DOCS OR MAGEEC_WITH_DOXYGEN)
   add_subdirectory (doc)
 endif ()
+
+# GCC plugin
+if (EXISTS ${PROJECT_SOURCE_DIR}/gcc_plugin AND MAGEEC_WITH_GCC_PLUGIN)
+  add_subdirectory(gcc_plugin)
+endif()

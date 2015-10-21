@@ -1,3 +1,19 @@
+2015-10-21  Edward Jones  <ed.jones@embecosm.com>
+	Reintroduce the GCC plugin, for feature extraction and pass gating.
+
+	* CMakeLists.txt: Refactor, build libraries and add option to build
+	plguin.
+	* include/mageec/Feature.h (FeatureBase::print)
+	(Feature::print): Added methods.
+	* include/mageec/FeatureSet.h (FeatureSet::addFeature): rename to add.
+	(FeatureSet::print): Added method.
+	* include/mageec/Parameter.h (ParameterBase::print)
+	(Parameter::print): Added methods.
+	* include/mageec/ParameterSet.h (ParameterSet:addParameter): rename to add.
+	(ParameterSet::print): Added method.
+	* lib/Database.cpp (ResultIterator::operator*): Update addFeature/
+	addParameter calls.
+
 2015-10-01  Edward Jones  <ed.jones@embecosm.com>
 	Added ability to train and retrieve results, updated various
 	interfaces.

@@ -32,7 +32,9 @@
 
 #include <cassert>
 #include <memory>
+#include <ostream>
 #include <string>
+#include <vector>
 
 
 namespace mageec {
@@ -59,6 +61,9 @@ public:
 
   /// \brief Get the value of the parameter as a blob of bytes
   virtual std::vector<uint8_t> toBlob() const = 0;
+
+  /// \brief Print out a parameter to the provided stream
+  virtual void print(std::ostream &os) const = 0;
 
 protected:
   /// \brief Create a parameter with the provided type and identifier
@@ -129,6 +134,14 @@ public:
     const T *value = reinterpret_cast<const T *>(blob.data());
     return std::unique_ptr<Parameter>(
         new Parameter(parameter_id, *value, name));
+  }
+
+  /// \brief Print out a parameter type to the provided stream
+  void print(std::ostream &os) const override
+  {
+    static_assert(std::is_integral<T>::value,
+                  "Only integral types handled for now");
+    os << getName() << ": " << m_value;
   }
 
 private:

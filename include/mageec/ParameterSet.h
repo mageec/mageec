@@ -28,6 +28,7 @@
 
 #include <cassert>
 #include <memory>
+#include <ostream>
 #include <set>
 #include <utility>
 
@@ -65,7 +66,7 @@ public:
   /// The ParameterSet takes ownership of the provided parameter
   ///
   /// \param param  The parameter to be added to the set
-  void addParameter(std::shared_ptr<ParameterBase> param) {
+  void add(std::shared_ptr<ParameterBase> param) {
     assert (param != nullptr && "Cannot add null parameter to parameter set");
 
     const auto& result = m_parameters.emplace(param);
@@ -77,6 +78,15 @@ public:
 
   /// \brief Get a constant iterator to the end of the parameter set
   const_iterator end() const { return m_parameters.cend(); }
+
+  /// \brief Print out the held parameters to the provided output stream
+  void print(std::ostream &os, std::string prefix) const {
+    for (auto I : m_parameters) {
+      os << prefix;
+      I->print(os);
+      os << std::endl;
+    }
+  }
 
 private:
   std::set<std::shared_ptr<ParameterBase>, ParameterIDComparator> m_parameters;

@@ -963,12 +963,10 @@ util::Option<Result> ResultIterator::operator*()
     // TODO: Also retrieve feature names
     switch (feature_type) {
     case FeatureType::kBool:
-      features.addFeature(
-          BoolFeature::fromBlob(feature_id, feature_blob, {}));
+      features.add(BoolFeature::fromBlob(feature_id, feature_blob, {}));
       break;
     case FeatureType::kInt:
-      features.addFeature(
-          IntFeature::fromBlob(feature_id, feature_blob, {}));
+      features.add(IntFeature::fromBlob(feature_id, feature_blob, {}));
       break;
     }
   }
@@ -988,12 +986,10 @@ util::Option<Result> ResultIterator::operator*()
       // TODO: Also retrieve parameter names
       switch (param_type) {
       case ParameterType::kBool:
-        parameters.addParameter(
-            BoolParameter::fromBlob(param_id, param_blob, {}));
+        parameters.add(BoolParameter::fromBlob(param_id, param_blob, {}));
         break;
       case ParameterType::kRange:
-        parameters.addParameter(
-            RangeParameter::fromBlob(param_id, param_blob, {}));
+        parameters.add(RangeParameter::fromBlob(param_id, param_blob, {}));
         break;
       }
     }
