@@ -1,0 +1,9 @@
+MAGEEC GCC Plugin
+=================
+
+This directory contains the GCC plugin for the MAchine Guided Energy Efficient
+Compilation (MAGEEC) framework. For information on MAGEEC, see
+http://mageec.org.
+
+The MAGEEC GCC Plugin is open source software. See COPYING for license
+information and copying terms.

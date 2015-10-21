@@ -1,0 +1,13 @@
+2015-10-21  Edward Jones  <ed.jones@embecosm.com>
+	Reintroduce the GCC plugin, for feature extraction and pass gating
+
+	* AUTHORS: Added file.
+	* CMakeLists.txt: Likewise.
+	* COPYING: Likewise.
+	* FeatureExtract.cpp: Likewise.
+	* Features.h: Likewise.
+	* GCCCallbacks.cpp: Likewise.
+	* GCCPlugin.cpp: Likewise.
+	* MAGEECPlugin.h: Likewise.
+	* PluginInfo.cpp: Likewise.
+	* README: Likewise.
