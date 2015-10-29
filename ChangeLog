@@ -1,3 +1,15 @@
+2015-10-29  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Framework.h (Framework::loadMachineLearner):
+	Return the UUID of the loaded machine learner.
+	* include/mageec/TrainedML.h (TrainedML::getUUID): Added function.
+	* include/mageec/Util.h (UUID): Added default copy/move constructors
+	and assignment.
+	(UUID::parse): Added method to parse a UUID from a canonical string.
+	(Option): Fix copy/move constructors and assignment operators.
+	* lib/Framework.cpp (Framework::loadMachineLearner): Return UUID.
+	* lib/TrainedML.cpp (TrainedML::getUUID): Added implementation.
+
 2015-10-21  Edward Jones  <ed.jones@embecosm.com>
 	Reintroduce the GCC plugin, for feature extraction and pass gating.
 

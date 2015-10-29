@@ -75,10 +75,15 @@ private:
 class UUID {
 public:
   UUID() = delete;
+  UUID(const UUID &other) = default;
+  UUID(UUID &&other) = default;
 
   explicit UUID(std::array<uint8_t, 16> data)
     : m_data(data)
   {}
+
+  UUID& operator=(const UUID &other) = default;
+  UUID& operator=(UUID &&other) = default;
 
   bool operator==(const UUID& other) const { return m_data == other.m_data; }
   bool operator<(const UUID& other) const { return m_data < other.m_data; }
@@ -88,11 +93,47 @@ public:
     return static_cast<unsigned>(m_data.size());
   }
 
+
+  /// \brief Parse a UUID from an input string
+  ///
+  /// The string is expected to be in canonical form, with the format 
+  /// xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx, where 'x' corresponds to a
+  /// hexidecimal digit. Any trailing characters are ignored.
+  ///
+  /// \return The UUID, or an empty Option if the string could not be
+  /// parsed as one.
+  static Option<UUID> parse(std::string s)
+  {
+    if (s.length() < 36) {
+      return nullptr;
+    }
+
+    std::array<uint8_t, 16> uuid;
+    for (int i = 0; i < 16; ++i) {
+      int j = (i + (i >= 4) + (i >= 6) + (i >= 8) + (i >= 10)) * 2;
+
+      uint8_t hex[2] = {
+        static_cast<uint8_t>(s[j + 0]),
+        static_cast<uint8_t>(s[j + 1])
+      };
+      for (auto &x : hex) {
+        x = ((x <= '9') && (x >= '0')) ? (x - '0') :
+            ((x <= 'f') && (x >= 'a')) ? (x - 'a' + 10) : 255;
+        if (x == 255) {
+          return nullptr;
+        }
+      }
+      uuid[i] = (hex[0] << 4) | hex[1];
+    }
+    if ((s[8] != '-') || (s[13] != '-') || (s[18] != '-') || (s[23] != '-')) {
+      return nullptr;
+    }
+    return UUID(uuid);
+  }
+
 private:
-  const std::array<uint8_t, 16> m_data;
+  std::array<uint8_t, 16> m_data;
 };
-
-
 
 /// \class Option
 ///
@@ -118,24 +159,36 @@ public:
   Option(const Option& other)
     : m_populated(other.m_populated)
   {
-    if (m_populated) { m_value = T(other.m_value); }
+    if (other.m_populated) {
+      m_value = other.m_value;
+    }
   }
 
   Option(Option&& other)
-    : m_populated(std::move(other.m_populated))
+    : m_populated(other.m_populated)
   {
-    if (m_populated) { m_value = T(std::move(other.m_value)); }
+    if (other.m_populated) {
+      other.m_populated = false;
+      m_value = std::move(other.m_value);
+    }
   }
 
   Option& operator=(const Option& other)
   {
-    if (m_populated) { m_value = other.m_value; }
+    m_populated = other.m_populated;
+    if (other.m_populated) {
+      m_value = other.m_value;
+    }
     return *this;
   }
 
   Option& operator=(Option&& other)
   {
-    if (m_populated) { m_value = std::move(other.m_value); }
+    m_populated = other.m_populated;
+    if (other.m_populated) {
+      other.m_populated = false;
+      m_value = std::move(other.m_value);
+    }
     return *this;
   }
 

@@ -34,6 +34,7 @@
 #include "mageec/Decision.h"
 #include "mageec/ML.h"
 #include "mageec/Types.h"
+#include "mageec/Util.h"
 
 #include "sqlite3.h"
 
@@ -50,6 +51,10 @@ TrainedML::TrainedML(sqlite3 &db,
   (void)m_db;
 }
 
+util::UUID TrainedML::getUUID(void) const
+{
+  return m_ml.getUUID();
+}
 
 std::string TrainedML::getName(void) const
 {

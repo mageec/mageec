@@ -55,10 +55,10 @@ util::Version Framework::getVersion(void) const
 }
 
 
-bool Framework::loadMachineLearner(std::string path)
+util::Option<util::UUID> Framework::loadMachineLearner(std::string path)
 {
   (void)path;
-  return false;
+  return nullptr;
 }
 
 

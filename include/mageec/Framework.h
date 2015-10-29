@@ -67,9 +67,9 @@ public:
   /// \brief Load a machine learner from a provided plugin
   ///
   /// \param ml_path  Path to the machine learner plugin
-  /// \return True if the machine learne was successfully loaded, otherwise
-  /// false.
-  bool loadMachineLearner(std::string ml_path);
+  /// \return The UUID of the machine learner if it was loaded successfully,
+  /// an empty Option otherwise.
+  util::Option<util::UUID> loadMachineLearner(std::string ml_path);
 
   /// \brief Register a machine learner usable by the mageec framework.
   ///
