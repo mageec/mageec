@@ -30,13 +30,13 @@
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 
-#include <iostream>
 #include <map>
 #include <string>
 
 #include "mageec/FeatureSet.h"
 #include "mageec/Framework.h"
 #include "mageec/TrainedML.h"
+#include "mageec/Util.h"
 #include "MAGEECPlugin.h"
 
 #include "gcc-plugin.h"
@@ -75,36 +75,294 @@ static struct plugin_info mageec_plugin_version =
 /// Stored GCC Plugin name for future register_callbacks.
 const char *mageec_gcc_plugin_name;
 
-// Framework instance, and the trained machine learner to use when making
-// decisions.
-std::unique_ptr<mageec::Framework> mageec_framework;
-std::unique_ptr<mageec::TrainedML> mageec_ml;
+/// Context shared by all components of the plugin
+MAGEECContext mageec_context;
 
-// Configuration of MAGEEC
-std::map<std::string, int> mageec_config;
-
-// Last feature set extracted
-std::unique_ptr<mageec::FeatureSet> mageec_features;
 
 
 /// \brief Parse arguments provided to the plugin
-static void parseArguments(int argc, struct plugin_argument *argv)
+static bool parseArguments(int argc, struct plugin_argument *argv)
 {
+  assert(!mageec_context.is_init);
+  assert(mageec_context.framework &&
+         "Cannot parse plugin arguments with uninitialized framework");
+
+  mageec::util::Option<std::string> ml_str;
+  mageec::util::Option<std::string> db_str;
+
+  bool with_plugin_info = false;
+  bool with_print_machine_learners = false;
+  bool with_feature_extract = false;
+  bool with_optimize = false;
+  bool with_save_features = false;
+
+  bool seen_debug = false;
+  bool seen_mode  = false;
+  bool seen_machine_learner = false;
+  bool seen_database = false;
+  bool seen_save_features = false;
+
   for (int i = 0; i < argc; ++i) {
-    if (!strcmp(argv[i].key, "plugin_info")) {
-      mageec_config["plugin_info"] = 1;
+    std::string arg_str = argv[i].key;
+
+    if (arg_str == "debug" || arg_str == "no_debug") {
+      if (seen_debug) {
+        MAGEEC_ERR("Plugin argument 'debug' already seen");
+        return false;
+      }
+
+      if (arg_str == "debug") {
+        if (argv[i].value) {
+          std::string arg_value = argv[i].value;
+          if (arg_value == "true") {
+            mageec_context.with_debug = true;
+          }
+          else if (arg_value == "false") {
+            mageec_context.with_debug = false;
+          }
+        }
+        else {
+          mageec_context.with_debug = true;
+        }
+      }
+      else if (arg_str == "no_debug") {
+        mageec_context.with_debug = false;
+      }
+      seen_debug = true;
     }
-    else if (!strcmp(argv[i].key, "debug")) {
-      mageec_config["debug"] = 1;
+
+    else if (arg_str == "mode") {
+      if (seen_mode) {
+        MAGEEC_ERR("Plugin argument 'mode' already seen");
+        return false;
+      }
+      if (!argv[i].value) {
+        MAGEEC_ERR("No 'mode' argument value provided");
+        return false;
+      }
+
+      std::string arg_value = argv[i].value;
+      
+      if (arg_value == "plugin_info") {
+        with_plugin_info = true;
+      }
+      else if (arg_value == "print_machine_learners") {
+        with_print_machine_learners = true;
+      }
+      else if (arg_value == "feature_extract") {
+        with_feature_extract = true;
+      }
+      else if (arg_value == "optimize") {
+        with_feature_extract = true;
+        with_optimize = true;
+      }
+      else {
+        MAGEEC_ERR("Unknown 'mode' for plugin: " << arg_value);
+        return false;
+      }
+      seen_mode = true;
     }
-    else if (!strcmp(argv[i].key, "no_decision")) {
-      mageec_config["no_decision"] = 1;
+
+    else if (arg_str == "machine_learner") {
+      if (seen_machine_learner) {
+        MAGEEC_ERR("Plugin argument 'machine_learner' already seen");
+        return false;
+      }
+      if (!argv[i].value) {
+        MAGEEC_ERR("Missing 'machine_learner' argument value");
+        return false;
+      }
+      ml_str = std::string(argv[i].value);
+      seen_machine_learner = true;
+    }
+
+    else if (arg_str == "database") {
+      if (seen_database) {
+        MAGEEC_ERR("Plugin argument 'database' already seen");
+        return false;
+      }
+      if (!argv[i].value) {
+        MAGEEC_ERR("Missing 'database' argument value");
+        return false;
+      }
+      db_str = std::string(argv[i].value);
+      seen_database = true;
+    }
+
+    else if (arg_str == "save_features" || arg_str == "no_save_features") {
+      if (seen_save_features) {
+        MAGEEC_ERR("Plugin argument 'save_features' already seen");
+        return false;
+      }
+
+      if (arg_str == "save_features") {
+        if (argv[i].value) {
+          std::string arg_value = argv[i].value;
+          if (arg_value == "true") {
+            with_save_features = true;
+          }
+          else if (arg_value == "false") {
+            with_save_features = false;
+          }
+        }
+        else {
+          with_save_features = false;
+        }
+      }
+      if (arg_str == "no_save_features") {
+        with_save_features = false;
+      }
+      seen_save_features = true;
     }
     else {
-      std::cerr << "MAGEEC Warning: Unknown option " << argv[i].key
-                << std::endl;
+      MAGEEC_ERR("Unknown argument to plugin: " << arg_str);
+      return false;
     }
   }
+
+  // Default mode
+  if (!seen_mode) {
+    MAGEEC_WARN("No mode specified, defaulting to 'feature_extract'");
+    with_feature_extract = true;
+  }
+
+  // Determine the mode we are running in
+  if (with_plugin_info) {
+    mageec_context.mode.reset(new MAGEECMode(MAGEECMode::kPluginInfo));
+  }
+  else if (with_print_machine_learners) {
+    mageec_context.mode.reset(
+        new MAGEECMode(MAGEECMode::kPrintMachineLearners));
+  }
+  else {
+    if (with_feature_extract && !with_save_features && !with_optimize) {
+      mageec_context.mode.reset(
+          new MAGEECMode(MAGEECMode::kFeatureExtract));
+    }
+    else if (with_feature_extract && with_save_features && !with_optimize) {
+      mageec_context.mode.reset(
+          new MAGEECMode(MAGEECMode::kFeatureExtractAndSave));
+    }
+    else if (with_feature_extract && !with_save_features && with_optimize) {
+      mageec_context.mode.reset(
+          new MAGEECMode(MAGEECMode::kFeatureExtractAndOptimize));
+    }
+    else if (with_feature_extract && with_save_features && with_optimize) {
+      mageec_context.mode.reset(
+          new MAGEECMode(MAGEECMode::kFeatureExtractSaveAndOptimize));
+    }
+    else {
+      assert(0 && "Invalid mode flags");
+    }
+  }
+
+  // Sanity checks
+  assert(mageec_context.mode);
+  assert(seen_machine_learner == (ml_str == true));
+  assert(seen_database == (db_str == true));
+
+  // Warnings
+  MAGEECMode mode = *mageec_context.mode;
+  if (seen_save_features) {
+    if ((mode == MAGEECMode::kPluginInfo) ||
+        (mode == MAGEECMode::kPrintMachineLearners)) {
+      MAGEEC_WARN("Ignored argument 'save_features'");
+    }
+  }
+  if (seen_database) {
+    if ((mode == MAGEECMode::kPluginInfo) ||
+        (mode == MAGEECMode::kPrintMachineLearners) ||
+        (mode == MAGEECMode::kFeatureExtract)) {
+      MAGEEC_WARN("Ignored argument 'database'");
+    }
+  }
+  if (seen_machine_learner) {
+    if ((mode == MAGEECMode::kPluginInfo) ||
+        (mode == MAGEECMode::kPrintMachineLearners) ||
+        (mode == MAGEECMode::kFeatureExtract) ||
+        (mode == MAGEECMode::kFeatureExtractAndSave)) {
+      MAGEEC_WARN("Ignored argument 'machine_learner'");
+    }
+  }
+
+  // Errors
+  if ((mode == MAGEECMode::kFeatureExtractAndSave) ||
+      (mode == MAGEECMode::kFeatureExtractSaveAndOptimize)) {
+    if (!seen_database) {
+      MAGEEC_ERR("Cannot save features without a database");
+      return false;
+    }
+  }
+  if ((mode == MAGEECMode::kFeatureExtractAndOptimize) ||
+      (mode == MAGEECMode::kFeatureExtractSaveAndOptimize)) {
+    if (!seen_machine_learner) {
+      MAGEEC_ERR("Cannot optimize without a machine learner");
+      return false;
+    }
+  }
+  if (mode == MAGEECMode::kFeatureExtractAndOptimize) {
+    if (!seen_database) {
+      MAGEEC_ERR("Cannot optimize without a database");
+      return false;
+    }
+  }
+
+
+  // Load in the appropriate database if required.
+  // TODO: Allow this to create a new database
+  if ((mode == MAGEECMode::kFeatureExtractAndSave) ||
+      (mode == MAGEECMode::kFeatureExtractAndOptimize) ||
+      (mode == MAGEECMode::kFeatureExtractSaveAndOptimize)) {
+    assert(seen_database);
+    mageec_context.database.reset(new mageec::Database(
+        mageec_context.framework->getDatabase(db_str.get(), false)));
+    assert(mageec_context.database);
+  }
+
+  // If we are in a mode which requires a machine learner, try and parse the
+  // machine learner string as a UUID.
+  mageec::util::Option<mageec::util::UUID> ml_uuid;
+  if ((mode == MAGEECMode::kFeatureExtractAndOptimize) ||
+      (mode == MAGEECMode::kFeatureExtractSaveAndOptimize)) {
+    assert(seen_machine_learner);
+    assert(mageec_context.database);
+    ml_uuid = mageec::util::UUID::parse(ml_str.get());
+
+    // Not a UUID, try and load as a shared object
+    if (!ml_uuid) {
+      ml_uuid = mageec_context.framework->loadMachineLearner(ml_str.get());
+    }
+
+    if (!ml_uuid) {
+      MAGEEC_ERR("Unable to load machine learner: " << ml_str);
+      return false;
+    }
+    assert(ml_uuid);
+    
+    // Get all of the trained machine learners in the database
+    // Find the machine learner we are interested in save it in the context
+    std::vector<mageec::TrainedML> machine_learners =
+        mageec_context.database->getTrainedMachineLearners();
+
+    bool ml_found = false;
+    for (auto &ml : machine_learners) {
+      if (ml.getUUID() == ml_uuid.get()) {
+        mageec_context.machine_learner.reset(new mageec::TrainedML(ml));
+        ml_found = true;
+        break;
+      }
+    }
+    if (!ml_found) {
+      MAGEEC_ERR("The provided machine learner has no training data in this "
+                 "database");
+      return false;
+    }
+    assert(mageec_context.machine_learner);
+  }
+
+  assert(mageec_context.mode);
+  mageec_context.is_init = true;
+  return true;
 }
 
 
@@ -117,31 +375,27 @@ static void parseArguments(int argc, struct plugin_argument *argv)
 ///
 /// \return 0 if MAGEEC successfully set up, 1 otherwise.
 int plugin_init (struct plugin_name_args *plugin_info,
-                      struct plugin_gcc_version *version)
+                 struct plugin_gcc_version *version)
 {
-  // Initialize options
-  mageec_config["debug"] = 0;
-  mageec_config["plugin_info"] = 0;
-  mageec_config["no_decision"] = 0;
+  // Initialize the MAGEEC framework
+  assert(!mageec_context.framework);
+  mageec_context.framework.reset(new mageec::Framework());
 
   // Register our information, parse arguments
   register_callback(plugin_info->base_name, PLUGIN_INFO, NULL,
                      &mageec_plugin_version);
   mageec_gcc_plugin_name = plugin_info->base_name;
-  parseArguments(plugin_info->argc, plugin_info->argv);
 
-  if (mageec_config["plugin_info"]) {
-    mageecPluginInfo(plugin_info, version);
+  bool res = parseArguments(plugin_info->argc, plugin_info->argv);
+  if (!res) {
+    MAGEEC_ERR("Error when parsing plugin arguments");
+    return 1;
   }
 
-  // Initialize the MAGEEC framework
-  mageec_framework.reset(new mageec::Framework());
-
-  // TODO: Get all trained machine learners
-  // Select a machine learner based on plugin input
-  // etc
-
-  mageec_ml.reset(nullptr);
+  if (*mageec_context.mode == MAGEECMode::kPluginInfo) {
+    mageecPluginInfo(plugin_info, version);
+    return 0;
+  }
 
   register_callback(plugin_info->base_name, PLUGIN_START_UNIT,
                     mageecStartFile, NULL);

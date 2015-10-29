@@ -1,3 +1,24 @@
+2015-10-29  Edward Jones  <ed.jones@embecosm.com>
+
+	* FeatureExtract.cpp: Replace mageec_config with mageec_context.
+	* GCCCallbacks.cpp: Use mageec_context to hold plugin state, use
+	MAGEEC_MSG/MAGEEC_ERR/MAGEEC_WARN macros for debug output. Do not
+	import the mageec namespace.
+	* GCCPlugin.cpp: General refactor, replace mageec_framework/mageec_ml/
+	mageec_config globals with a single mageec_context. Improved error
+	handling throughout.
+	(parseArguments): More complex handling of 'debug' option.
+	Removed 'no_decision' option. Added 'mode', 'machine_learner',
+	'database' and 'save_features' options.
+	(plugin_init): Initialize the framework.
+	* MAGEECPlugin.h (mageecDbg): Added function to retrive debug stream.
+	(MAGEEC_PREFIX): Prefix for output messages
+	(MAGEEC_MSG, MAGEEC_WARN, MAGEEC_ERR): Macros to print status.
+	(MAGEECMode): Added enum of modes for the plugin.
+	(MAGEECContext): Added structure to hold global data for the plugin.
+	(mageec_context): Global context shared throughout plugin.
+	* PluginInfo.cpp: Replace uses of std::err with mageecDbg()
+
 2015-10-21  Edward Jones  <ed.jones@embecosm.com>
 	Reintroduce the GCC plugin, for feature extraction and pass gating
 

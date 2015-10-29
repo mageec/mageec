@@ -44,19 +44,19 @@
 void mageecPluginInfo(struct plugin_name_args *plugin_info,
                       struct plugin_gcc_version *version)
 {
-  std::cerr << "MAGEEC Plugin Information" << std::endl
-            << "=========================" << std::endl
-            << "base_name: " << plugin_info->base_name << std::endl
-            << "full_name: " << plugin_info->full_name << std::endl
-            << "    #args: " << plugin_info->argc << std::endl
-            << "  version: " << plugin_info->version << std::endl
-            << "     help: " << plugin_info->help << std::endl;
+  mageecDbg() << "MAGEEC Plugin Information" << std::endl
+              << "=========================" << std::endl
+              << "base_name: " << plugin_info->base_name << std::endl
+              << "full_name: " << plugin_info->full_name << std::endl
+              << "    #args: " << plugin_info->argc << std::endl
+              << "  version: " << plugin_info->version << std::endl
+              << "     help: " << plugin_info->help << std::endl;
 
-  std::cerr << "GCC Information" << std::endl
-            << "---------------" << std::endl
-            << "  basever: " << version->basever << std::endl
-            << "datestamp: " << version->datestamp << std::endl
-            << " devphase: " << version->devphase << std::endl
-            << " revision: " << version->revision << std::endl
-            << " confargs: " << version->configuration_arguments << std::endl;
+  mageecDbg() << "GCC Information" << std::endl
+              << "---------------" << std::endl
+              << "  basever: " << version->basever << std::endl
+              << "datestamp: " << version->datestamp << std::endl
+              << " devphase: " << version->devphase << std::endl
+              << " revision: " << version->revision << std::endl
+              << " confargs: " << version->configuration_arguments << std::endl;
 }

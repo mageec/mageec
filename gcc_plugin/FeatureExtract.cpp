@@ -362,16 +362,15 @@ static unsigned featureExtractExecute(void)
   features->add(std::make_shared<IntFeature>(FuncFeatureID::kUncondBranches,     uncond_branches,       "Func: Number of unconditional branches"));
 
   // Save the created feature set in the global variable.
-  assert(!mageec_features && "Attempt to overwrite mageec features");
-  mageec_features = std::move(features);
+  assert(!mageec_context.features && "Attempt to overwrite mageec features");
+  mageec_context.features = std::move(features);
 
-  // TODO: If debug is enabled, then dump out the extracted feature vector
-  if (mageec_config["debug"]) {
-    std::cerr << "-- Extracting features for function '"
-              << current_function_name() << "'" << std::endl;
-    std::cerr << "-- Dumping feature vector" << std::endl;
-    mageec_features->print(std::cerr, "  |- ");
-    std::cerr << "-- Finished dumping feature vector" << std::endl;
+  if (mageec_context.with_debug) {
+    MAGEEC_MSG("Extracting features for function '"
+              << current_function_name() << "'");
+    MAGEEC_MSG("Dumping feature vector");
+    mageec_context.features->print(mageecDbg(), "  |- ");
+    MAGEEC_MSG("Finished dumping feature vector");
   }
   return 0;
 }

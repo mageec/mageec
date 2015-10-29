@@ -25,30 +25,65 @@
 #ifndef MAGEEC_PLUGIN_H
 #define MAGEEC_PLUGIN_H
 
+#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
 
+#include "mageec/Framework.h"
+#include "mageec/Database.h"
+#include "mageec/TrainedML.h"
+
 
 namespace mageec {
   class FeatureSet;
-  class Framework;
-  class TrainedML;
 } // end of namespace mageec
 
 
-// Handle to the MAGEEC framework and a trained machine learner
-extern std::unique_ptr<mageec::Framework> mageec_framework;
-extern std::unique_ptr<mageec::TrainedML> mageec_ml;
+static std::ostream& mageecDbg() { return std::cerr; }
 
-// The plugin base_name for our hooks to use to schedule new passes
+// Macros to be used for error handling
+#define MAGEEC_PREFIX "-- MAGEEC: "
+#define MAGEEC_MSG(str)  mageecDbg() << MAGEEC_PREFIX << str << std::endl
+#define MAGEEC_ERR(str)  mageecDbg() << MAGEEC_PREFIX << "error: " << str << std::endl
+#define MAGEEC_WARN(str) mageecDbg() << MAGEEC_PREFIX << "warning: " << str << std::endl
+
+
+/// \brief The different modes which the plugin may run in
+enum class MAGEECMode : unsigned {
+  kPluginInfo,
+  kPrintMachineLearners,
+  kFeatureExtract,
+  kFeatureExtractAndSave,
+  kFeatureExtractAndOptimize,
+  kFeatureExtractSaveAndOptimize
+};
+
+
+/// \brief The context which holds all the information need by the plugin
+struct MAGEECContext {
+  MAGEECContext()
+    : is_init(), mode(), framework(), database(), machine_learner(), features()
+  {}
+
+  bool is_init;
+  bool with_debug;
+
+  std::unique_ptr<MAGEECMode> mode;
+  std::unique_ptr<mageec::Framework> framework;
+  std::unique_ptr<mageec::Database>  database;
+  std::unique_ptr<mageec::TrainedML> machine_learner;
+
+  /// Last feature set extracted
+  std::unique_ptr<mageec::FeatureSet> features;
+};
+
+
+/// The plugin base_name for our hooks to use to schedule new passes
 extern const char *mageec_gcc_plugin_name;
 
-// MAGEEC plugin configuration
-extern std::map<std::string, int> mageec_config;
-
-// Last features extracted by the feature extractor
-extern std::unique_ptr<mageec::FeatureSet> mageec_features;
+/// Context shared by all components of the plugin
+extern MAGEECContext mageec_context;
 
 
 /// \brief Prints information about the plugin to stdout.
