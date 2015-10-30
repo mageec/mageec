@@ -72,9 +72,17 @@ bool Framework::registerMachineLearner(const IMachineLearner &ml)
 }
 
 
-Database Framework::getDatabase(std::string db_path, bool create) const
+std::unique_ptr<Database>
+Framework::getDatabase(std::string db_path, bool create) const
 {
-  return Database(db_path, m_mls, create);
+  std::unique_ptr<Database> db;
+  if (create) {
+    db = Database::createDatabase(db_path, m_mls);
+  }
+  else {
+    db = Database::loadDatabase(db_path, m_mls);
+  }
+  return db;
 }
 
 

@@ -86,19 +86,27 @@ include_directories(include)
 
 
 # MAGEEC library
-add_library (mageec
+add_library (mageec_lib
   lib/Database.cpp
   lib/DatabaseQuery.cpp
   lib/Framework.cpp
   lib/TrainedML.cpp
 )
-target_link_libraries(mageec sqlite3)
+set_target_properties(mageec_lib PROPERTIES OUTPUT_NAME mageec)
+target_link_libraries(mageec_lib sqlite3)
 
 # Standalone tool executable
-add_executable (tmp
+add_executable (mageec_driver
+  lib/Driver.cpp
+)
+set_target_properties(mageec_driver PROPERTIES OUTPUT_NAME mageec)
+target_link_libraries(mageec_driver mageec_lib)
+
+# Test file
+add_executable (mageec_test
   lib/Main.cpp
 )
-target_link_libraries(tmp mageec)
+target_link_libraries(mageec_test mageec_lib)
 
 # Documentation
 if (MAGEEC_WITH_ALL_DOCS)

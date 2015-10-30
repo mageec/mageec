@@ -63,27 +63,73 @@ public:
   static const util::Version version;
 
 
-  Database(void) = delete;
-  ~Database(void);
+  /// \brief Load a database from the provided path
+  ///
+  /// If the database does not exist then this will fail
+  ///
+  /// \param db_path  Path to the database to be loaded.
+  /// \param mls  Map of the machine learner interfaces available to the
+  /// database
+  /// \return The database if it could be loaded, nullptr otherwise.
+  static std::unique_ptr<Database>
+  loadDatabase(std::string db_path,
+               std::map<util::UUID, const IMachineLearner*> mls);
 
-  Database(const Database &other) = default;
-  Database(Database &&other) = default;
+  /// \brief Create a database from the provided path
+  ///
+  /// If the database already exists then this will fail
+  ///
+  /// \param db_path  Path to the database to be created.
+  /// \param mls  Map of the machine learner interfaces available to the
+  /// database
+  /// \return The database if it could be created, nullptr otherwise.
+  static std::unique_ptr<Database>
+  createDatabase(std::string db_path,
+                 std::map<util::UUID, const IMachineLearner*> mls);
 
+  /// \brief Load or create a database from the provided path
+  ///
+  /// If the database does not already exists, then a new database will be
+  /// created. If the database could not be loaded or created, then
+  /// this will fail.
+  ///
+  /// \param db_path  Path to the database to be created or loaded
+  /// \param mls  Map of the machine learner interfaces available to the
+  /// database
+  /// \return The database if it could be created or loaded, nullptr
+  /// otherwise.
+  static std::unique_ptr<Database>
+  getDatabase(std::string db_path,
+              std::map<util::UUID, const IMachineLearner*> mls);
+
+
+private:
   /// \brief Construct a database from the provided database path.
   ///
   /// If the database does not exist then an empty database is created and
   /// used.
   ///
-  /// \param db_path  Path to the database to be used. If it does not exist
-  /// then the database will be created.
+  /// \param db  Handle to the sqlite database
   /// \param mls  Map of the machine learner interfaces available to the
   /// database.
-  /// \param create  True if this database does not exist and should be
-  /// created.
-  Database(std::string db_path,
+  /// \param create  True if the database should be constructed.
+  Database(sqlite3 &db,
            std::map<util::UUID, const IMachineLearner*> mls,
            bool create);
 
+
+public:
+  Database(void) = delete;
+  ~Database(void);
+
+  Database(const Database &other) = delete;
+  Database(Database &&other) = default;
+
+  Database &operator=(const Database &other) = delete;
+  Database &operator=(Database &&other) = default;
+
+
+public:
   /// \brief Get the version of the database
   util::Version getVersion(void);
 

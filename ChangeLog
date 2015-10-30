@@ -1,3 +1,25 @@
+2015-10-30  Edward Jones  <ed.jones@embecosm.com>
+
+	* CMakeLists.txt: Rename mageec library target to mageec_lib, tmp
+	to mageec_test, and add mageec_driver target for the standalone tool.
+	Set the output names of the library and driver targets.
+	* include/mageec/Database.h (Database::loadDatabase)
+	(Database::createDatabase Database::getDatabase):
+	Add static functions to load or create a new database from a path.
+	(Database::Database): Make constructor private as the static creation
+	functions should be used. Change first operand from string to sqlite
+	object.
+	* include/mageec/Framework.h (Framework::getDatabase): Use a
+	std::unique_ptr for return to allow it to fail.
+	* include/mageec/Util.h (Option): Fix various issues by using
+	placement new to initialize union member.
+	* lib/Database.cpp (Database::createDatabase)
+	(Database::loadDatabase Database::getDatabase): Add implementations.
+	* lib/Driver.cpp: Added file, driver for the standalone tool.
+	* lib/Framework.cpp (Framework::getDatabase): Return a
+	std::unique_ptr<Database>.
+	* lib/Main.cpp (main): Make db a unique_ptr<Database>.
+
 2015-10-29  Edward Jones  <ed.jones@embecosm.com>
 
 	* include/mageec/Framework.h (Framework::loadMachineLearner):

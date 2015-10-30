@@ -28,6 +28,7 @@
 #define MAGEEC_FRAMEWORK_H
 
 #include <map>
+#include <memory>
 #include <string>
 
 #include "mageec/Util.h"
@@ -88,7 +89,7 @@ public:
   ///
   /// \param db_path  Path to the database to be loaded or created
   /// \param create  Dictates whether the database should be loaded or created
-  Database getDatabase(std::string db_path, bool create) const;
+  std::unique_ptr<Database> getDatabase(std::string db_path, bool create) const;
 
 
 private:

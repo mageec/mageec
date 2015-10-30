@@ -29,6 +29,7 @@
 
 #include <cassert>
 #include <cstdio>
+#include <fstream>
 #include <map>
 #include <sstream>
 #include <string>
@@ -221,16 +222,74 @@ static const char * const create_parameter_debug_table =
 //===-------------------- Database implementation -------------------------===//
 
 
-Database::Database(std::string db_path,
+std::unique_ptr<Database>
+Database::createDatabase(std::string db_path,
+                         std::map<util::UUID, const IMachineLearner*> mls)
+{
+  // Fail if the file already exists
+  std::ifstream f(db_path.c_str());
+  if (f.good()) {
+    return nullptr;
+  }
+  f.close();
+
+  sqlite3 *db;
+  int res = sqlite3_open (db_path.c_str(), &db);
+  if (db == nullptr) {
+    return nullptr;
+  }
+  if (res != SQLITE_OK) {
+    sqlite3_close(db);
+    return nullptr;
+  }
+  return std::unique_ptr<Database>(new Database(*db, mls, true));
+}
+
+
+std::unique_ptr<Database>
+Database::loadDatabase(std::string db_path,
+                       std::map<util::UUID, const IMachineLearner*> mls)
+{
+  // Fail if the file does not already exist
+  std::ifstream f(db_path.c_str());
+  if (!f.good()) {
+    return nullptr;
+  }
+  f.close();
+
+  sqlite3 *db;
+  int res = sqlite3_open (db_path.c_str(), &db);
+  if (db == nullptr) {
+    return nullptr;
+  }
+  if (res != SQLITE_OK) {
+    sqlite3_close(db);
+    return nullptr;
+  }
+  return std::unique_ptr<Database>(new Database(*db, mls, false));
+}
+
+
+std::unique_ptr<Database>
+Database::getDatabase(std::string db_path,
+                      std::map<util::UUID, const IMachineLearner*> mls)
+{
+  // First try and load the database, if that fails try and create it
+  std::unique_ptr<Database> db;
+  db = loadDatabase(db_path, mls);
+  if (db) {
+    return db;
+  }
+  db = createDatabase(db_path, mls);
+  return db;
+}
+
+
+Database::Database(sqlite3 &db,
                    std::map<util::UUID, const IMachineLearner*> mls,
                    bool create)
-  : m_db(nullptr), m_mls(mls)
+  : m_db(&db), m_mls(mls)
 {
-  int res = sqlite3_open (db_path.c_str(), &m_db);
-  
-  assert(res == SQLITE_OK && "Unable to load or create mageec database");
-  assert(m_db != nullptr);
-
   // Enable foreign keys (requires sqlite 3.6.19 or above)
   // If foreign keys are not available the database is still usable, but no
   // foreign key checking will do done.

@@ -94,7 +94,7 @@ public:
     : m_populated(other.m_populated)
   {
     if (other.m_populated) {
-      m_value = other.m_value;
+      new (&m_value) T(other.m_value);
     }
   }
 
@@ -103,25 +103,46 @@ public:
   {
     if (other.m_populated) {
       other.m_populated = false;
-      m_value = std::move(other.m_value);
+      new (&m_value) T(std::move(other.m_value));
     }
   }
 
   Option& operator=(const Option& other)
   {
-    m_populated = other.m_populated;
     if (other.m_populated) {
-      m_value = other.m_value;
+      if (m_populated) {
+        m_value = other.m_value;
+      }
+      else {
+        new (&m_value) T(other.m_value);
+        m_populated = true;
+      }
+    }
+    else {
+      if (m_populated) {
+        m_value.~T();
+        m_populated = false;
+      }
     }
     return *this;
   }
 
   Option& operator=(Option&& other)
   {
-    m_populated = other.m_populated;
     if (other.m_populated) {
-      other.m_populated = false;
-      m_value = std::move(other.m_value);
+      if (m_populated) {
+        m_value = std::move(other.m_value);
+      }
+      else {
+        new (&m_value) T(std::move(other.m_value));
+        m_populated = true;
+      }
+    }
+    else {
+      if (m_populated) {
+        m_value.~T();
+        m_populated = false;
+      }
     }
     return *this;
   }
