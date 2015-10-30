@@ -1,3 +1,12 @@
+2015-10-30  Edward Jones  <ed.jones@embecosm.com>
+
+	* CMakeLists.txt: Link target against mageec_lib instead of mageec
+	as the library target has been renamed.
+	* FeatureExtract.cpp: Save extracted features in the database.
+	* GCCPlugin.cpp (parseArguments): with_save_features now set
+	correctly when save_features flag is provided.
+	mageec_context.database is now initialized correctly.
+
 2015-10-29  Edward Jones  <ed.jones@embecosm.com>
 
 	* FeatureExtract.cpp: Replace mageec_config with mageec_context.

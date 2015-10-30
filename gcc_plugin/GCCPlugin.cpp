@@ -206,7 +206,7 @@ static bool parseArguments(int argc, struct plugin_argument *argv)
           }
         }
         else {
-          with_save_features = false;
+          with_save_features = true;
         }
       }
       if (arg_str == "no_save_features") {
@@ -314,8 +314,8 @@ static bool parseArguments(int argc, struct plugin_argument *argv)
       (mode == MAGEECMode::kFeatureExtractAndOptimize) ||
       (mode == MAGEECMode::kFeatureExtractSaveAndOptimize)) {
     assert(seen_database);
-    mageec_context.database.reset(new mageec::Database(
-        mageec_context.framework->getDatabase(db_str.get(), false)));
+    mageec_context.database =
+        mageec_context.framework->getDatabase(db_str.get(), false);
     assert(mageec_context.database);
   }
 

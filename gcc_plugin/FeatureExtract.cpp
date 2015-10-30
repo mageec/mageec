@@ -372,6 +372,36 @@ static unsigned featureExtractExecute(void)
     mageec_context.features->print(mageecDbg(), "  |- ");
     MAGEEC_MSG("Finished dumping feature vector");
   }
+
+  // Save the features in the database if necessary
+  MAGEECMode mode = *mageec_context.mode;
+  if ((mode == MAGEECMode::kFeatureExtractAndSave) ||
+      (mode == MAGEECMode::kFeatureExtractSaveAndOptimize)) {
+    if (mageec_context.with_debug) {
+      MAGEEC_MSG("Saving features in the database");
+    }
+
+    // Populate in the database
+    mageec::FeatureSetID feature_set_id =
+        mageec_context.database->newFeatureSet(*mageec_context.features);
+
+    mageec::FeatureGroupID feature_group_id =
+        mageec_context.database->newFeatureGroup({feature_set_id});
+
+    // Create an empty parameter set
+    std::unique_ptr<ParameterSet> params(new ParameterSet());
+    mageec::ParameterSetID parameter_set_id =
+        mageec_context.database->newParameterSet(*params);
+
+    // Create a compilation for this execution run
+    mageec_context.database->newCompilation(
+        current_function_name(),
+        "function",
+        feature_group_id,
+        parameter_set_id,
+        nullptr, nullptr);
+  }
+
   return 0;
 }
 

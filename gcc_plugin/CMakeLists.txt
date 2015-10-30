@@ -144,5 +144,5 @@ add_library(mageec_gcc SHARED
   GCCPlugin.cpp
   PluginInfo.cpp
 )
-target_link_libraries(mageec_gcc mageec)
+target_link_libraries(mageec_gcc mageec_lib)
 
