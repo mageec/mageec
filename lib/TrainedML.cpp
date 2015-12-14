@@ -27,6 +27,7 @@
 #include "mageec/TrainedML.h"
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "mageec/Feature.h"

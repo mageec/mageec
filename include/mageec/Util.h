@@ -236,6 +236,29 @@ private:
 };
 
 
+/// \brief Read a 16-bit little endian value from a byte vector, advancing
+/// the iterator in the process.
+///
+/// It is assumed that the end of the iterator will not be encountered
+/// when reading the value.
+static unsigned read16LE(std::vector<uint8_t>::const_iterator &it)
+{
+  assert(it != end);
+  assert((it + 1) != end);
+  unsigned res = 0;
+  res |= static_cast<unsigned>(*it);
+  res |= static_cast<unsigned>(*(it + 1)) << 8;
+  return res;
+}
+
+/// \brief Write a 16-bit little endian value to a byte vector
+static void write16LE(std::vector<uint8_t> buf, unsigned value)
+{
+  buf.push_back(static_cast<uint8_t>(value));
+  buf.push_back(static_cast<uint8_t>(value >> 8));
+}
+
+
 } // end of namespace util
 } // end of namespace mageec
 

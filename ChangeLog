@@ -1,3 +1,21 @@
+2015-12-14  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Database.h (version): Make member private.
+	(ResultIterator::operator++): Replace with ResultIterator::next
+	member function
+	* include/mageec/Framework.h (version): Make member private.
+	* include/mageec/Types.h (FeatureDesc::operator<)
+	(ParameterDesc::operator<): Added comparison function.
+	* include/mageec/Util.h (read16LE, write16LE): Add little-endian
+	read/write functions.
+	* lib/Database.cpp (Database::trainMachineLearner): Refactor to
+	use sets of FeatureDesc/ParameterDesc.
+	(ResultIterator::operator++): Replaced with ResultIterator::next.
+	* lib/Driver.cpp (trainDatabase): Added function.
+	(main): Refactor to handle new utility flags and new 'training mode'.
+	* lib/ML/C5.cpp: Added implementation of C5.0 driver.
+	* lib/TrainedML.cpp: Add missing include.
+
 2015-10-30  Edward Jones  <ed.jones@embecosm.com>
 
 	* CMakeLists.txt: Rename mageec library target to mageec_lib, tmp

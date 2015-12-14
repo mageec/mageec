@@ -54,11 +54,12 @@ class IMachineLearner;
 
 
 class Framework {
-public:
+private:
   /// \brief Version of the mageec framework
   static const util::Version version;
 
 
+public:
   /// \brief Create the framework
   Framework(void);
 

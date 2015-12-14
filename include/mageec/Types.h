@@ -78,12 +78,20 @@ enum class DecisionRequestType : unsigned {
 struct FeatureDesc {
   unsigned    id;
   FeatureType type;
+
+  bool operator<(const FeatureDesc &other) const {
+    return id < other.id;
+  }
 };
 
 
 struct ParameterDesc {
   unsigned      id;
   ParameterType type;
+
+  bool operator<(const ParameterDesc &other) const {
+    return id < other.id;
+  }
 };
 
 

@@ -881,29 +881,29 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric)
   // Collect all information in a single transaction
   start_transaction.execute().assertDone();
 
-  std::vector<FeatureDesc> feature_descs;
-  std::vector<ParameterDesc> param_descs;
+  std::set<FeatureDesc> feature_descs;
+  std::set<ParameterDesc> parameter_descs;
   std::vector<std::string> pass_names;
 
   DatabaseQueryIterator feat_iter = select_feature_types.execute();
   while (!feat_iter.done()) {
     assert(feat_iter.numColumns() == 2);
-    FeatureDesc feature_desc = {
+    FeatureDesc desc = {
       static_cast<unsigned>(feat_iter.getInteger(0)),
       static_cast<FeatureType>(feat_iter.getInteger(1))
     };
-    feature_descs.push_back(feature_desc);
+    feature_descs.insert(desc);
     feat_iter.next();
   }
 
   DatabaseQueryIterator param_iter = select_parameter_types.execute();
   while (!param_iter.done()) {
     assert(param_iter.numColumns() == 2);
-    ParameterDesc param_desc = {
+    ParameterDesc desc = {
       static_cast<unsigned>(param_iter.getInteger(0)),
       static_cast<ParameterType>(param_iter.getInteger(1))
     };
-    param_descs.push_back(param_desc);
+    param_descs.insert(desc);
     param_iter.next();
   }
 
@@ -1058,7 +1058,7 @@ util::Option<Result> ResultIterator::operator*()
   return Result(features, parameters, value);
 }
 
-ResultIterator ResultIterator::operator++()
+ResultIterator ResultIterator::next()
 {
   if (m_result_iter->done()) {
     return std::move(*this);

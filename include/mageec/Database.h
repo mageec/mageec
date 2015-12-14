@@ -57,12 +57,13 @@ class ParameterBase;
 
 
 class Database {
-public:
+private:
   /// \brief Version of the database interface. A newly created database will
   /// have this version number.
   static const util::Version version;
 
 
+public:
   /// \brief Load a database from the provided path
   ///
   /// If the database does not exist then this will fail
@@ -309,7 +310,7 @@ public:
   ResultIterator(ResultIterator &&other);
 
   util::Option<Result> operator*();
-  ResultIterator operator++();
+  ResultIterator next();
 
 private:
   sqlite3 &m_db;
