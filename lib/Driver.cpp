@@ -26,9 +26,11 @@
 
 #include <iostream>
 #include <memory>
+#include <set>
 
 #include "mageec/Database.h"
 #include "mageec/Framework.h"
+#include "mageec/ML/C5.h"
 
 
 // Utilies used for debugging the driver
@@ -42,12 +44,11 @@ static std::ostream &mageecDbg() { return std::cerr; }
 
 namespace mageec {
 
-
 enum class DriverMode {
   kNone,
-  kCreateDatabase
+  kCreateDatabase,
+  kTrainDatabase,
 };
-
 
 } // end of namespace mageec
 
@@ -58,6 +59,11 @@ using namespace mageec;
 int createDatabase(const std::string &db_path)
 {
   Framework framework;
+
+  // Register some machine learners that are part of MAGEEC
+  std::unique_ptr<IMachineLearner> c5_ml(new C5Driver());
+  framework.registerMachineLearner(std::move(c5_ml));
+
 
   std::unique_ptr<Database> db = framework.getDatabase(db_path, true);
   if (!db) {
@@ -70,24 +76,36 @@ int createDatabase(const std::string &db_path)
 }
 
 int trainDatabase(const std::string &db_path,
-                  const std::vector<std::string> &ml_strs,
-                  const std::string &metric_str);
+                  const std::set<std::string> &ml_strs,
+                  const std::set<std::string> &metric_strs)
 {
+  assert(metric_strs.size() > 0);
+  assert(ml_strs.size() > 0);
+
   Framework framework;
 
-  // Parse the metric string
-  Metric metric;
-  if (metric_str == "size") {
-    metric = kCodeSize;
+  // Parse the metrics we are training against.
+  std::set<Metric> metrics;
+  for (auto str : metric_strs) {
+    util::Option<Metric> metric;
+    if (str == "size") {
+      metric = Metric::kCodeSize;
+    }
+    else if (str == "time") {
+      metric = Metric::kTime;
+    }
+    else if (str == "energy") {
+      metric = Metric::kEnergy;
+    }
+    else {
+      MAGEEC_WARN("Unrecognized metric specified '" << str << "'");
+    }
+    if (metric) {
+      metrics.insert(metric.get());
+    }
   }
-  else if (metric_str == "time") {
-    metric = kTime;
-  }
-  else if (metric_str == "energy") {
-    metric = kEnergy;
-  }
-  else {
-    MAGEEC_ERR("Unknown metric specified '" << metric_str << "'");
+  if (metrics.size() == 0) {
+    MAGEEC_ERR("No recognized metrics specified");
     return -1;
   }
 
@@ -100,7 +118,7 @@ int trainDatabase(const std::string &db_path,
   }
 
   // Load machine learners
-  const std::vector<mageec::util::UUID> mls;
+  std::set<mageec::util::UUID> mls;
   for (auto str : ml_strs) {
     mageec::util::Option<mageec::util::UUID> ml_uuid;
 
@@ -112,7 +130,7 @@ int trainDatabase(const std::string &db_path,
 
     // Try and parse the argument as a UUID
     ml_uuid = mageec::util::UUID::parse(str);
-    if (ml_uuid && !framework.hasMachineLearner(str)) {
+    if (ml_uuid && !framework.hasMachineLearner(ml_uuid.get())) {
       MAGEEC_WARN("UUID '" << str << "' is not a register machine learner "
                   "and will be ignored");
       continue;
@@ -120,7 +138,7 @@ int trainDatabase(const std::string &db_path,
 
     // Not a UUID, try and load as a shared object
     if (!ml_uuid) {
-      ml_uuid = mageec_context.framework->loadMachineLearner(ml_str.get());
+      ml_uuid = framework.loadMachineLearner(str);
     }
     if (!ml_uuid) {
       MAGEEC_WARN("Unable to load machine learner '" << str << "'. This "
@@ -130,7 +148,7 @@ int trainDatabase(const std::string &db_path,
     assert(ml_uuid);
 
     // add uuid of ml to be trained.
-    mls.push_back(ml_uuid);
+    mls.insert(ml_uuid.get());
   }
   if (mls.empty()) {
     MAGEEC_ERR("No machine learners were successfully loaded");
@@ -139,8 +157,10 @@ int trainDatabase(const std::string &db_path,
 
   // Train. This will put the training blobs from the machine learners into
   // the database.
-  for (auto ml : mls) {
-    db->trainMachineLearner(ml, metric);
+  for (auto metric : metrics) {
+    for (auto ml : mls) {
+      db->trainMachineLearner(ml, metric);
+    }
   }
   return 0;
 }
@@ -154,18 +174,22 @@ int main(int argc, const char *argv[])
   // The database to be created or trained
   util::Option<std::string> db_str;
   // The machine learners to train
-  std::vector<std::string>  mls;
+  std::set<std::string> mls;
+  // Metrics to train the machine learners against
+  std::set<std::string> metrics;
 
   bool seen_database = false;
   bool seen_mls = false;
+  bool seen_metrics = false;
 
   bool with_help = false;
   bool with_version = false;
   bool with_database_version = false;
   bool with_debug = false;
-  bool with_print_mls = false;
+  bool with_print_trained_mls = false;
+  bool with_print_ml_interfaces = false;
 
-  for (int i = 0; i < argc; ++i) {
+  for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
 
     // If this is the first argument, it may specify the mode which the tool
@@ -191,7 +215,7 @@ int main(int argc, const char *argv[])
     else if (arg == "--debug") {
       with_debug = true;
     }
-    else if (arg == "--print-machine-learner-interfaces")
+    else if (arg == "--print-machine-learner-interfaces") {
       with_print_ml_interfaces = true;
     }
     else if (arg == "--print-trained-machine-learners") {
@@ -201,6 +225,15 @@ int main(int argc, const char *argv[])
       with_database_version = true;
     }
 
+    else if (arg == "--metric") {
+      ++i;
+      if (i >= argc) {
+        MAGEEC_ERR("No '--metric' value provided");
+        return -1;
+      }
+      metrics.insert(std::string(argv[i]));
+      seen_metrics = true;
+    }
     else if (arg == "--database") {
       if (seen_database) {
         MAGEEC_ERR("Argument '--database' already seen");
@@ -219,7 +252,7 @@ int main(int argc, const char *argv[])
         MAGEEC_ERR("No '--machine-learner' value provided");
         return -1;
       }
-      mls.push_back(std::string(argv[i]));
+      mls.insert(std::string(argv[i]));
       seen_mls = true;
     }
     else {
@@ -233,6 +266,14 @@ int main(int argc, const char *argv[])
     MAGEEC_ERR("Training mode specified without machine learners");
     return -1;
   }
+  if (mode == DriverMode::kTrainDatabase && !seen_metrics) {
+    MAGEEC_ERR("Training mode specified without any metrics to train for");
+    return -1;
+  }
+  if (mode == DriverMode::kCreateDatabase && !seen_database) {
+    MAGEEC_ERR("Create mode specified without any database to create");
+    return -1;
+  }
 
   // Warnings
   if (mode == DriverMode::kCreateDatabase && seen_mls) {
@@ -242,7 +283,7 @@ int main(int argc, const char *argv[])
   if (with_database_version && !seen_database) {
     MAGEEC_WARN("Cannot get database version, as no database was specified");
   }
-  if (with_print_ml_interfaces && !seen_machine_learners) {
+  if (with_print_ml_interfaces && !seen_mls) {
     MAGEEC_WARN("Cannot print machine learner interfaces with no specified "
                 "machine learners");
   }
@@ -252,13 +293,16 @@ int main(int argc, const char *argv[])
   }
 
   // Handle normal arguments
+  (void)with_help;
+  (void)with_version;
+  (void)with_debug;
 
   // Handle modes
   switch (mode) {
     case DriverMode::kCreateDatabase:
       return createDatabase(db_str.get());
     case DriverMode::kTrainDatabase:
-      return trainDatabase(db_str.get(), mls);
+      return trainDatabase(db_str.get(), mls, metrics);
     default:
       break;
   }

@@ -222,7 +222,7 @@ public:
   DatabaseQuery& operator<<(std::string str);
 
   /// \brief Bind a blob to the next available parameter
-  DatabaseQuery& operator<<(std::vector<uint8_t> blob);
+  DatabaseQuery& operator<<(const std::vector<uint8_t> blob);
 
   /// \brief Bind a null to the next available parameter
   DatabaseQuery& operator<<(std::nullptr_t nullp);

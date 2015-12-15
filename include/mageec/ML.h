@@ -47,7 +47,7 @@ class DecisionRequestBase;
 /// Abstract interface to a machine learner.
 class IMachineLearner {
 public:
-  virtual ~IMachineLearner(void);
+  virtual ~IMachineLearner(void) = 0;
 
   /// \brief Get the unique identifier for this machine learner
   virtual util::UUID getUUID(void) const = 0;
@@ -98,9 +98,9 @@ public:
   ///
   /// \return A blob of training data. 
   virtual const std::vector<uint8_t>
-  train(std::vector<FeatureDesc> feature_descs,
-        std::vector<ParameterDesc> parameter_descs,
-        std::vector<std::string> passes,
+  train(std::set<FeatureDesc>   feature_descs,
+        std::set<ParameterDesc> parameter_descs,
+        std::set<std::string>   passes,
         ResultIterator results) const = 0;
 
   /// \brief Incrementally train the machine learner, using a partial set of
@@ -118,13 +118,17 @@ public:
   /// \param old_blob  The old blob of training data to be replaced
   ///
   /// \return A new blob of training data.
-  virtual std::vector<uint8_t>
-  train(std::vector<FeatureDesc> feature_descs,
-        std::vector<ParameterDesc> parameter_descs,
-        std::vector<std::string> passes,
+  virtual const std::vector<uint8_t>
+  train(std::set<FeatureDesc>   feature_descs,
+        std::set<ParameterDesc> parameter_descs,
+        std::set<std::string>   passes,
         ResultIterator results,
         std::vector<uint8_t> old_blob) const = 0;
 };
+
+
+inline IMachineLearner::~IMachineLearner()
+{}
 
 
 } // end of namespace MAGEEC

@@ -27,6 +27,7 @@
 
 #include <array>
 #include <cassert>
+#include <vector>
 
 
 namespace mageec {
@@ -241,22 +242,11 @@ private:
 ///
 /// It is assumed that the end of the iterator will not be encountered
 /// when reading the value.
-static unsigned read16LE(std::vector<uint8_t>::const_iterator &it)
-{
-  assert(it != end);
-  assert((it + 1) != end);
-  unsigned res = 0;
-  res |= static_cast<unsigned>(*it);
-  res |= static_cast<unsigned>(*(it + 1)) << 8;
-  return res;
-}
+unsigned read16LE(std::vector<uint8_t>::const_iterator &it);
+
 
 /// \brief Write a 16-bit little endian value to a byte vector
-static void write16LE(std::vector<uint8_t> buf, unsigned value)
-{
-  buf.push_back(static_cast<uint8_t>(value));
-  buf.push_back(static_cast<uint8_t>(value >> 8));
-}
+void write16LE(std::vector<uint8_t> buf, unsigned value);
 
 
 } // end of namespace util

@@ -1,3 +1,32 @@
+2015-12-15  Edward Jones  <ed.jones@embecosm.com>
+
+	* CMakeLists.txt: Add C5 machine learner library target. Added
+	lib/Util.cpp source file to build.
+	* include/mageec/Database.h (ResultIterator::operator=): Added method.
+	(ResultIterator::m_db): Make a pointer rather than reference.
+	* include/mageec/DatabaseQuery.h (DatabaseQuery::operator<<):
+	Take a const std::vector<uint8_t>.
+	* include/mageec/Decision.h (NativeDecision::NativeDecision):
+	Make constructor public.
+	* include/mageec/Framework.h (Framework): Fix compile errors.
+	(Framework::registerMachineLearner): Framework now takes ownership of
+	machine learner interfaces.
+	(Framework::hasMachineLearner Framework::getMachineLearners):
+	Added public methods.
+	* include/mageec/ML.h (IMachineLearner::~IMachineLearner): Make pure
+	virtual. Add stub implementation.
+	(IMachineLearner::train): Replace 'vector' parameters with sets.
+	* include/mageec/ML/C5.h: Added file.
+	* include/mageec/Util.h: Factor out read16LE/write16LE.
+	* lib/Database.cpp: Minor changes to resolve compile errors.
+	* lib/DatabaseQuery.cpp (DatabaseQuery::operator<<):
+	Take a const std::vector<uint8_t>.
+	* lib/Driver.cpp: Fix compile issues and add further diagnostics.
+	* lib/Framework.cpp (Framework::hasMachineLearner)
+	(Framework::getMachineLearners): Added implementations.
+	* lib/ML/C5.cpp: Fix outstanding compile issues.
+	* lib/Util.cpp: Added file.
+
 2015-12-14  Edward Jones  <ed.jones@embecosm.com>
 
 	* include/mageec/Database.h (version): Make member private.

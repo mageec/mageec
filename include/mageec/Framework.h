@@ -29,6 +29,7 @@
 
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 
 #include "mageec/Util.h"
@@ -63,6 +64,9 @@ public:
   /// \brief Create the framework
   Framework(void);
 
+  /// \brief Destroy the framework, deleting help machine learner interfaces
+  ~Framework(void);
+
   /// \brief Get the version of the mageec framework
   util::Version getVersion(void) const;
 
@@ -78,7 +82,7 @@ public:
   /// \param ml  The machine learner to register with the framework
   /// \return True if the machine learner was successfully register, otherwise
   /// false.
-  bool registerMachineLearner(const IMachineLearner& ml);
+  bool registerMachineLearner(std::unique_ptr<IMachineLearner> ml);
 
   /// \brief Load the database at the provided path
   ///
@@ -91,6 +95,14 @@ public:
   /// \param db_path  Path to the database to be loaded or created
   /// \param create  Dictates whether the database should be loaded or created
   std::unique_ptr<Database> getDatabase(std::string db_path, bool create) const;
+
+  /// \brief Check whether a machine learner with the specified uuid has be
+  /// registered with the framework.
+  bool hasMachineLearner(util::UUID uuid) const;
+
+  /// \brief Get the uuid of all of the machine learners which are registered
+  /// with the framework
+  std::set<util::UUID> getMachineLearners() const;
 
 
 private:

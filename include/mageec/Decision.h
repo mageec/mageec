@@ -159,6 +159,7 @@ typedef DecisionRequest<DecisionRequestType::kPassList,
 ///
 /// \brief The native decision is equivalent to no decision being made.
 class NativeDecision : public DecisionBase {
+public:
   NativeDecision() : DecisionBase(DecisionType::kNative) {}
 };
 typedef Decision<DecisionType::kBool,  bool>        BoolDecision;

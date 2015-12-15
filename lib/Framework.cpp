@@ -27,6 +27,7 @@
 #include "mageec/Framework.h"
 
 #include <cassert>
+#include <set>
 #include <string>
 
 #include "mageec/Database.h"
@@ -48,6 +49,14 @@ Framework::Framework(void)
 {
 }
 
+Framework::~Framework(void)
+{
+  // Delete ml interfaces
+  for (auto ml : m_mls) {
+    delete ml.second;
+  }
+}
+
 
 util::Version Framework::getVersion(void) const
 {
@@ -62,10 +71,11 @@ util::Option<util::UUID> Framework::loadMachineLearner(std::string path)
 }
 
 
-bool Framework::registerMachineLearner(const IMachineLearner &ml)
+bool
+Framework::registerMachineLearner(std::unique_ptr<IMachineLearner> ml)
 {
-  util::UUID ml_id = ml.getUUID();
-  auto res = m_mls.emplace(std::make_pair(ml_id, &ml));
+  util::UUID ml_id = ml->getUUID();
+  auto res = m_mls.emplace(std::make_pair(ml_id, ml.release()));
   assert(res.second);
 
   return true;
@@ -83,6 +93,23 @@ Framework::getDatabase(std::string db_path, bool create) const
     db = Database::loadDatabase(db_path, m_mls);
   }
   return db;
+}
+
+
+bool Framework::hasMachineLearner(util::UUID uuid) const 
+{
+  const auto it = m_mls.find(uuid);
+  return (it != m_mls.cend());
+}
+
+
+std::set<util::UUID> Framework::getMachineLearners() const
+{
+  std::set<util::UUID> keys;
+  for (auto &it : m_mls) {
+    keys.emplace(it.first);
+  }
+  return keys;
 }
 
 

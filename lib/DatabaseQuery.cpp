@@ -149,7 +149,7 @@ DatabaseQuery& DatabaseQuery::operator<<(std::string str)
   return *this;
 }
 
-DatabaseQuery& DatabaseQuery::operator<<(std::vector<uint8_t> blob)
+DatabaseQuery& DatabaseQuery::operator<<(const std::vector<uint8_t> blob)
 {
   validate();
   assert(m_param_types[m_curr_param] == QueryParamType::kBlob);

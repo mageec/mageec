@@ -883,7 +883,7 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric)
 
   std::set<FeatureDesc> feature_descs;
   std::set<ParameterDesc> parameter_descs;
-  std::vector<std::string> pass_names;
+  std::set<std::string> pass_names;
 
   DatabaseQueryIterator feat_iter = select_feature_types.execute();
   while (!feat_iter.done()) {
@@ -903,11 +903,11 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric)
       static_cast<unsigned>(param_iter.getInteger(0)),
       static_cast<ParameterType>(param_iter.getInteger(1))
     };
-    param_descs.insert(desc);
+    parameter_descs.insert(desc);
     param_iter.next();
   }
 
-  // TODO: No pass names yet
+  // TODO: Read pass names
 
   commit_transaction.execute().assertDone();
 
@@ -915,7 +915,7 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric)
   ResultIterator results(*m_db, metric);
 
   // Retrieve the blob and then insert it into the database
-  auto blob = i_ml.train(feature_descs, param_descs, pass_names,
+  auto blob = i_ml.train(feature_descs, parameter_descs, pass_names,
                          std::move(results));
   
   insert_blob
@@ -930,10 +930,10 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric)
 
 
 ResultIterator::ResultIterator(sqlite3 &db, Metric metric)
-  : m_db(db), m_metric(metric)
+  : m_db(&db), m_metric(metric)
 {
   // Get the each compilation and its accompanying results
-  DatabaseQuery select_compilation_result = DatabaseQueryBuilder(m_db)
+  DatabaseQuery select_compilation_result = DatabaseQueryBuilder(*m_db)
     << "SELECT "
       << "Compilation.feature_group_id, Compilation.parameter_set_id, "
       << "Compilation.pass_sequence_id, Result.result "
@@ -952,16 +952,28 @@ ResultIterator::ResultIterator(ResultIterator &&other)
   : m_db(other.m_db),
     m_metric(other.m_metric),
     m_result_iter(std::move(other.m_result_iter))
-{}
+{
+  other.m_db = nullptr;
+}
+
+ResultIterator& ResultIterator::operator=(ResultIterator &&other)
+{
+  m_db = other.m_db;
+  m_metric = other.m_metric;
+  m_result_iter = std::move(other.m_result_iter);
+
+  other.m_db = nullptr;
+  return *this;
+}
 
 util::Option<Result> ResultIterator::operator*()
 {
   // We do this in a single transaction only for performance reasons
-  DatabaseQuery start_transaction(m_db, "BEGIN TRANSACTION");
-  DatabaseQuery commit_transaction(m_db, "COMMIT");
+  DatabaseQuery start_transaction(*m_db, "BEGIN TRANSACTION");
+  DatabaseQuery commit_transaction(*m_db, "COMMIT");
 
   // Get all of the features in a feature group
-  DatabaseQuery select_features = DatabaseQueryBuilder(m_db)
+  DatabaseQuery select_features = DatabaseQueryBuilder(*m_db)
     << "SELECT "
       << "FeatureInstance.feature_id, FeatureInstance.feature_type_id, "
       << "FeatureInstance.value "
@@ -973,7 +985,7 @@ util::Option<Result> ResultIterator::operator*()
         << QueryParamType::kInteger;
 
   // Get all of the parameters in a parameter set
-  DatabaseQuery select_parameters = DatabaseQueryBuilder(m_db)
+  DatabaseQuery select_parameters = DatabaseQueryBuilder(*m_db)
     << "SELECT "
       << "ParameterInstance.parameter_id, ParameterInstance.parameter_type_id, "
       << "ParameterInstance.value "

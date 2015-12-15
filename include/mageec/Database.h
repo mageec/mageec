@@ -309,11 +309,13 @@ public:
   ResultIterator(const ResultIterator &other) = delete;
   ResultIterator(ResultIterator &&other);
 
+  ResultIterator& operator=(ResultIterator &&other);
+
   util::Option<Result> operator*();
   ResultIterator next();
 
 private:
-  sqlite3 &m_db;
+  sqlite3 *m_db;
   Metric   m_metric;
   std::unique_ptr<DatabaseQueryIterator> m_result_iter;
 };
