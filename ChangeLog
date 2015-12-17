@@ -1,3 +1,42 @@
+2015-12-17  Edward Jones  <ed.jones@embecosm.com>
+
+	* CMakeLists.txt: Update to build C5 classifier.
+	* lib/ML/C5/CMakeLists.txt: Added file to build C5.
+	* lib/ML/C5/attwinnow.c: Added file.
+	* lib/ML/C5/c50.c: Likewise.
+	* lib/ML/C5/classify.c: Likewise.
+	* lib/ML/C5/confmat.c: Likewise.
+	* lib/ML/C5/construct.c: Likewise.
+	* lib/ML/C5/contin.c: Likewise.
+	* lib/ML/C5/defns.i: Likewise.
+	* lib/ML/C5/discr.c: Likewise.
+	* lib/ML/C5/extern.i: Likewise.
+	* lib/ML/C5/formrules.c: Likewise.
+	* lib/ML/C5/formtree.c: Likewise.
+	* lib/ML/C5/getdata.c: Likewise.
+	* lib/ML/C5/getnames.c: Likewise.
+	* lib/ML/C5/global.c: Likewise.
+	* lib/ML/C5/gpl.txt: Likewise.
+	* lib/ML/C5/implicitatt.c: Likewise.
+	* lib/ML/C5/info.c: Likewise.
+	* lib/ML/C5/mcost.c: Likewise.
+	* lib/ML/C5/modelfiles.c: Likewise.
+	* lib/ML/C5/p-thresh.c: Likewise.
+	* lib/ML/C5/prune.c: Likewise.
+	* lib/ML/C5/report.c: Likewise.
+	* lib/ML/C5/rules.c: Likewise.
+	* lib/ML/C5/ruletree.c: Likewise.
+	* lib/ML/C5/siftrules.c: Likewise.
+	* lib/ML/C5/sort.c: Likewise.
+	* lib/ML/C5/subset.c: Likewise.
+	* lib/ML/C5/text.i: Likewise.
+	* lib/ML/C5/trees.c: Likewise.
+	* lib/ML/C5/undefined.xsum: Likewise.
+	* lib/ML/C5/update.c: Likewise.
+	* lib/ML/C5/utility.c: Likewise.
+	* lib/ML/C5/xval: Likewise.
+	* lib/ML/C5/xval.c: Likewise.
+
 2015-12-15  Edward Jones  <ed.jones@embecosm.com>
 
 	* CMakeLists.txt: Add C5 machine learner library target. Added

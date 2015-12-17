@@ -8,6 +8,7 @@ set (MAGEEC_WITH_ALL_DOCS    False)
 set (MAGEEC_WITH_DESIGN_DOCS False)
 set (MAGEEC_WITH_DOXYGEN     False)
 set (MAGEEC_WITH_GCC_PLUGIN  False)
+set (MAGEEC_WITH_C5          False)
 
 
 # MAGEEC options
@@ -23,6 +24,8 @@ option (MAGEEC_WITH_DOXYGEN
         "Generate MAGEEC API documentation with Doxygen")
 option (MAGEEC_WITH_GCC_PLUGIN
         "Build the GCC plugin as well as MAGEEC")
+option (MAGEEC_WITH_C5
+        "Built the C5 classifier as well as MAGEEC")
 
 
 # This should match the version number found in the mageec framework source
@@ -96,18 +99,18 @@ add_library (mageec_lib
 set_target_properties(mageec_lib PROPERTIES OUTPUT_NAME mageec)
 target_link_libraries(mageec_lib sqlite3)
 
-# C5 machine learner
-add_library (mageec_c5
-  lib/ML/C5.cpp
-)
-target_link_libraries(mageec_c5 mageec_lib)
+# Machine learners incorporated into MAGEEC
+set (ML_SOURCES "lib/ML/C5.cpp")
+
+add_library (mageec_ml ${ML_SOURCES})
+target_link_libraries(mageec_ml mageec_lib)
 
 # Standalone tool executable
 add_executable (mageec_driver
   lib/Driver.cpp
 )
 set_target_properties(mageec_driver PROPERTIES OUTPUT_NAME mageec)
-target_link_libraries(mageec_driver mageec_lib mageec_c5)
+target_link_libraries(mageec_driver mageec_lib mageec_ml)
 
 # Test file
 add_executable (mageec_test
@@ -131,3 +134,8 @@ endif ()
 if (EXISTS ${PROJECT_SOURCE_DIR}/gcc_plugin AND MAGEEC_WITH_GCC_PLUGIN)
   add_subdirectory(gcc_plugin)
 endif()
+
+# Standalone C5 classifier
+if (MAGEEC_WITH_C5)
+  add_subdirectory (lib/ML/C5)
+endif ()
