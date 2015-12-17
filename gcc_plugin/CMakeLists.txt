@@ -137,12 +137,12 @@ endif ()
 ### Targets ###
 
 
-# Plugin library target, link against the mageec library
+# Plugin library target, link against the mageec core library
 add_library(mageec_gcc SHARED
   FeatureExtract.cpp
   GCCCallbacks.cpp
   GCCPlugin.cpp
   PluginInfo.cpp
 )
-target_link_libraries(mageec_gcc mageec_lib)
+target_link_libraries(mageec_gcc mageec_core)
 

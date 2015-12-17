@@ -89,35 +89,40 @@ include_directories(include)
 
 
 # MAGEEC library
-add_library (mageec_lib
+add_library (mageec_core
   lib/DatabaseQuery.cpp
   lib/Database.cpp
   lib/Framework.cpp
   lib/TrainedML.cpp
   lib/Util.cpp
 )
-set_target_properties(mageec_lib PROPERTIES OUTPUT_NAME mageec)
-target_link_libraries(mageec_lib sqlite3)
+set_target_properties(mageec_core PROPERTIES OUTPUT_NAME mageec)
+target_link_libraries(mageec_core sqlite3)
 
 # Machine learners incorporated into MAGEEC
 set (ML_SOURCES "lib/ML/C5.cpp")
 
 add_library (mageec_ml ${ML_SOURCES})
-target_link_libraries(mageec_ml mageec_lib)
+target_link_libraries(mageec_ml mageec_core)
 
 # Standalone tool executable
 add_executable (mageec_driver
   lib/Driver.cpp
 )
 set_target_properties(mageec_driver PROPERTIES OUTPUT_NAME mageec)
-target_link_libraries(mageec_driver mageec_lib mageec_ml)
+target_link_libraries(mageec_driver mageec_core mageec_ml)
 
 # Test file
 add_executable (mageec_test
   lib/Main.cpp
 )
-target_link_libraries(mageec_test mageec_lib)
+target_link_libraries(mageec_test mageec_core)
 
+# Install libraries and executables
+install(TARGETS mageec_test mageec_driver mageec_ml mageec_core
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
 
 # Documentation
 if (MAGEEC_WITH_ALL_DOCS)

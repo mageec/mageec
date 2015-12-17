@@ -1,5 +1,12 @@
 2015-12-17  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Install libraries and executables, rename mageec_lib
+	target to mageec_core.
+	* doc/CMakeLists.txt: Install documentation.
+	* gcc_plugin/CMakeLists.txt: Renamed mageec_lib to mageec_core.
+
+2015-12-17  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Util.h (UUID::parse): Fix to UUID parsing code.
 
 2015-12-17  Edward Jones  <ed.jones@embecosm.com>

@@ -74,3 +74,8 @@ if (DOXYGEN_FOUND AND MAGEEC_WITH_DOXYGEN)
   add_dependencies (all-doc mageec-doxygen)
 endif ()
 
+
+# Install documentation by copying the various directories to the install
+install (DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/info DESTINATION doc)
+install (DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html DESTINATION doc)
+install (DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doxygen DESTINATION doc)
