@@ -24,22 +24,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <iostream>
 #include <memory>
 #include <set>
 
 #include "mageec/Database.h"
 #include "mageec/Framework.h"
 #include "mageec/ML/C5.h"
-
-
-// Utilies used for debugging the driver
-static std::ostream &mageecDbg() { return std::cerr; }
-
-#define MAGEEC_PREFIX "-- "
-#define MAGEEC_ERR(msg) mageecDbg() << MAGEEC_PREFIX << "error: " << msg << std::endl
-#define MAGEEC_WARN(msg) mageecDbg() << MAGEEC_PREFIX << "warning: " << msg << std::endl
-#define MAGEEC_MSG(msg) mageecDbg() << MAGEEC_PREFIX << msg << std::endl
+#include "mageec/Util.h"
 
 
 namespace mageec {
@@ -56,15 +47,185 @@ enum class DriverMode {
 using namespace mageec;
 
 
-int createDatabase(const std::string &db_path)
+/// \brief Convert from a metric to a string
+std::string metricToString(Metric metric) {
+  switch (metric) {
+  case Metric::kCodeSize:   return "size";
+  case Metric::kTime:       return "time";
+  case Metric::kEnergy:     return "energy";
+  default:
+    assert(0 && "Unhandled metric type");
+    return std::string();
+  }
+}
+/// \brief Convert from a string to a metric if possible.
+/// 
+/// \return The metric if possible, or an empty Option type if not.
+util::Option<Metric> stringToMetric(std::string metric) {
+  if (metric == "size") {
+    return Metric::kCodeSize;
+  }
+  else if (metric == "time") {
+    return Metric::kTime;
+  }
+  else if (metric == "energy") {
+    return Metric::kEnergy;
+  }
+  else{
+    return util::Option<Metric>();
+  }
+}
+
+
+/// \brief Print out the version of the MAGEEC framework
+void printVersion(const Framework &framework)
 {
-  Framework framework;
+  util::out() << static_cast<std::string>(framework.getVersion()) << '\n';
+}
 
-  // Register some machine learners that are part of MAGEEC
-  std::unique_ptr<IMachineLearner> c5_ml(new C5Driver());
-  framework.registerMachineLearner(std::move(c5_ml));
+/// \brief Print out the version of the database
+///
+/// \return 0 on success, 1 if the database could not be opened.
+int printDatabaseVersion(Framework &framework, const std::string &db_path)
+{
+  std::unique_ptr<Database> db = framework.getDatabase(db_path, false);
+  if (!db) {
+    MAGEEC_ERR("Error retrieving database. The database may not exist, "
+               "or you may not have sufficient permissions to read it");
+    return -1;
+  }
+  util::out() << static_cast<std::string>(db->getVersion()) << '\n';
+  return 0;
+}
+
+/// \brief Print out a help string for the mageec tool
+void printHelp()
+{
+  util::out() <<
+"Usage: mageec [options]\n"
+"       mageec (create | train) [options]\n"
+"\n"
+"Utility methods used alongside the MAGEEC frame work. Used to create a new \n"
+"empty database, train using an existing database, or access other framework \n"
+"functionality.\n"
+"\n"
+"Options:\n"
+"  --help                   Print this help information\n"
+"  --version                Print the version of the MAGEEC framework.\n"
+"  --database <path>        Name of the database to be created, trained or\n"
+"                           queried.\n"
+"  --database-version       Print the version of the provided database.\n"
+"  --machine-learner <arg>  UUID or shared object identifing the machine\n"
+"                           learner to be used for training. A wildcard '*'\n"
+"                           argument corresponds to all available machine\n"
+"                           learners\n"
+"  --print-trained-machine-learners    Print information about the machine\n"
+"                           learners which are trained in the provided\n"
+"                           database\n"
+"  --print-machine-learner-interfaces  Print the interfaces registers with\n"
+"                           the framework, and therefore usable for training\n"
+"                           and decision making.\n"
+"Examples:\n"
+"  mageec --help\n"
+"  mageec create --database foo.db\n"
+"  mageec train --database bar.db --machine-learner my_ml.so\n"
+"  mageec train --database foo.db\n"
+"               --machine-learner ccf7593c-78d9-429a-b544-2a7339d4325e\n";
+}
 
 
+/// \brief Retrieve or load machine learners provided on the command line
+///
+/// \param framework  The framework to register the machine learners with
+/// \param ml_strs  A list of strings from the command line to be parsed
+/// and loaded into the framework.
+///
+/// \return A list of UUIDs of loaded machine learners, which may be empty
+/// if none were successfully loaded.
+std::set<util::UUID>
+getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs)
+{
+  // Load machine learners
+  std::set<util::UUID> mls;
+  for (const auto &str : ml_strs) {
+    util::Option<util::UUID> ml_uuid;
+
+    // A wildcard means all known machine learners should be trained
+    if (str == "*") {
+      for (const auto *ml : framework.getMachineLearners()) {
+        mls.emplace(ml->getUUID());
+      }
+      continue;
+    }
+
+    // Try and parse the argument as a UUID
+    ml_uuid = util::UUID::parse(str);
+    if (ml_uuid && !framework.hasMachineLearner(ml_uuid.get())) {
+      MAGEEC_WARN("UUID '" << str << "' is not a register machine learner "
+                  "and will be ignored");
+      continue;
+    }
+
+    // Not a UUID, try and load as a shared object
+    if (!ml_uuid) {
+      ml_uuid = framework.loadMachineLearner(str);
+    }
+    if (!ml_uuid) {
+      MAGEEC_WARN("Unable to load machine learner '" << str << "'. This "
+                  "machine learner will be ignored");
+      continue;
+    }
+    assert(ml_uuid);
+
+    // add uuid of ml to be trained.
+    mls.insert(ml_uuid.get());
+  }
+  if (mls.empty()) {
+    MAGEEC_ERR("No machine learners were successfully loaded");
+    return std::set<util::UUID>();
+  }
+  return mls;
+}
+
+
+/// \brief Print a description of all of the machine learners trained
+/// for this database.
+///
+/// \return 0 on success, 1 if the database could not be opened.
+int printTrainedMLs(Framework &framework, const std::string &db_path)
+{
+  std::unique_ptr<Database> db = framework.getDatabase(db_path, false);
+  if (!db) {
+    MAGEEC_ERR("Error retrieving database. The database may not exist, "
+               "or you may not have sufficient permissions to read it");
+    return -1;
+  }
+
+  std::vector<TrainedML> trained_mls = db->getTrainedMachineLearners();
+  for (auto &ml : trained_mls) {
+    util::out() << ml.getName() << '\n'
+                << static_cast<std::string>(ml.getUUID()) << '\n'
+                << metricToString(ml.getMetric()) << "\n\n";
+  }
+  return 0;
+}
+
+/// \brief Print a description of all of the machine learner interfaces
+/// known by the framework.
+void printMLInterfaces(Framework &framework)
+{
+  std::set<IMachineLearner *> mls = framework.getMachineLearners();
+  for (const auto *ml : mls) {
+    util::out() << ml->getName() << '\n'
+                << static_cast<std::string>(ml->getUUID()) << "\n\n";
+  }
+}
+
+/// \brief Create a new database
+///
+/// \return 0 on success, 1 if the database could not be created.
+int createDatabase(Framework &framework, const std::string &db_path)
+{
   std::unique_ptr<Database> db = framework.getDatabase(db_path, true);
   if (!db) {
     MAGEEC_ERR("Error creating new database. The database may already exist, "
@@ -75,14 +236,15 @@ int createDatabase(const std::string &db_path)
   return 0;
 }
 
-int trainDatabase(const std::string &db_path,
-                  const std::set<std::string> &ml_strs,
+/// \brief Train a database
+///
+/// \return 0 on success, 1 if the database could not be trained.
+int trainDatabase(Framework &framework,
+                  const std::string &db_path,
+                  const std::set<util::UUID> mls,
                   const std::set<std::string> &metric_strs)
 {
   assert(metric_strs.size() > 0);
-  assert(ml_strs.size() > 0);
-
-  Framework framework;
 
   // Parse the metrics we are training against.
   std::set<Metric> metrics;
@@ -117,44 +279,6 @@ int trainDatabase(const std::string &db_path,
     return -1;
   }
 
-  // Load machine learners
-  std::set<mageec::util::UUID> mls;
-  for (auto str : ml_strs) {
-    mageec::util::Option<mageec::util::UUID> ml_uuid;
-
-    // A wildcard means all known machine learners should be trained
-    if (str == "*") {
-      mls = framework.getMachineLearners();
-      continue;
-    }
-
-    // Try and parse the argument as a UUID
-    ml_uuid = mageec::util::UUID::parse(str);
-    if (ml_uuid && !framework.hasMachineLearner(ml_uuid.get())) {
-      MAGEEC_WARN("UUID '" << str << "' is not a register machine learner "
-                  "and will be ignored");
-      continue;
-    }
-
-    // Not a UUID, try and load as a shared object
-    if (!ml_uuid) {
-      ml_uuid = framework.loadMachineLearner(str);
-    }
-    if (!ml_uuid) {
-      MAGEEC_WARN("Unable to load machine learner '" << str << "'. This "
-                  "machine learner will be ignored");
-      continue;
-    }
-    assert(ml_uuid);
-
-    // add uuid of ml to be trained.
-    mls.insert(ml_uuid.get());
-  }
-  if (mls.empty()) {
-    MAGEEC_ERR("No machine learners were successfully loaded");
-    return -1;
-  }
-
   // Train. This will put the training blobs from the machine learners into
   // the database.
   for (auto metric : metrics) {
@@ -174,7 +298,7 @@ int main(int argc, const char *argv[])
   // The database to be created or trained
   util::Option<std::string> db_str;
   // The machine learners to train
-  std::set<std::string> mls;
+  std::set<std::string> ml_strs;
   // Metrics to train the machine learners against
   std::set<std::string> metrics;
 
@@ -185,7 +309,6 @@ int main(int argc, const char *argv[])
   bool with_help = false;
   bool with_version = false;
   bool with_database_version = false;
-  bool with_debug = false;
   bool with_print_trained_mls = false;
   bool with_print_ml_interfaces = false;
 
@@ -211,9 +334,6 @@ int main(int argc, const char *argv[])
     }
     else if (arg == "--version") {
       with_version = true;
-    }
-    else if (arg == "--debug") {
-      with_debug = true;
     }
     else if (arg == "--print-machine-learner-interfaces") {
       with_print_ml_interfaces = true;
@@ -252,7 +372,7 @@ int main(int argc, const char *argv[])
         MAGEEC_ERR("No '--machine-learner' value provided");
         return -1;
       }
-      mls.insert(std::string(argv[i]));
+      ml_strs.insert(std::string(argv[i]));
       seen_mls = true;
     }
     else {
@@ -283,26 +403,56 @@ int main(int argc, const char *argv[])
   if (with_database_version && !seen_database) {
     MAGEEC_WARN("Cannot get database version, as no database was specified");
   }
-  if (with_print_ml_interfaces && !seen_mls) {
-    MAGEEC_WARN("Cannot print machine learner interfaces with no specified "
-                "machine learners");
-  }
   if (with_print_trained_mls && !seen_database) {
     MAGEEC_WARN("Cannot print trained machine learners as no database was "
                 "specified");
   }
 
-  // Handle normal arguments
-  (void)with_help;
-  (void)with_version;
-  (void)with_debug;
+  // Initialize the framework, and register some builtin machine learner
+  // interfaces so that they can be selected by UUID by the user.
+  Framework framework;
+  // C5 classifier
+  std::unique_ptr<IMachineLearner> c5_ml(new C5Driver());
+  framework.registerMachineLearner(std::move(c5_ml));
+
+  // Get the UUIDs of the available machine learners provided on the command
+  // line.
+  std::set<util::UUID> mls;
+  if (seen_mls) {
+    assert(ml_strs.size() != 0);
+    mls = getMachineLearners(framework, ml_strs);
+    if (mls.size() <= 0) {
+      return -1;
+    }
+  }
+
+  // Handle common arguments
+  if (with_version) {
+    printVersion(framework);
+  }
+  if (with_help) {
+    printHelp();
+  }
+  if (with_database_version) {
+    if (!printDatabaseVersion(framework, db_str.get())) {
+      return -1;
+    }
+  }
+  if (with_print_trained_mls) {
+    if (!printTrainedMLs(framework, db_str.get())) {
+      return -1;
+    }
+  }
+  if (with_print_ml_interfaces) {
+    printMLInterfaces(framework);
+  }
 
   // Handle modes
   switch (mode) {
     case DriverMode::kCreateDatabase:
-      return createDatabase(db_str.get());
+      return createDatabase(framework, db_str.get());
     case DriverMode::kTrainDatabase:
-      return trainDatabase(db_str.get(), mls, metrics);
+      return trainDatabase(framework, db_str.get(), mls, metrics);
     default:
       break;
   }

@@ -23,10 +23,15 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstdint>
+#include <iostream>
 #include <vector>
 
 namespace mageec {
 namespace util {
+
+
+std::ostream &dbg() { return std::cerr; }
+std::ostream &out() { return std::cout; }
 
 
 unsigned read16LE(std::vector<uint8_t>::const_iterator &it)

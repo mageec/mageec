@@ -103,13 +103,13 @@ bool Framework::hasMachineLearner(util::UUID uuid) const
 }
 
 
-std::set<util::UUID> Framework::getMachineLearners() const
+std::set<IMachineLearner *> Framework::getMachineLearners() const
 {
-  std::set<util::UUID> keys;
+  std::set<IMachineLearner *> mls;
   for (auto &it : m_mls) {
-    keys.emplace(it.first);
+    mls.emplace(it.second);
   }
-  return keys;
+  return mls;
 }
 
 

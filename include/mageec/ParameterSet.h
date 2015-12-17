@@ -84,7 +84,7 @@ public:
     for (auto I : m_parameters) {
       os << prefix;
       I->print(os);
-      os << std::endl;
+      os << '\n';
     }
   }
 

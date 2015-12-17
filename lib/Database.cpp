@@ -224,7 +224,7 @@ static const char * const create_parameter_debug_table =
 
 std::unique_ptr<Database>
 Database::createDatabase(std::string db_path,
-                         std::map<util::UUID, const IMachineLearner*> mls)
+                         std::map<util::UUID, IMachineLearner*> mls)
 {
   // Fail if the file already exists
   std::ifstream f(db_path.c_str());
@@ -248,7 +248,7 @@ Database::createDatabase(std::string db_path,
 
 std::unique_ptr<Database>
 Database::loadDatabase(std::string db_path,
-                       std::map<util::UUID, const IMachineLearner*> mls)
+                       std::map<util::UUID, IMachineLearner*> mls)
 {
   // Fail if the file does not already exist
   std::ifstream f(db_path.c_str());
@@ -272,7 +272,7 @@ Database::loadDatabase(std::string db_path,
 
 std::unique_ptr<Database>
 Database::getDatabase(std::string db_path,
-                      std::map<util::UUID, const IMachineLearner*> mls)
+                      std::map<util::UUID, IMachineLearner*> mls)
 {
   // First try and load the database, if that fails try and create it
   std::unique_ptr<Database> db;
@@ -286,7 +286,7 @@ Database::getDatabase(std::string db_path,
 
 
 Database::Database(sqlite3 &db,
-                   std::map<util::UUID, const IMachineLearner*> mls,
+                   std::map<util::UUID, IMachineLearner*> mls,
                    bool create)
   : m_db(&db), m_mls(mls)
 {
@@ -313,8 +313,8 @@ Database::~Database(void)
   int res = sqlite3_close(m_db);
 #ifdef MAGEEC_DEBUG
   if (res != SQLITE_OK) {
-    std::cerr << "Unable to close mageec database" << std::endl
-      << sqlite3_errmsg(m_db) << std::endl;
+    std::cerr << "Unable to close mageec database\n"
+      << sqlite3_errmsg(m_db) << '\n';
   }
 #endif // MAGEEC_DEBUG
   assert(res == SQLITE_OK && "Unable to close mageec database!");

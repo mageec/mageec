@@ -1,9 +1,37 @@
 2015-12-17  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/Database.h (Database): Make all uses of
+	IMachineLearner non-const.
+	* include/mageec/FeatureSet.h: Replace std::endl with newline.
+	* include/mageec/Framework.h (Framework::getMachineLearners):
+	Return a set of IMachineLearner interfaces instead of UUIDs.
+	* include/mageec/ParameterSet.h: Replace std::endl with newline.
+	* include/mageec/Util.h (dbg out): Added functions.
+	(MAGEEC_PREFIX MAGEEC_ERR MAGEEC_WARN MAGEEC_DBG MAGEEC_STATUS):
+	Add macros for debug.
+	(UUID::operator std::string): Added function.
+	* lib/Database.cpp (Database): Make all uses of IMachineLearner in
+	interfaces non-const.
+	* lib/DatabaseQuery.cpp: Use newline instead of std::endl throughout.
+	* lib/Driver.cpp (MAGEEC_PREFIX MAGEEC_ERR MAGEEC_WARN MAGEEC_MSG):
+	macros moved to Util.h.
+	(metricToString stringToMetric printVersion printDatabaseVersion)
+	(printHelp getMachineLearners printTrainedMLs printMLInterfaces):
+	Added functions.
+	(main): Add implementation for --help, --version, --database-version,
+	--print-trained-machine-learners and --print-machine-learner-interfaces
+	options.
+	* lib/Framework.cpp (Framework::getMachineLearners): Return a
+	set of IMachineLearner interfaces instead of UUIDs.
+	* lib/ML/C5.cpp: Replace std::endl with newlines.
+	* lib/Main.cpp: Likewise.
+	* lib/Util.cpp (dbg out): Added functions.
+
+2015-12-17  Edward Jones  <ed.jones@embecosm.com>
+
 	* CMakeLists.txt: Install libraries and executables, rename mageec_lib
 	target to mageec_core.
 	* doc/CMakeLists.txt: Install documentation.
-	* gcc_plugin/CMakeLists.txt: Renamed mageec_lib to mageec_core.
 
 2015-12-17  Edward Jones  <ed.jones@embecosm.com>
 

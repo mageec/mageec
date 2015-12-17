@@ -34,6 +34,17 @@ namespace mageec {
 namespace util {
 
 
+// Debug functionality.
+std::ostream &dbg();
+std::ostream &out();
+
+#define MAGEEC_PREFIX "-- "
+#define MAGEEC_ERR(msg)    mageec::util::dbg() << MAGEEC_PREFIX << "error: " << msg << '\n'
+#define MAGEEC_WARN(msg)   mageec::util::dbg() << MAGEEC_PREFIX << "warning: " << msg << '\n'
+#define MAGEEC_DBG(msg)    mageec::util::dbg() << MAGEEC_PREFIX << msg << '\n'
+#define MAGEEC_STATUS(msg) mageec::util::dbg() << MAGEEC_PREFIX << msg << '\n'
+
+
 /// \class Version
 ///
 /// Simple encapsulation of a version number. A version number is divided into
@@ -194,6 +205,29 @@ public:
     return static_cast<unsigned>(m_data.size());
   }
 
+  /// \brief Output a UUID to a string
+  ///
+  /// The string is output in canonical form, ie
+  /// xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx, where 'x' corresponds to a
+  /// hexidecimal digit.
+  operator std::string(void) const {
+    std::string out;
+    for (int i = 0; i < 16; ++i) {
+      uint8_t nibble[2] = {
+        static_cast<uint8_t>( m_data[i] & 0xf),
+        static_cast<uint8_t>((m_data[i] >> 4) & 0xf)
+      };
+      for (auto &x : nibble) {
+        x = (x <= 9) ? (x + '0') : ((x - 10) + 'a');
+      }
+      if ((i == 4) || (i == 6) || (i == 8) || (i == 10)) {
+        out = out + '-';
+      }
+      out = out + static_cast<char>(nibble[1]) + static_cast<char>(nibble[0]);
+    }
+    return out;
+  }
+
 
   /// \brief Parse a UUID from an input string
   ///
@@ -232,6 +266,7 @@ public:
     }
     return UUID(uuid);
   }
+
 
 private:
   std::array<uint8_t, 16> m_data;

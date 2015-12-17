@@ -74,7 +74,7 @@ public:
   /// \return The database if it could be loaded, nullptr otherwise.
   static std::unique_ptr<Database>
   loadDatabase(std::string db_path,
-               std::map<util::UUID, const IMachineLearner*> mls);
+               std::map<util::UUID, IMachineLearner*> mls);
 
   /// \brief Create a database from the provided path
   ///
@@ -86,7 +86,7 @@ public:
   /// \return The database if it could be created, nullptr otherwise.
   static std::unique_ptr<Database>
   createDatabase(std::string db_path,
-                 std::map<util::UUID, const IMachineLearner*> mls);
+                 std::map<util::UUID, IMachineLearner*> mls);
 
   /// \brief Load or create a database from the provided path
   ///
@@ -101,7 +101,7 @@ public:
   /// otherwise.
   static std::unique_ptr<Database>
   getDatabase(std::string db_path,
-              std::map<util::UUID, const IMachineLearner*> mls);
+              std::map<util::UUID, IMachineLearner*> mls);
 
 
 private:
@@ -115,7 +115,7 @@ private:
   /// database.
   /// \param create  True if the database should be constructed.
   Database(sqlite3 &db,
-           std::map<util::UUID, const IMachineLearner*> mls,
+           std::map<util::UUID, IMachineLearner*> mls,
            bool create);
 
 
@@ -276,7 +276,7 @@ private:
   sqlite3 *m_db;
 
   /// Mapping of machine learner uuids to machine learners
-  std::map<util::UUID, const IMachineLearner*> m_mls;
+  std::map<util::UUID, IMachineLearner*> m_mls;
 
   /// \brief Initialize a new empty database
   ///

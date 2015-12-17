@@ -17,7 +17,7 @@ int main(void)
   std::unique_ptr<Database> db = framework.getDatabase("tmp", true);
 
 #ifdef MAGEEC_DEBUG
-  std::cout << std::string(db->getVersion()) << std::endl;
+  std::cout << std::string(db->getVersion()) << '\n';
 #endif // MAGEEC_DEBUG
 
   // Emulate some feature extraction

@@ -100,15 +100,14 @@ public:
   /// registered with the framework.
   bool hasMachineLearner(util::UUID uuid) const;
 
-  /// \brief Get the uuid of all of the machine learners which are registered
-  /// with the framework
-  std::set<util::UUID> getMachineLearners() const;
-
+  /// \brief Get the interfaces for all of the machine learners registered
+  /// with the framework.
+  std::set<IMachineLearner *> getMachineLearners() const;
 
 private:
   /// A map of machine learner interfaces registers with the framework, keyed
   /// based on their uuids.
-  std::map<util::UUID, const IMachineLearner*> m_mls;
+  std::map<util::UUID, IMachineLearner*> m_mls;
 };
 
 

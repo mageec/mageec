@@ -51,8 +51,8 @@ DatabaseQuery::~DatabaseQuery(void)
 
 #ifdef MAGEEC_DEBUG
   if (res != SQLITE_OK) {
-    std::cerr << "Error destroying database query:" << std::endl
-      << sqlite3_errmsg(&m_db) << std::endl;
+    std::cerr << "Error destroying database query:\n"
+      << sqlite3_errmsg(&m_db) << '\n';
     assert(0);
   }
 #endif
@@ -68,8 +68,8 @@ DatabaseQuery::DatabaseQuery(sqlite3 &db, std::string str)
 
 #ifdef MAGEEC_DEBUG
   if (res != SQLITE_OK) {
-    std::cerr << "Error creating database query:" << std::endl
-      << sqlite3_errmsg(&m_db) << std::endl;
+    std::cerr << "Error creating database query:\n"
+      << sqlite3_errmsg(&m_db) << '\n';
     assert(0);
   }
 #endif // MAGEEC_DEBUG
@@ -98,8 +98,8 @@ DatabaseQuery::DatabaseQuery(sqlite3 &db,
 
 #ifdef MAGEEC_DEBUG
   if (res != SQLITE_OK) {
-    std::cerr << "Error creating database query:" << std::endl
-      << sqlite3_errmsg(&m_db) << std::endl;
+    std::cerr << "Error creating database query:\n"
+      << sqlite3_errmsg(&m_db) << '\n';
     assert(0);
   }
 #endif // MAGEEC_DEBUG
@@ -117,8 +117,8 @@ DatabaseQuery& DatabaseQuery::operator<<(int64_t i)
 
 #ifdef MAGEEC_DEBUG
   if (res != SQLITE_OK) {
-    std::cerr << "Error binding integer value to database query:" << std::endl
-      << sqlite3_errmsg(&m_db) << std::endl;
+    std::cerr << "Error binding integer value to database query:\n"
+      << sqlite3_errmsg(&m_db) << '\n';
     assert(0);
   }
 #endif // MAGEEC_DEBUG
@@ -138,8 +138,8 @@ DatabaseQuery& DatabaseQuery::operator<<(std::string str)
                               str.c_str(), -1, SQLITE_TRANSIENT);
 #ifdef MAGEEC_DEBUG
   if (res != SQLITE_OK) {
-    std::cerr << "Error binding text value to database query:" << std::endl
-      << sqlite3_errmsg(&m_db) << std::endl;
+    std::cerr << "Error binding text value to database query:\n"
+      << sqlite3_errmsg(&m_db) << '\n';
     assert(0);
   }
 #endif // MAGEEC_DEBUG
@@ -160,8 +160,8 @@ DatabaseQuery& DatabaseQuery::operator<<(const std::vector<uint8_t> blob)
                               SQLITE_TRANSIENT);
 #ifdef MAGEEC_DEBUG
   if (res != SQLITE_OK) {
-    std::cerr << "Error binding blob value to database query:" << std::endl
-      << sqlite3_errmsg(&m_db) << std::endl;
+    std::cerr << "Error binding blob value to database query:\n"
+      << sqlite3_errmsg(&m_db) << '\n';
     assert(0);
   }
 #endif // MAGEEC_DEBUG
@@ -181,8 +181,8 @@ DatabaseQuery& DatabaseQuery::operator<<(std::nullptr_t nullp)
 
 #ifdef MAGEEC_DEBUG
   if (res != SQLITE_OK) {
-    std::cerr << "Error binding null value to database query:" << std::endl
-      << sqlite3_errmsg(&m_db) << std::endl;
+    std::cerr << "Error binding null value to database query:\n"
+      << sqlite3_errmsg(&m_db) << '\n';
     assert(0);
   }
 #endif // MAGEEC_DEBUG
@@ -213,8 +213,8 @@ void DatabaseQuery::clearAllBindings(void)
 
 #ifdef MAGEEC_DEBUG
   if (res != SQLITE_OK) {
-    std::cerr << "Failed to clear bindings on database query:" << std::endl
-      << sqlite3_errmsg(&m_db) << std::endl;
+    std::cerr << "Failed to clear bindings on database query:\n"
+      << sqlite3_errmsg(&m_db) << '\n';
     assert(0);
   }
 #endif // MAGEEC_DEBUG
@@ -359,8 +359,8 @@ DatabaseQueryIterator DatabaseQueryIterator::next(void)
   }
   else {
 #ifdef MAGEEC_DEBUG
-    std::cerr << "Error executing query:" << std::endl
-      << sqlite3_errmsg(&m_db) << std::endl;
+    std::cerr << "Error executing query:\n"
+      << sqlite3_errmsg(&m_db) << '\n';
     assert(0);
 #endif // MAGEEC_DEBUG
     assert(0 && "Error executing query");

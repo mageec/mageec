@@ -329,7 +329,7 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
 
     // Output the target parameter first
     // TODO: Comment containing parameter description
-    name_file << "parameter_" << std::to_string(param_id) << "." << std::endl;
+    name_file << "parameter_" << std::to_string(param_id) << ".\n";
 
     // Output columns for all of the features which we have seen in the
     // training set.
@@ -347,9 +347,9 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
       default:
         assert(0 && "Unhandled FeatureType");
       }
-      name_file << std::endl;
+      name_file << '\n';
     }
-    name_file << std::endl;
+    name_file << '\n';
 
     // Output a column for the target parameter
     name_file << "parameter_" << std::to_string(param_id) << ": ";
@@ -363,7 +363,7 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
     default:
       assert(0 && "Unhandled ParameterType");
     }
-    name_file << std::endl;
+    name_file << '\n';
     name_file.close();
 
 
@@ -408,7 +408,7 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
       }
     }
     // Finally, add the 'unknown' for our target parameter
-    cases_file << "?" << std::endl;
+    cases_file << "?" << '\n';
     cases_file.close();
     break;
   }
@@ -472,7 +472,7 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
 
     // Output the target parameter first
     // TODO: Comment containing parameter description
-    name_file << "parameter_" << param.id << "." << std::endl;
+    name_file << "parameter_" << param.id << ".\n";
 
     // Output columns for all of the features which we have seen in the
     // training set.
@@ -488,9 +488,9 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
         name_file << "continuous.";
         break;
       }
-      name_file << std::endl;
+      name_file << '\n';
     }
-    name_file << std::endl;
+    name_file << '\n';
 
     // Output a column for the target parameter
     name_file << "parameter_" << param.id << ": ";
@@ -502,7 +502,7 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
       name_file << "continuous.";
       break;
     }
-    name_file << std::endl;
+    name_file << '\n';
     name_file.close();
 
     // For the current parameter, output a data (.data) file containing the

@@ -85,7 +85,7 @@ public:
     for (auto I : m_features) {
       os << prefix;
       I->print(os);
-      os << std::endl;
+      os << '\n';
     }
   }
 
