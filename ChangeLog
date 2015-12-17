@@ -1,5 +1,9 @@
 2015-12-17  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/Util.h (UUID::parse): Fix to UUID parsing code.
+
+2015-12-17  Edward Jones  <ed.jones@embecosm.com>
+
 	* CMakeLists.txt: Update to build C5 classifier.
 	* lib/ML/C5/CMakeLists.txt: Added file to build C5.
 	* lib/ML/C5/attwinnow.c: Added file.

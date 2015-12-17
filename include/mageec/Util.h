@@ -211,7 +211,7 @@ public:
 
     std::array<uint8_t, 16> uuid;
     for (int i = 0; i < 16; ++i) {
-      int j = (i + (i >= 4) + (i >= 6) + (i >= 8) + (i >= 10)) * 2;
+      int j = (i * 2) + (i >= 4) + (i >= 6) + (i >= 8) + (i >= 10);
 
       uint8_t hex[2] = {
         static_cast<uint8_t>(s[j + 0]),
@@ -219,7 +219,8 @@ public:
       };
       for (auto &x : hex) {
         x = ((x <= '9') && (x >= '0')) ? (x - '0') :
-            ((x <= 'f') && (x >= 'a')) ? (x - 'a' + 10) : 255;
+            ((x <= 'f') && (x >= 'a')) ? (x - 'a' + 10) :
+            ((x <= 'F') && (x >= 'A')) ? (x - 'A' + 10) : 255;
         if (x == 255) {
           return nullptr;
         }
