@@ -64,7 +64,7 @@ static std::string passTypeString(opt_pass *pass)
 void mageecStartFile(void *, void *)
 {
   if (mageec_context.with_debug) {
-    MAGEEC_MSG("Start file");
+    MAGEEC_STATUS("Start file");
   }
 }
 
@@ -73,7 +73,7 @@ void mageecFinishFile(void *, void *)
   mageec_context.features.release();
 
   if (mageec_context.with_debug) {
-    MAGEEC_MSG("End file");
+    MAGEEC_STATUS("End file");
   }
 }
 
@@ -81,7 +81,7 @@ void mageecFinish(void *gcc_data __attribute__((unused)),
                      void *user_data __attribute__((unused)))
 {
   if (mageec_context.with_debug) {
-    MAGEEC_MSG("Finish");
+    MAGEEC_STATUS("Finish");
   }
 }
 
@@ -125,9 +125,9 @@ void mageecPassGate(void *gcc_data, void *user_data __attribute__((unused)))
 
     if (mageec_context.with_debug) {
       std::string pass_type_str = passTypeString(current_pass);
-      MAGEEC_MSG("Updating pass '" << current_pass->name << "'");
-      mageecDbg() << "  |- Old Gate: " << old_gate << std::endl
-                  << "  |- New Gate: " << new_gate << std::endl;
+      MAGEEC_STATUS("Updating pass '" << current_pass->name << "'");
+      MAGEEC_DBG(" |- Old Gate: " << old_gate << '\n'
+              << " |- New Gate: " << new_gate << '\n');
     }
   }
 }

@@ -25,7 +25,6 @@
 #ifndef MAGEEC_PLUGIN_H
 #define MAGEEC_PLUGIN_H
 
-#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
@@ -33,20 +32,13 @@
 #include "mageec/Framework.h"
 #include "mageec/Database.h"
 #include "mageec/TrainedML.h"
+#include "mageec/Util.h"
 
 
 namespace mageec {
   class FeatureSet;
 } // end of namespace mageec
 
-
-static std::ostream& mageecDbg() { return std::cerr; }
-
-// Macros to be used for error handling
-#define MAGEEC_PREFIX "-- MAGEEC: "
-#define MAGEEC_MSG(str)  mageecDbg() << MAGEEC_PREFIX << str << std::endl
-#define MAGEEC_ERR(str)  mageecDbg() << MAGEEC_PREFIX << "error: " << str << std::endl
-#define MAGEEC_WARN(str) mageecDbg() << MAGEEC_PREFIX << "warning: " << str << std::endl
 
 
 /// \brief The different modes which the plugin may run in

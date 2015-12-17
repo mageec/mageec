@@ -29,9 +29,8 @@
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 
-#include <iostream>
-
 #include "MAGEECPlugin.h"
+#include "mageec/Util.h"
 
 #include "gcc-plugin.h"
 #include "tree-pass.h"
@@ -44,19 +43,19 @@
 void mageecPluginInfo(struct plugin_name_args *plugin_info,
                       struct plugin_gcc_version *version)
 {
-  mageecDbg() << "MAGEEC Plugin Information" << std::endl
-              << "=========================" << std::endl
-              << "base_name: " << plugin_info->base_name << std::endl
-              << "full_name: " << plugin_info->full_name << std::endl
-              << "    #args: " << plugin_info->argc << std::endl
-              << "  version: " << plugin_info->version << std::endl
-              << "     help: " << plugin_info->help << std::endl;
+  MAGEEC_DBG("MAGEEC Plugin Information" << '\n'
+          << "=========================" << '\n'
+          << "base_name: " << plugin_info->base_name << '\n'
+          << "full_name: " << plugin_info->full_name << '\n'
+          << "    #args: " << plugin_info->argc << '\n'
+          << "  version: " << plugin_info->version << '\n'
+          << "     help: " << plugin_info->help << '\n');
 
-  mageecDbg() << "GCC Information" << std::endl
-              << "---------------" << std::endl
-              << "  basever: " << version->basever << std::endl
-              << "datestamp: " << version->datestamp << std::endl
-              << " devphase: " << version->devphase << std::endl
-              << " revision: " << version->revision << std::endl
-              << " confargs: " << version->configuration_arguments << std::endl;
+  MAGEEC_DBG("GCC Information" << '\n'
+          << "---------------" << '\n'
+          << "  basever: " << version->basever << '\n'
+          << "datestamp: " << version->datestamp << '\n'
+          << " devphase: " << version->devphase << '\n'
+          << " revision: " << version->revision << '\n'
+          << " confargs: " << version->configuration_arguments << '\n');
 }

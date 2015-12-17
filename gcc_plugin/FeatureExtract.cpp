@@ -366,11 +366,11 @@ static unsigned featureExtractExecute(void)
   mageec_context.features = std::move(features);
 
   if (mageec_context.with_debug) {
-    MAGEEC_MSG("Extracting features for function '"
+    MAGEEC_STATUS("Extracting features for function '"
               << current_function_name() << "'");
-    MAGEEC_MSG("Dumping feature vector");
-    mageec_context.features->print(mageecDbg(), "  |- ");
-    MAGEEC_MSG("Finished dumping feature vector");
+    MAGEEC_STATUS("Dumping feature vector");
+    mageec_context.features->print(mageec::util::dbg(), "  |- ");
+    MAGEEC_STATUS("Finished dumping feature vector");
   }
 
   // Save the features in the database if necessary
@@ -378,7 +378,7 @@ static unsigned featureExtractExecute(void)
   if ((mode == MAGEECMode::kFeatureExtractAndSave) ||
       (mode == MAGEECMode::kFeatureExtractSaveAndOptimize)) {
     if (mageec_context.with_debug) {
-      MAGEEC_MSG("Saving features in the database");
+      MAGEEC_STATUS("Saving features in the database");
     }
 
     // Populate in the database

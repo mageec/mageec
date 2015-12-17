@@ -1,3 +1,15 @@
+2015-12-17  Edward Jones  <ed.jones@embecosm.com>
+
+	* FeatureExtract.cpp: Replace MAGEEC_MSG uses with MAGEEC_STATUS.
+	* GCCCallbacks.cpp: Likewise.
+	* MAGEECPlugin.h (MAGEEC_PREFIX MAGEEC_MSG MAGEEC_ERR)
+	(MAGEEC_WARN): Macros moved into MAGEEC's Util.h.
+	* PluginInfo.cpp: Use MAGEEC_DBG macro.
+
+2015-12-17  Edward Jones  <ed.jones@embecosm.com>
+
+	* CMakeLists.txt: Renamed mageec_lib to mageec_core.
+
 2015-10-30  Edward Jones  <ed.jones@embecosm.com>
 
 	* CMakeLists.txt: Link target against mageec_lib instead of mageec
