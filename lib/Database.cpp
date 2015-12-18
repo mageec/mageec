@@ -430,13 +430,16 @@ std::vector<TrainedML> Database::getTrainedMachineLearners(void)
 
     auto res = query.execute();
     res.assertDone();
-    assert(res.numColumns() == 2);
+    if (res.numColumns() == 2) {
+      Metric metric = static_cast<Metric>(res.getInteger(0));
+      std::vector<uint8_t> ml_blob = res.getBlob(1);
 
-    Metric metric = static_cast<Metric>(res.getInteger(0));
-    std::vector<uint8_t> ml_blob = res.getBlob(1);
-
-    TrainedML trained_ml(*m_db, ml, metric, ml_blob);
-    trained_mls.push_back(trained_ml);
+      TrainedML trained_ml(*m_db, ml, metric, ml_blob);
+      trained_mls.push_back(trained_ml);
+    }
+    else {
+      assert(res.numColumns() == 0);
+    }
   }
 
   return trained_mls;

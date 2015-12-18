@@ -1,3 +1,8 @@
+2015-12-18  Edward Jones  <ed.jones@embecosm.com>
+
+  * lib/Database.cpp (Database::getTrainedMachineLearners): Fix crash
+  when there are no trained machine learners in the database.
+
 2015-12-17  Edward Jones  <ed.jones@embecosm.com>
 
 	* include/mageec/Database.h (Database): Make all uses of
