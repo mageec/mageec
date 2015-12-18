@@ -1,5 +1,9 @@
 2015-12-18  Edward Jones  <ed.jones@embecosm.com>
 
+  * CMakeLists.txt: Allow for older versions of CMake.
+
+2015-12-18  Edward Jones  <ed.jones@embecosm.com>
+
   * lib/Database.cpp (Database::getTrainedMachineLearners): Fix crash
   when there are no trained machine learners in the database.
 
