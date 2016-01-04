@@ -192,8 +192,11 @@ public:
   /// \brief Destructor releases sqlite resources
   ~DatabaseQuery(void);
 
-  DatabaseQuery(const DatabaseQuery &other) = default;
+  DatabaseQuery(const DatabaseQuery &other) = delete;
   DatabaseQuery(DatabaseQuery &&other) = default;
+
+  DatabaseQuery& operator=(const DatabaseQuery &other) = delete;
+  DatabaseQuery& operator=(DatabaseQuery &&other) = delete;
 
   /// \brief Construct a simple query with no parameters
   ///
@@ -268,10 +271,6 @@ private:
   
   /// Number of parameters in the query
   const std::vector<QueryParamType>::size_type m_param_count;
-
-  /// A vector of the strings which make up the query, these are interleaved
-  /// with the provided parameters.
-  const std::vector<std::string> m_substrs;
 
   /// A vector of the parameter types which make up the query.
   const std::vector<QueryParamType> m_param_types;

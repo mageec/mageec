@@ -896,7 +896,7 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric)
       static_cast<FeatureType>(feat_iter.getInteger(1))
     };
     feature_descs.insert(desc);
-    feat_iter.next();
+    feat_iter = std::move(feat_iter.next());
   }
 
   DatabaseQueryIterator param_iter = select_parameter_types.execute();
@@ -907,7 +907,7 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric)
       static_cast<ParameterType>(param_iter.getInteger(1))
     };
     parameter_descs.insert(desc);
-    param_iter.next();
+    param_iter = std::move(param_iter.next());
   }
 
   // TODO: Read pass names
@@ -935,8 +935,8 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric)
 ResultIterator::ResultIterator(sqlite3 &db, Metric metric)
   : m_db(&db), m_metric(metric)
 {
-  // Get the each compilation and its accompanying results
-  DatabaseQuery select_compilation_result = DatabaseQueryBuilder(*m_db)
+  // Get each compilation and its accompanying results
+  DatabaseQueryBuilder select_compilation_result = DatabaseQueryBuilder(*m_db)
     << "SELECT "
       << "Compilation.feature_group_id, Compilation.parameter_set_id, "
       << "Compilation.pass_sequence_id, Result.result "
@@ -945,15 +945,17 @@ ResultIterator::ResultIterator(sqlite3 &db, Metric metric)
       << "Compilation.compilation_id = Result.compilation_id AND "
       << "Result.metric = " << QueryParamType::kInteger << " "
     << "ORDER BY Compilation.compilation_id";
+  m_query.reset(new DatabaseQuery(select_compilation_result));
+  *m_query << static_cast<int64_t>(metric);
 
-  select_compilation_result << static_cast<int64_t>(metric);
   m_result_iter.reset(
-      new DatabaseQueryIterator(select_compilation_result.execute()));
+      new DatabaseQueryIterator(m_query->execute()));
 }
 
 ResultIterator::ResultIterator(ResultIterator &&other)
   : m_db(other.m_db),
     m_metric(other.m_metric),
+    m_query(std::move(other.m_query)),
     m_result_iter(std::move(other.m_result_iter))
 {
   other.m_db = nullptr;
@@ -963,6 +965,7 @@ ResultIterator& ResultIterator::operator=(ResultIterator &&other)
 {
   m_db = other.m_db;
   m_metric = other.m_metric;
+  m_query = std::move(other.m_query);
   m_result_iter = std::move(other.m_result_iter);
 
   other.m_db = nullptr;
@@ -1010,11 +1013,11 @@ util::Option<Result> ResultIterator::operator*()
       static_cast<FeatureGroupID>(m_result_iter->getInteger(0));
 
   util::Option<ParameterSetID> param_set;
-  if (!m_result_iter->isNull(2)) {
+  if (!m_result_iter->isNull(1)) {
     param_set = static_cast<ParameterSetID>(m_result_iter->getInteger(1));
   }
   util::Option<PassSequenceID> pass_seq;
-  if (!m_result_iter->isNull(3)) {
+  if (!m_result_iter->isNull(2)) {
     pass_seq = static_cast<PassSequenceID>(m_result_iter->getInteger(2));
   }
   uint64_t value = static_cast<uint64_t>(m_result_iter->getInteger(3));
@@ -1043,6 +1046,7 @@ util::Option<Result> ResultIterator::operator*()
       features.add(IntFeature::fromBlob(feature_id, feature_blob, {}));
       break;
     }
+    feature_iter = std::move(feature_iter.next());
   }
 
   // Retrieve parameters
@@ -1066,6 +1070,7 @@ util::Option<Result> ResultIterator::operator*()
         parameters.add(RangeParameter::fromBlob(param_id, param_blob, {}));
         break;
       }
+      param_iter = std::move(param_iter.next());
     }
   }
 

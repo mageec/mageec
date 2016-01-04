@@ -444,7 +444,7 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
                 std::set<std::string> passes,
                 ResultIterator result_iter) const
 {
-  std::unique_ptr<C5Context> context;
+  std::unique_ptr<C5Context> context(new C5Context());
   context->feature_descs = feature_descs;
   context->parameter_descs = parameter_descs;
   context->passes = passes;

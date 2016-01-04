@@ -1,3 +1,16 @@
+2016-01-04  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Database.h (ResultIterator::m_query): Added member
+	to hold the query during execution.
+	* include/mageec/DatabaseQuery.h (DatabaseQuery::DatabaseQuery):
+	Enable default move constructor, set others to deleted.
+	* lib/Database.cpp (Database::trainMachineLearner): Correct feat_iter
+	and param_iter iterators so that they iterate properly.
+	(ResultIterator::ResultIterator): Initialize m_query.
+	(ResultIterator::operator*): Increment feature_iter and param_iter
+	iterators.
+	* lib/C5.cpp (C5Driver::train): Fix segfault when assigning C5Context.
+
 2015-12-18  Edward Jones  <ed.jones@embecosm.com>
 
   * CMakeLists.txt: Allow for older versions of CMake.

@@ -317,6 +317,7 @@ public:
 private:
   sqlite3 *m_db;
   Metric   m_metric;
+  std::unique_ptr<DatabaseQuery> m_query;
   std::unique_ptr<DatabaseQueryIterator> m_result_iter;
 };
 
