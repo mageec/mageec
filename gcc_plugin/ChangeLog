@@ -1,3 +1,8 @@
+2016-01-04  Edward Jones  <ed.jones@embecosm.com>
+
+	* CMakeLists.txt: Allow older versions of CMake to be used for
+	building. Install the gcc plugin.
+
 2015-12-17  Edward Jones  <ed.jones@embecosm.com>
 
 	* FeatureExtract.cpp: Replace MAGEEC_MSG uses with MAGEEC_STATUS.

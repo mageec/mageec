@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2.2)
+cmake_minimum_required(VERSION 3.0.2)
 
 
 # Check if we are building standalone, or as part of MAGEEC
@@ -146,3 +146,8 @@ add_library(mageec_gcc SHARED
 )
 target_link_libraries(mageec_gcc mageec_core)
 
+# install the plugin
+install(TARGETS mageec_gcc
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
