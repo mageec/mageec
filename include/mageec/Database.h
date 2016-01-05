@@ -230,31 +230,32 @@ public:
   /// \return The identifier of the new pass sequence
   PassSequenceID newPassSequence(void);
 
-  /// \brief Add a new pass to a pass sequence
+  /// \brief Add new passes to a pass sequence
   ///
   /// Passes should be added in the order in which they are run
   ///
-  /// \param name  The name used to identify the pass
-  /// \param pass_seq  The pass sequence the pass belongs to
-  /// \param parameters  An optional set of parameters which are appropriate
-  /// for this pass
+  /// \param pass_names  A sequence of names used to identify each pass in
+  /// turn.
+  /// \param pass_seq  The pass sequence these passes belong to
   ///
-  /// \return The identifier of the pass instance
-  PassID addPass(std::string name, PassSequenceID pass_seq,
-                 util::Option<ParameterSetID> parameters = nullptr);
+  /// \return Identifiers for each of the add passes instances. The returned
+  /// vector has the same size and order as the input sequence of passes.
+  std::vector<PassID> addPasses(std::vector<std::string> pass_names,
+                                PassSequenceID pass_seq);
 
+  /// FIXME: Add support for pass parameters
 
 //===------------------------ Results interface ---------------------------===//
 
 
-  /// \brief Add a single result entry to the database for a previously
-  /// established compilation.
+  /// \brief Add result entries to the database for a previously established
+  /// compilation.
   ///
-  /// \param compilation  The compilation of the program unit which this result
-  /// corresponds to.
   /// \param metric  The metric which the result measured
-  /// \param result  The value of the metric for this compilation
-  void addResult(CompilationID compilation, Metric metric, uint64_t result);
+  /// \param results  A list of results consisting of a pair of the
+  /// compilation id and result value for the provided metric.
+  void addResults(Metric metric,
+                  std::vector<std::pair<CompilationID, uint64_t> > results);
 
 
 //===----------------------- Training interface ---------------------------===//

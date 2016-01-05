@@ -772,9 +772,12 @@ PassSequenceID Database::newPassSequence(void)
   return static_cast<PassSequenceID>(pass_sequence_id);
 }
 
-PassID Database::addPass(std::string pass_name, PassSequenceID sequence_id,
-                         util::Option<ParameterSetID> parameters)
+std::vector<PassID>
+Database::addPasses(std::vector<std::string> pass_names,
+                    PassSequenceID sequence_id)
 {
+  // FIXME: Introduce pass parameters
+
   DatabaseQuery start_transaction(*m_db, "BEGIN TRANSACTION");
   DatabaseQuery commit_transaction(*m_db, "COMMIT");
 
@@ -791,58 +794,76 @@ PassID Database::addPass(std::string pass_name, PassSequenceID sequence_id,
       << QueryParamType::kText << ", "
       << QueryParamType::kInteger << ")";
 
-  // Complete in a single transaction
+  // Vector to hold the passes as they are added to the database
+  std::vector<PassID> pass_ids;
+
+  // Add all of the passes in a single transaction
   start_transaction.execute().assertDone();
+  for (const auto &pass_name : pass_names) {
+    // Clear any bound data for the query
+    select_pass_sequence_pos.clearAllBindings();
+    insert_pass_into_sequence.clearAllBindings();
 
-  // The next pass index is the current maximum for this sequence +1
-  select_pass_sequence_pos << static_cast<int64_t>(sequence_id);
+    // The next pass index is the current maximum for this sequence +1
+    select_pass_sequence_pos << static_cast<int64_t>(sequence_id);
 
-  auto res = select_pass_sequence_pos.execute();
-  int64_t pass_pos = 0;
-  assert(res.numColumns() == 1);
-  if (!res.isNull(0)) {
-    pass_pos = res.getInteger(0) + 1;
-    assert(pass_pos != 0 && "pass_pos overflowed");
+    auto res = select_pass_sequence_pos.execute();
+    int64_t pass_pos = 0;
+    assert(res.numColumns() == 1);
+    if (!res.isNull(0)) {
+      pass_pos = res.getInteger(0) + 1;
+      assert(pass_pos != 0 && "pass_pos overflowed");
+    }
+
+    // FIXME: Insert pass parameters if appropriate.
+    insert_pass_into_sequence
+      << static_cast<int64_t>(sequence_id)
+      << pass_pos << pass_name << nullptr;
+    insert_pass_into_sequence.execute().assertDone();
+
+    // The pass id is the primary key, and equal to the row id.
+    int64_t pass_id = sqlite3_last_insert_rowid(m_db);
+    pass_ids.push_back(static_cast<PassID>(pass_id));
   }
-
-  insert_pass_into_sequence
-    << static_cast<int64_t>(sequence_id)
-    << pass_pos << pass_name;
-  if (parameters) {
-    insert_pass_into_sequence << static_cast<int64_t>(parameters.get());
-  }
-  else {
-    insert_pass_into_sequence << nullptr;
-  }
-  insert_pass_into_sequence.execute().assertDone();
-
-  // The pass id is the primary key, and equal to the row id.
-  int64_t pass_id = sqlite3_last_insert_rowid(m_db);
-
-  // Commit the transaction
+  // Commit
   commit_transaction.execute().assertDone();
 
-  return static_cast<PassID>(pass_id);
+  return pass_ids;
 }
 
 
 //===------------------------ Results interface ---------------------------===//
 
 
-void Database::addResult(CompilationID compilation,
-                         Metric metric,
-                         uint64_t result)
+void Database::
+addResults(Metric metric,
+           std::vector<std::pair<CompilationID, uint64_t> > results)
 {
   DatabaseQuery insert_result = DatabaseQueryBuilder(*m_db)
-    << "INSERT INTO Result(compilation_id, metric, result) VALUES("
+    << "INSERT INTO RESULT(compilation_id, metric, result) VALUES("
       << QueryParamType::kInteger << ", "
       << QueryParamType::kInteger << ", "
       << QueryParamType::kInteger << ")";
-  insert_result
-    << static_cast<int64_t>(compilation)
-    << static_cast<int64_t>(metric)
-    << static_cast<int64_t>(result);
-  insert_result.execute().assertDone();
+
+  DatabaseQuery start_transaction(*m_db, "BEGIN TRANSACTION");
+  DatabaseQuery commit_transaction(*m_db, "COMMIT");
+
+  // All results in a single transaction
+  start_transaction.execute().assertDone();
+
+  for (const auto &res : results) {
+    CompilationID compilation = res.first;
+    uint64_t value = res.second;
+
+    insert_result.clearAllBindings();
+    insert_result
+      << static_cast<int64_t>(compilation)
+      << static_cast<int64_t>(metric)
+      << static_cast<int64_t>(value);
+    insert_result.execute().assertDone();
+  }
+  // Completed addition of results
+  commit_transaction.execute().assertDone();
 }
 
 
@@ -921,6 +942,9 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric)
   auto blob = i_ml.train(feature_descs, parameter_descs, pass_names,
                          std::move(results));
   
+  // FIXME: Handle case where the blob is empty. (causes a failure when
+  // running the database query).
+
   insert_blob
     << std::vector<uint8_t>(std::begin(ml.data()), std::end(ml.data()))
     << static_cast<int64_t>(metric)

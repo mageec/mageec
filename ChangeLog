@@ -1,3 +1,14 @@
+2016-01-05  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/Database.h (Database::addPass): Renamed to addPasses. Now
+	takes a sequence of the passes to run.
+	(Database::addResult): Renamed to addResults. Now takes a sequence of
+	results.
+	* lib/Database.cpp (Database::addPass): Renamed to addPasses.
+	(Database::addResult): Renamed to addResults.
+	* lib/Main.cpp (main): Use updated interfaces for Database::addResult
+	and Database::addPasses.
+
 2016-01-04  Edward Jones  <ed.jones@embecosm.com>
 
 	* include/mageec/Database.h (ResultIterator::m_query): Added member

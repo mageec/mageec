@@ -72,19 +72,23 @@ int main(void)
     std::make_shared<RangeParameter>(5, 1, "pass inline threshold")
   };
   ParameterSetID inline_param_set = db->newParameterSet(inline_params);
+  (void)inline_param_set;
 
   // Add a few passes to the pass sequence
-  PassID dce = db->addPass("Dead code elim", pass_sequence);
-  db->addPass("Common subexpression elim", pass_sequence);
-  db->addPass("Register resurrection", pass_sequence);
-  db->addPass("Inliner", pass_sequence,
-    util::Option<ParameterSetID>(inline_param_set));
+  std::vector<PassID> passes = db->addPasses(
+      {"Dead code elim", "Common subexpression elim",
+       "Register resurrection", "Inliner"},
+      pass_sequence
+  );
 
   // Module features were unchanged after dead code elimination
-  db->addFeaturesAfterPass(module_feature_group, module_compilation, dce);
+  db->addFeaturesAfterPass(module_feature_group, module_compilation, passes[0]);
+
+  std::vector<std::pair<CompilationID, uint64_t> > results;
+  results.push_back(std::make_pair(func_compilation, 12345));
 
   // Add results for the now completed compilation
-  db->addResult(func_compilation, Metric::kCodeSize, 12345);
+  db->addResults(Metric::kCodeSize, results);
 
   return 0;
 }
