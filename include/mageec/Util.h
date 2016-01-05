@@ -284,6 +284,8 @@ unsigned read16LE(std::vector<uint8_t>::const_iterator &it);
 /// \brief Write a 16-bit little endian value to a byte vector
 void write16LE(std::vector<uint8_t> buf, unsigned value);
 
+/// \brief Calculate a CRC64 across a blob
+uint64_t crc64(uint8_t *message, unsigned len);
 
 } // end of namespace util
 } // end of namespace mageec

@@ -48,6 +48,29 @@ void write16LE(std::vector<uint8_t> buf, unsigned value)
   buf.push_back(static_cast<uint8_t>(value >> 8));
 }
 
+//! Simple CRC implementation
+// Based on crc32b from Hacker's Delight
+// (http://www.hackersdelight.org/hdcodetxt/crc.c.txt)
+// Expanded to support crc64 and nulls by Simon Cook
+uint64_t crc64(uint8_t *message, unsigned len)
+{
+   unsigned i;
+   int j;
+   uint64_t byte, crc, mask;
+
+   i = 0;
+   crc = 0xFFFFFFFFFFFFFFFFULL;
+   while (i < len) {
+      byte = message[i];            // Get next byte.
+      crc = crc ^ byte;
+      for (j = 7; j >= 0; j--) {    // Do eight times.
+         mask = -(crc & 1);
+         crc = (crc >> 1) ^ (0xC96C5795D7870F42ULL & mask);
+      }
+      i = i + 1;
+   }
+   return ~crc;
+}
 
 } // end of namespace util
 } // end of namespace mageec
