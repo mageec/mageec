@@ -66,11 +66,70 @@ void mageecStartFile(void *, void *)
   if (mageec_context.with_debug) {
     MAGEEC_STATUS("Start file");
   }
+
+  // Check that the feature set and pass sequence is empty
+  assert(mageec_context.func_features.size() == 0);
+  assert(mageec_context.func_passes.size() == 0);
 }
 
 void mageecFinishFile(void *, void *)
 {
-  mageec_context.features.release();
+  // If necessary, store the features and pass sequences in the database
+  MAGEECMode mode = *mageec_context.mode;
+  if ((mode == MAGEECMode::kFeatureExtractAndSave) ||
+      (mode == MAGEECMode::kFeatureExtractSaveAndOptimize)) {
+    // For each function, save the functions features, compilation parameters,
+    // and the passes executed.
+    for (const auto &features : mageec_context.func_features) {
+      // Features
+      if (mageec_context.with_debug) {
+        MAGEEC_STATUS("Saving features for function '" << features.first
+                   << "' in the database");
+      }
+      mageec::FeatureSetID feature_set_id =
+          mageec_context.database->newFeatureSet(*features.second);
+      mageec::FeatureGroupID feature_group_id =
+          mageec_context.database->newFeatureGroup({feature_set_id});
+
+      // Parameters
+      // FIXME: Using an empty parameter set for now
+      if (mageec_context.with_debug) {
+        MAGEEC_STATUS("Saving parameters for function '" << features.first
+                   << "' in the database");
+      }
+      std::unique_ptr<mageec::ParameterSet> params(new mageec::ParameterSet());
+      mageec::ParameterSetID parameter_set_id =
+        mageec_context.database->newParameterSet(*params);
+
+      // Pass sequence
+      if (mageec_context.with_debug) {
+        MAGEEC_STATUS("Saving pass sequence for function '" << features.first
+                   << "' in the database");
+      }
+      assert(mageec_context.func_passes.count(features.first) &&
+             "Function with no pass sequence");
+      std::vector<std::string> pass_seq =
+          mageec_context.func_passes[features.first];
+
+      mageec::PassSequenceID pass_sequence_id =
+          mageec_context.database->newPassSequence();
+      mageec_context.database->addPasses(pass_seq, pass_sequence_id);
+
+      // Create the  compilation for this execution run
+      mageec_context.database->newCompilation(
+          features.first,
+          "function",
+          feature_group_id,
+          parameter_set_id,
+          pass_sequence_id,
+          nullptr /* parent */);
+    }
+  }
+
+  // Discard the current feature set and pass sequence, ready for the next
+  // file.
+  mageec_context.func_features.clear();
+  mageec_context.func_passes.clear();
 
   if (mageec_context.with_debug) {
     MAGEEC_STATUS("End file");
@@ -96,8 +155,11 @@ void mageecPassGate(void *gcc_data, void *user_data __attribute__((unused)))
     assert(mageec_context.machine_learner && "Missing machine learner");
   }
 
-  // early exit if the feature extractor has not yet run
-  if (!mageec_context.features) {
+  // Function whose passes we are gating
+  std::string func_name = current_function_name();
+
+  // early exit if the feature extractor has not yet run for this function.
+  if (mageec_context.func_features.count(func_name) == 0) {
     return;
   }
 
@@ -107,7 +169,7 @@ void mageecPassGate(void *gcc_data, void *user_data __attribute__((unused)))
 
     mageec::TrainedML &ml = *mageec_context.machine_learner.get();
     std::unique_ptr<mageec::DecisionBase> decision = 
-        ml.makeDecision(request, *mageec_context.features.get());
+        ml.makeDecision(request, *mageec_context.func_features[func_name]);
     
     const mageec::DecisionType decision_type = decision->getType();
     if (decision_type == mageec::DecisionType::kNative) {
@@ -125,9 +187,19 @@ void mageecPassGate(void *gcc_data, void *user_data __attribute__((unused)))
 
     if (mageec_context.with_debug) {
       std::string pass_type_str = passTypeString(current_pass);
-      MAGEEC_STATUS("Updating pass '" << current_pass->name << "'");
+      MAGEEC_STATUS("Updating pass '" << current_pass->name <<
+                    "' for function '" << func_name << "'");
       MAGEEC_DBG(" |- Old Gate: " << old_gate << '\n'
               << " |- New Gate: " << new_gate << '\n');
+    }
+  }
+
+  // If we are saving features, then we also want to save the sequence of
+  // pass for the function as they are run.
+  if ((mode == MAGEECMode::kFeatureExtractAndSave) ||
+      (mode == MAGEECMode::kFeatureExtractSaveAndOptimize)) {
+    if (*result) {
+      mageec_context.func_passes[func_name].push_back(current_pass->name);
     }
   }
 }

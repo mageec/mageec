@@ -361,47 +361,19 @@ static unsigned featureExtractExecute(void)
   features->add(std::make_shared<IntFeature>(FuncFeatureID::kCallRetInt,         call_ret_int,          "Func: Number of calls returning an int"));
   features->add(std::make_shared<IntFeature>(FuncFeatureID::kUncondBranches,     uncond_branches,       "Func: Number of unconditional branches"));
 
-  // Save the created feature set in the global variable.
-  assert(!mageec_context.features && "Attempt to overwrite mageec features");
-  mageec_context.features = std::move(features);
+  std::string func_name = current_function_name();
+
+  assert((mageec_context.func_features.count(func_name) == 0) &&
+         "Features for function already extracted");
+  mageec_context.func_features[func_name] = std::move(features);
 
   if (mageec_context.with_debug) {
-    MAGEEC_STATUS("Extracting features for function '"
-              << current_function_name() << "'");
+    MAGEEC_STATUS("Extracting features for function '" << func_name << "'");
     MAGEEC_STATUS("Dumping feature vector");
-    mageec_context.features->print(mageec::util::dbg(), "  |- ");
+    mageec_context.func_features[func_name]->print(mageec::util::dbg(),
+                                                   "  |- ");
     MAGEEC_STATUS("Finished dumping feature vector");
   }
-
-  // Save the features in the database if necessary
-  MAGEECMode mode = *mageec_context.mode;
-  if ((mode == MAGEECMode::kFeatureExtractAndSave) ||
-      (mode == MAGEECMode::kFeatureExtractSaveAndOptimize)) {
-    if (mageec_context.with_debug) {
-      MAGEEC_STATUS("Saving features in the database");
-    }
-
-    // Populate in the database
-    mageec::FeatureSetID feature_set_id =
-        mageec_context.database->newFeatureSet(*mageec_context.features);
-
-    mageec::FeatureGroupID feature_group_id =
-        mageec_context.database->newFeatureGroup({feature_set_id});
-
-    // Create an empty parameter set
-    std::unique_ptr<ParameterSet> params(new ParameterSet());
-    mageec::ParameterSetID parameter_set_id =
-        mageec_context.database->newParameterSet(*params);
-
-    // Create a compilation for this execution run
-    mageec_context.database->newCompilation(
-        current_function_name(),
-        "function",
-        feature_group_id,
-        parameter_set_id,
-        nullptr, nullptr);
-  }
-
   return 0;
 }
 

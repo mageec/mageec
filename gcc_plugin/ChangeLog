@@ -1,3 +1,17 @@
+2016-01-05  Edward Jones  <ed.jones@embecosm.com>
+
+	* FeatureExtract.cpp (featureExtractExecute): Saving of features
+	in the database moved to mageecFinishFile in GCCCallbacks.cpp.
+	Feature extraction now per function.
+	* GCCCallbacks (mageecFinishFile): Save features and the pass
+	sequence in the database.
+	(mageecPassGate): Record passes as they are executed to be stored
+	in the database.
+	* MAGEECPlugin.h (MAGEECContext::features): Renamed to func_features,
+	now stores a feature set for each function.
+	(MAGEECContext::passes): Renamed to func_passes, now stores a pass
+	sequence for each function.
+
 2016-01-04  Edward Jones  <ed.jones@embecosm.com>
 
 	* CMakeLists.txt: Allow older versions of CMake to be used for

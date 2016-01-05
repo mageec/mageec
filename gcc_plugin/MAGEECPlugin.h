@@ -55,7 +55,8 @@ enum class MAGEECMode : unsigned {
 /// \brief The context which holds all the information need by the plugin
 struct MAGEECContext {
   MAGEECContext()
-    : is_init(), mode(), framework(), database(), machine_learner(), features()
+    : is_init(), mode(), framework(), database(), machine_learner(),
+      func_features(), func_passes()
   {}
 
   bool is_init;
@@ -66,8 +67,11 @@ struct MAGEECContext {
   std::unique_ptr<mageec::Database>  database;
   std::unique_ptr<mageec::TrainedML> machine_learner;
 
-  /// Last feature set extracted
-  std::unique_ptr<mageec::FeatureSet> features;
+  /// Feature sets for each function in the module
+  std::map<std::string, std::unique_ptr<mageec::FeatureSet>> func_features;
+
+  /// Pass sequence for each function in the module
+  std::map<std::string, std::vector<std::string>> func_passes;
 };
 
 
