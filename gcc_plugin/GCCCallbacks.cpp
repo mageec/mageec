@@ -112,8 +112,7 @@ void mageecFinishFile(void *, void *)
           mageec_context.func_passes[features.first];
 
       mageec::PassSequenceID pass_sequence_id =
-          mageec_context.database->newPassSequence();
-      mageec_context.database->addPasses(pass_seq, pass_sequence_id);
+          mageec_context.database->newPassSequence(pass_seq);
 
       // Create the  compilation for this execution run
       mageec_context.database->newCompilation(

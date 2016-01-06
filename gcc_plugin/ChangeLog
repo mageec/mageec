@@ -1,3 +1,8 @@
+2016-01-06  Edward Jones  <ed.jones@embecosm.com>
+
+	* GCCCallbacks.cpp (mageecFinishFile): Updated to reflect changes
+	in the interface to add a pass sequence.
+
 2016-01-05  Edward Jones  <ed.jones@embecosm.com>
 
 	* FeatureExtract.cpp (featureExtractExecute): Saving of features
