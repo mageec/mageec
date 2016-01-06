@@ -176,8 +176,6 @@ C5Context::fromBlob(const std::vector<uint8_t> &blob)
           std::make_pair(pass_name, classifier_blob));
       break;
     }
-    default:
-      assert(0 && "Unknown field of C5.0 classifier blob!");
     }
   }
   return context;
@@ -217,7 +215,7 @@ std::vector<uint8_t> C5Context::toBlob()
     util::write16LE(blob, static_cast<unsigned>(C5BlobField::kPassDesc));
     util::write16LE(blob, pass_name_len);
     for (auto it : pass_name) {
-      blob.push_back(it);
+      blob.push_back(static_cast<uint8_t>(it));
     }
   }
 
@@ -249,7 +247,7 @@ std::vector<uint8_t> C5Context::toBlob()
         static_cast<unsigned>(C5BlobField::kPassClassifierTree));
     util::write16LE(blob, pass_name_len);
     for (auto it : pass_name) {
-      blob.push_back(it);
+      blob.push_back(static_cast<uint8_t>(it));
     }
     util::write16LE(blob, classifier_len);
     for (auto it : classifier_blob) {
@@ -305,6 +303,9 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
       assert(range_request->getDecisionType() == DecisionType::kRange);
       param_type = ParameterType::kRange;
     }
+    else {
+      assert(0 && "Unreachable");
+    }
 
     // Check if we have a classifier tree for this parameter.
     const auto res = context->parameter_classifier_trees.find(param_id);
@@ -344,8 +345,6 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
       case FeatureType::kInt:
         name_file << "continuous.";
         break;
-      default:
-        assert(0 && "Unhandled FeatureType");
       }
       name_file << '\n';
     }
@@ -360,8 +359,6 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
     case ParameterType::kRange:
       name_file << "continuous.";
       break;
-    default:
-      assert(0 && "Unhandled ParameterType");
     }
     name_file << '\n';
     name_file.close();
@@ -398,8 +395,6 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
           cases_file << value;
           break;
         }
-        default:
-          assert(0 && "Unhandled FeatureType!");
         }
       }
       else {
@@ -550,8 +545,6 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
             name_file << value;
             break;
           }
-          default:
-            assert(0 && "Unhandled FeatureType");
           }
           name_file << ",";
         }
@@ -574,8 +567,6 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
         name_file << value;
         break;
       }
-      default:
-        assert(0 && "Unhandled ParameterType");
       }
       name_file << ",";
     }
@@ -583,7 +574,8 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
     // Now we have .names and .data files, run the classifier over them to
     // generate a tree
     // TODO: Running command on windows?
-    std::string command_str("c5.0 -f /tmp/parameter_" + param.id);
+    std::string command_str(
+        "c5.0 -f /tmp/parameter_" + std::to_string(param.id));
     FILE *fpipe = popen(command_str.c_str(), "r");
     if (!fpipe) {
       assert(0 && "Process spawn failed!");
@@ -603,7 +595,7 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
       std::streampos tree_size = tree_file.tellg();
 
       std::vector<uint8_t> tree_blob;
-      tree_blob.reserve(tree_size);
+      tree_blob.reserve(static_cast<size_t>(tree_size));
 
       tree_file.seekg(0, tree_file.beg);
       tree_file.read(reinterpret_cast<char *>(tree_blob.data()), tree_size);

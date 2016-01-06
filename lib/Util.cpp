@@ -26,6 +26,9 @@
 #include <iostream>
 #include <vector>
 
+#include "mageec/Util.h"
+
+
 namespace mageec {
 namespace util {
 

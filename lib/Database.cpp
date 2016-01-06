@@ -501,7 +501,8 @@ FeatureSetID Database::newFeatureSet(FeatureSet features)
     blob.insert(blob.end(), I.second.begin(), I.second.end());
   }
   FeatureSetID feature_set_id =
-      static_cast<FeatureSetID>(util::crc64(blob.data(), blob.size()));
+      static_cast<FeatureSetID>(util::crc64(blob.data(),
+                                static_cast<unsigned>(blob.size())));
 
   // Whole operation in a single transaction
   DatabaseTransaction db_transaction(m_db);
@@ -522,7 +523,7 @@ FeatureSetID Database::newFeatureSet(FeatureSet features)
       // compare to the one we hashed.
       std::map<unsigned, std::vector<uint8_t>> db_feature_map;
       for (; !feat_iter.done(); feat_iter = feat_iter.next()) {
-        uint64_t feat_id = static_cast<uint64_t>(feat_iter.getInteger(0));
+        unsigned feat_id = static_cast<unsigned>(feat_iter.getInteger(0));
         std::vector<uint8_t> feat_blob = feat_iter.getBlob(1);
 
         db_feature_map[feat_id] = feat_blob;
@@ -602,7 +603,8 @@ FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group)
     util::write64LE(blob, static_cast<uint64_t>(I));
   }
   FeatureGroupID group_id =
-      static_cast<FeatureGroupID>(util::crc64(blob.data(), blob.size()));
+      static_cast<FeatureGroupID>(util::crc64(blob.data(),
+                                  static_cast<unsigned>(blob.size())));
 
   // Whole operation in a single transaction
   DatabaseTransaction db_transaction(m_db);
@@ -786,7 +788,8 @@ Database::newParameterSet(ParameterSet parameters)
     blob.insert(blob.end(), I.second.begin(), I.second.end());
   }
   ParameterSetID param_set_id =
-      static_cast<ParameterSetID>(util::crc64(blob.data(), blob.size()));
+      static_cast<ParameterSetID>(util::crc64(blob.data(),
+                                  static_cast<unsigned>(blob.size())));
 
   // Whole operation in a single transaction
   DatabaseTransaction db_transaction(m_db);
@@ -807,7 +810,7 @@ Database::newParameterSet(ParameterSet parameters)
       // one we hashed.
       std::map<unsigned, std::vector<uint8_t>> db_param_map;
       for (; !param_iter.done(); param_iter = param_iter.next()) {
-        uint64_t param_id = static_cast<uint64_t>(param_iter.getInteger(0));
+        unsigned param_id = static_cast<unsigned>(param_iter.getInteger(0));
         std::vector<uint8_t> param_blob = param_iter.getBlob(1);
 
         db_param_map[param_id] = param_blob;
@@ -894,7 +897,8 @@ PassSequenceID Database::newPassSequence(std::vector<std::string> pass_names)
     blob.push_back(0);
   }
   PassSequenceID pass_sequence_id = 
-      static_cast<PassSequenceID>(util::crc64(blob.data(), blob.size()));
+      static_cast<PassSequenceID>(util::crc64(blob.data(),
+                                  static_cast<unsigned>(blob.size())));
 
   // Do all operations in a single transaction
   DatabaseTransaction db_transaction(m_db);
@@ -1026,7 +1030,6 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric)
   std::set<ParameterDesc> parameter_descs;
   std::set<std::string> pass_names;
 
-  DatabaseQueryIterator feat_iter = select_feature_types.execute();
   for (auto feat_iter = select_feature_types.execute();
        !feat_iter.done(); feat_iter = feat_iter.next()) {
     assert(feat_iter.numColumns() == 2);
@@ -1037,7 +1040,6 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric)
     feature_descs.insert(desc);
   }
 
-  DatabaseQueryIterator param_iter = select_parameter_types.execute();
   for (auto param_iter = select_parameter_types.execute();
        !param_iter.done(); param_iter = param_iter.next()) {
     assert(param_iter.numColumns() == 2);
@@ -1166,7 +1168,6 @@ util::Option<Result> ResultIterator::operator*()
   
   // Retrieve the features
   select_features << static_cast<int64_t>(feature_group);
-  auto feature_iter = select_features.execute();
   for (auto feature_iter = select_features.execute();
        !feature_iter.done(); feature_iter = feature_iter.next()) {
     assert(feature_iter.numColumns() == 3);
@@ -1190,7 +1191,6 @@ util::Option<Result> ResultIterator::operator*()
   // Retrieve parameters
   if (param_set) {
     select_parameters << static_cast<int64_t>(param_set.get());
-    auto param_iter = select_parameters.execute();
     for (auto param_iter = select_parameters.execute();
          !param_iter.done(); param_iter = param_iter.next()) {
       assert(param_iter.numColumns() == 3);

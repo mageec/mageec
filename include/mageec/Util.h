@@ -212,7 +212,7 @@ public:
   /// hexidecimal digit.
   operator std::string(void) const {
     std::string out;
-    for (int i = 0; i < 16; ++i) {
+    for (unsigned i = 0; i < 16; ++i) {
       uint8_t nibble[2] = {
         static_cast<uint8_t>( m_data[i] & 0xf),
         static_cast<uint8_t>((m_data[i] >> 4) & 0xf)
@@ -244,8 +244,8 @@ public:
     }
 
     std::array<uint8_t, 16> uuid;
-    for (int i = 0; i < 16; ++i) {
-      int j = (i * 2) + (i >= 4) + (i >= 6) + (i >= 8) + (i >= 10);
+    for (unsigned i = 0; i < 16; ++i) {
+      unsigned j = (i * 2) + (i >= 4) + (i >= 6) + (i >= 8) + (i >= 10);
 
       uint8_t hex[2] = {
         static_cast<uint8_t>(s[j + 0]),
@@ -259,7 +259,7 @@ public:
           return nullptr;
         }
       }
-      uuid[i] = (hex[0] << 4) | hex[1];
+      uuid[i] = static_cast<uint8_t>((hex[0] << 4) | hex[1]);
     }
     if ((s[8] != '-') || (s[13] != '-') || (s[18] != '-') || (s[23] != '-')) {
       return nullptr;

@@ -48,20 +48,18 @@ using namespace mageec;
 
 
 /// \brief Convert from a metric to a string
-std::string metricToString(Metric metric) {
+static std::string metricToString(Metric metric) {
   switch (metric) {
   case Metric::kCodeSize:   return "size";
   case Metric::kTime:       return "time";
   case Metric::kEnergy:     return "energy";
-  default:
-    assert(0 && "Unhandled metric type");
-    return std::string();
   }
 }
+
 /// \brief Convert from a string to a metric if possible.
 /// 
 /// \return The metric if possible, or an empty Option type if not.
-util::Option<Metric> stringToMetric(std::string metric) {
+static util::Option<Metric> stringToMetric(std::string metric) {
   if (metric == "size") {
     return Metric::kCodeSize;
   }
@@ -78,7 +76,7 @@ util::Option<Metric> stringToMetric(std::string metric) {
 
 
 /// \brief Print out the version of the MAGEEC framework
-void printVersion(const Framework &framework)
+static void printVersion(const Framework &framework)
 {
   util::out() << static_cast<std::string>(framework.getVersion()) << '\n';
 }
@@ -86,7 +84,7 @@ void printVersion(const Framework &framework)
 /// \brief Print out the version of the database
 ///
 /// \return 0 on success, 1 if the database could not be opened.
-int printDatabaseVersion(Framework &framework, const std::string &db_path)
+static int printDatabaseVersion(Framework &framework, const std::string &db_path)
 {
   std::unique_ptr<Database> db = framework.getDatabase(db_path, false);
   if (!db) {
@@ -99,7 +97,7 @@ int printDatabaseVersion(Framework &framework, const std::string &db_path)
 }
 
 /// \brief Print out a help string for the mageec tool
-void printHelp()
+static void printHelp()
 {
   util::out() <<
 "Usage: mageec [options]\n"
@@ -142,7 +140,7 @@ void printHelp()
 ///
 /// \return A list of UUIDs of loaded machine learners, which may be empty
 /// if none were successfully loaded.
-std::set<util::UUID>
+static std::set<util::UUID>
 getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs)
 {
   // Load machine learners
@@ -192,7 +190,7 @@ getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs)
 /// for this database.
 ///
 /// \return 0 on success, 1 if the database could not be opened.
-int printTrainedMLs(Framework &framework, const std::string &db_path)
+static int printTrainedMLs(Framework &framework, const std::string &db_path)
 {
   std::unique_ptr<Database> db = framework.getDatabase(db_path, false);
   if (!db) {
@@ -212,7 +210,7 @@ int printTrainedMLs(Framework &framework, const std::string &db_path)
 
 /// \brief Print a description of all of the machine learner interfaces
 /// known by the framework.
-void printMLInterfaces(Framework &framework)
+static void printMLInterfaces(Framework &framework)
 {
   std::set<IMachineLearner *> mls = framework.getMachineLearners();
   for (const auto *ml : mls) {
@@ -224,7 +222,7 @@ void printMLInterfaces(Framework &framework)
 /// \brief Create a new database
 ///
 /// \return 0 on success, 1 if the database could not be created.
-int createDatabase(Framework &framework, const std::string &db_path)
+static int createDatabase(Framework &framework, const std::string &db_path)
 {
   std::unique_ptr<Database> db = framework.getDatabase(db_path, true);
   if (!db) {
@@ -239,30 +237,21 @@ int createDatabase(Framework &framework, const std::string &db_path)
 /// \brief Train a database
 ///
 /// \return 0 on success, 1 if the database could not be trained.
-int trainDatabase(Framework &framework,
-                  const std::string &db_path,
-                  const std::set<util::UUID> mls,
-                  const std::set<std::string> &metric_strs)
+static int trainDatabase(Framework &framework,
+                         const std::string &db_path,
+                         const std::set<util::UUID> mls,
+                         const std::set<std::string> &metric_strs)
 {
   assert(metric_strs.size() > 0);
 
   // Parse the metrics we are training against.
   std::set<Metric> metrics;
   for (auto str : metric_strs) {
-    util::Option<Metric> metric;
-    if (str == "size") {
-      metric = Metric::kCodeSize;
-    }
-    else if (str == "time") {
-      metric = Metric::kTime;
-    }
-    else if (str == "energy") {
-      metric = Metric::kEnergy;
-    }
-    else {
+    util::Option<Metric> metric = stringToMetric(str);
+    if (!metric) {
       MAGEEC_WARN("Unrecognized metric specified '" << str << "'");
     }
-    if (metric) {
+    else {
       metrics.insert(metric.get());
     }
   }

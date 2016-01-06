@@ -1,5 +1,14 @@
 2015-01-06  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Disable two more clang warnings.
+	* include/mageec/Util.h: Fix clang warnings.
+	* lib/Database.cpp: Likewise.
+	* lib/Driver.cpp: Likewise.
+	* lib/C5.cpp: Likewise.
+	* lib/Util.cpp: Likewise.
+
+2015-01-06  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Database.h (DatabaseTransaction): New wrapper class
 	around a database transaction.
 	* lib/Database.cpp: Use database transactions throughout.
@@ -42,8 +51,8 @@
 
 2016-01-05  Edward Jones  <ed.jones@embecosm.com>
 
-	* include/Database.h (Database::addPass): Renamed to addPasses. Now
-	takes a sequence of the passes to run.
+	* include/mageec/Database.h (Database::addPass): Renamed to addPasses.
+	Now takes a sequence of the passes to run.
 	(Database::addResult): Renamed to addResults. Now takes a sequence of
 	results.
 	* lib/Database.cpp (Database::addPass): Renamed to addPasses.

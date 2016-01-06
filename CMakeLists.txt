@@ -50,7 +50,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   # Clang compiler options
   set (CMAKE_CXX_FLAGS "\
 -fPIC -std=c++11 -Werror -Weverything -Wno-c++98-compat \
--Wno-global-constructors -Wno-padded -Wno-weak-vtables")
+-Wno-c++98-compat-pedantic -Wno-global-constructors -Wno-padded \
+-Wno-weak-vtables -Wno-switch-enum")
   if (MAGEEC_DEBUG)
     set (CMAKE_CXX_FLAGS "-g3 ${CMAKE_CXX_FLAGS}")
   endif ()
