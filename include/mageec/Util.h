@@ -282,10 +282,24 @@ unsigned read16LE(std::vector<uint8_t>::const_iterator &it);
 
 
 /// \brief Write a 16-bit little endian value to a byte vector
-void write16LE(std::vector<uint8_t> buf, unsigned value);
+void write16LE(std::vector<uint8_t> &buf, unsigned value);
+
+
+/// \brief Read a 64-bit little endian value from a byte vector, advancing
+/// the iterator in the process.
+///
+/// It is assumed that the end of the iterator will not be encountered
+/// when reading the value
+uint64_t read64LE(std::vector<uint8_t>::const_iterator &it);
+
+
+/// \brief Write a 64-bit little endian value to a byte vector
+void write64LE(std::vector<uint8_t> &buf, uint64_t value);
+
 
 /// \brief Calculate a CRC64 across a blob
 uint64_t crc64(uint8_t *message, unsigned len);
+
 
 } // end of namespace util
 } // end of namespace mageec

@@ -52,7 +52,10 @@ int main(void)
   ParameterSetID parameter_set = db->newParameterSet(params);
 
   // Create a single pass sequence shared by the module and function
-  PassSequenceID pass_sequence = db->newPassSequence();
+  PassSequenceID pass_sequence = db->newPassSequence(
+      {"Dead code elim", "Common subexpression elim",
+       "Register resurrection", "Inliner"}
+  );
 
   // Create compilations for the module and function
   CompilationID module_compilation = db->newCompilation(
@@ -74,15 +77,8 @@ int main(void)
   ParameterSetID inline_param_set = db->newParameterSet(inline_params);
   (void)inline_param_set;
 
-  // Add a few passes to the pass sequence
-  std::vector<PassID> passes = db->addPasses(
-      {"Dead code elim", "Common subexpression elim",
-       "Register resurrection", "Inliner"},
-      pass_sequence
-  );
-
   // Module features were unchanged after dead code elimination
-  db->addFeaturesAfterPass(module_feature_group, module_compilation, passes[0]);
+  //db->addFeaturesAfterPass(module_feature_group, module_compilation, passes[0]);
 
   std::vector<std::pair<CompilationID, uint64_t> > results;
   results.push_back(std::make_pair(func_compilation, 12345));

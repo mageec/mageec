@@ -42,16 +42,44 @@ unsigned read16LE(std::vector<uint8_t>::const_iterator &it)
   return res;
 }
 
-void write16LE(std::vector<uint8_t> buf, unsigned value)
+void write16LE(std::vector<uint8_t> &buf, unsigned value)
 {
   buf.push_back(static_cast<uint8_t>(value));
   buf.push_back(static_cast<uint8_t>(value >> 8));
 }
 
-//! Simple CRC implementation
-// Based on crc32b from Hacker's Delight
-// (http://www.hackersdelight.org/hdcodetxt/crc.c.txt)
-// Expanded to support crc64 and nulls by Simon Cook
+uint64_t read64LE(std::vector<uint8_t>::const_iterator &it)
+{
+  unsigned res = 0;
+  res |= static_cast<uint64_t>(*it);
+  res |= static_cast<uint64_t>(*(it + 1)) <<  8;
+  res |= static_cast<uint64_t>(*(it + 2)) << 16;
+  res |= static_cast<uint64_t>(*(it + 3)) << 24;
+  res |= static_cast<uint64_t>(*(it + 4)) << 32;
+  res |= static_cast<uint64_t>(*(it + 5)) << 40;
+  res |= static_cast<uint64_t>(*(it + 6)) << 48;
+  res |= static_cast<uint64_t>(*(it + 7)) << 56;
+  return res;
+}
+
+void write64LE(std::vector<uint8_t> &buf, uint64_t value)
+{
+  buf.push_back(static_cast<uint8_t>(value));
+  buf.push_back(static_cast<uint8_t>(value >>  8));
+  buf.push_back(static_cast<uint8_t>(value >> 16));
+  buf.push_back(static_cast<uint8_t>(value >> 24));
+  buf.push_back(static_cast<uint8_t>(value >> 32));
+  buf.push_back(static_cast<uint8_t>(value >> 40));
+  buf.push_back(static_cast<uint8_t>(value >> 48));
+  buf.push_back(static_cast<uint8_t>(value >> 56));
+}
+
+
+/// \brief Simple CRC implementation
+///
+/// Based on crc32b from Hacker's Delight
+/// (http://www.hackersdelight.org/hdcodetxt/crc.c.txt)
+/// Expanded to support crc64 and nulls by Simon Cook
 uint64_t crc64(uint8_t *message, unsigned len)
 {
    unsigned i;
@@ -71,6 +99,7 @@ uint64_t crc64(uint8_t *message, unsigned len)
    }
    return ~crc;
 }
+
 
 } // end of namespace util
 } // end of namespace mageec

@@ -30,13 +30,13 @@
 namespace mageec {
 
 
-enum class CompilationID    : unsigned {};
-enum class FeatureSetID     : unsigned {};
-enum class FeatureGroupID   : unsigned {};
-enum class PassID           : unsigned {};
-enum class PassSequenceID   : unsigned {};
-enum class ParameterSetID   : unsigned {};
-enum class ParameterGroupID : unsigned {};
+enum class CompilationID    : uint64_t {};
+enum class FeatureSetID     : uint64_t {};
+enum class FeatureGroupID   : uint64_t {};
+enum class PassID           : uint64_t {};
+enum class PassSequenceID   : uint64_t {};
+enum class ParameterSetID   : uint64_t {};
+enum class ParameterGroupID : uint64_t {};
 
 
 enum class MetadataField : unsigned {

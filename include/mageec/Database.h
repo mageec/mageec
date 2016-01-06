@@ -176,11 +176,10 @@ public:
 
   /// \brief Create a new group of features from a number of feature sets
   ///
-  /// \param features  The feature sets which form this feature group, there
-  /// should be no features with the same identifier throughout the groups.
+  /// \param group  The feature sets which form this feature group.
   ///
   /// \return The identifier of the feature group in the database
-  FeatureGroupID newFeatureGroup(std::vector<FeatureSetID> features);
+  FeatureGroupID newFeatureGroup(std::set<FeatureSetID> group);
 
   /// \brief Associate features with a specific pass in the compilation of a
   /// program unit.
@@ -226,22 +225,13 @@ public:
   /// \return The identifier of the new parameter set in the database
   ParameterSetID newParameterSet(ParameterSet parameters);
 
-  /// \brief Create a new empty pass sequence
-  /// \return The identifier of the new pass sequence
-  PassSequenceID newPassSequence(void);
-
-  /// \brief Add new passes to a pass sequence
-  ///
-  /// Passes should be added in the order in which they are run
+  /// \brief Create a new pass sequence
   ///
   /// \param pass_names  A sequence of names used to identify each pass in
   /// turn.
-  /// \param pass_seq  The pass sequence these passes belong to
   ///
-  /// \return Identifiers for each of the add passes instances. The returned
-  /// vector has the same size and order as the input sequence of passes.
-  std::vector<PassID> addPasses(std::vector<std::string> pass_names,
-                                PassSequenceID pass_seq);
+  /// \return The identifier of the new pass sequence
+  PassSequenceID newPassSequence(std::vector<std::string> pass_names);
 
   /// FIXME: Add support for pass parameters
 
