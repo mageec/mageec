@@ -1,14 +1,21 @@
+2015-01-06  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Database.h (DatabaseTransaction): New wrapper class
+	around a database transaction.
+	* lib/Database.cpp: Use database transactions throughout.
+	(DatabaseTransaction): Added implementation.
+
 2016-01-06  Edward Jones  <ed.jones@embecosm.com>
 
-	* include/Database.h (Database::newFeatureGroup): Refine to take a
-	set of FeatureSetID rather than vector.
+	* include/mageec/Database.h (Database::newFeatureGroup): Refine to take
+	a set of FeatureSetID rather than vector.
 	(Database::addPasses): Removed method.
 	(Database::newPassSequence): Method now takes a list of passes to
 	add to the database.
-	* include/Types.h (CompilationID FeatureSetID FeatureGroupID)
+	* include/mageec/Types.h (CompilationID FeatureSetID FeatureGroupID)
 	(PassID PassSequenceID ParameterSetID ParameterGroupID): Redefined
 	types to be uint64_t so that they can store a hash.
-	* include/Util.h (read64LE wrte64LE): Added functions.
+	* include/mageec/Util.h (read64LE wrte64LE): Added functions.
 	* lib/Database.cpp (create_feature_set_table)
 	(create_feature_group_table create_parameter_set_table)
 	(create_pass_sequence_table): Remove query strings to create

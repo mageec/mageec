@@ -313,6 +313,36 @@ private:
 };
 
 
+/// \class DatabaseTransaction
+///
+/// This is a wrapper around a transaction, which rolls back a transaction
+/// if it is destroyed before it has been explicitly committed.
+class DatabaseTransaction {
+public:
+  DatabaseTransaction() = delete;
+  ~DatabaseTransaction();
+
+  DatabaseTransaction(sqlite3 *db);
+  DatabaseTransaction(const DatabaseTransaction &other) = delete;
+  DatabaseTransaction(DatabaseTransaction &&other);
+
+  DatabaseTransaction& operator=(const DatabaseTransaction &other) = delete;
+  DatabaseTransaction& operator=(DatabaseTransaction &&other);
+
+  /// \brief Commit the transaction
+  ///
+  /// This must be done before the destruction of the transaction, or the
+  /// transaction will be rolled back
+  void commit(void);
+
+private:
+  bool m_is_init;
+
+  bool m_is_committed;
+  sqlite3 *m_db;
+};
+
+
 } // end of namespace mageec
 
 
