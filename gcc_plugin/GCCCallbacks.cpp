@@ -41,7 +41,7 @@
 #include "function.h"
 
 
-/// \grief Get string representing type of pass
+/// \brief Get string representing type of pass
 ///
 /// \param pass  Compiler pass
 /// \return String corresponding to the type of the pass (GIMPLE, RTL, etc)
@@ -55,10 +55,7 @@ static std::string passTypeString(opt_pass *pass)
   case RTL_PASS:        return "RTL";
   case SIMPLE_IPA_PASS: return "SIMPLE_IPA";
   case IPA_PASS:        return "IPA";
-  default:
-    return "*UNKNOWN*";
   }
-  return "*UNKNOWN*";
 }
 
 void mageecStartFile(void *, void *)

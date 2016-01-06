@@ -1,5 +1,11 @@
 2016-01-06  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Allow Clang to build the gcc plugin.
+	* GCCCallbacks.cpp: Fix warnings when building with Clang.
+	* GCCPlugin.cpp: Likewise.
+
+2016-01-06  Edward Jones  <ed.jones@embecosm.com>
+
 	* GCCCallbacks.cpp (mageecFinishFile): Updated to reflect changes
 	in the interface to add a pass sequence.
 

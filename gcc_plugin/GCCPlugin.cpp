@@ -61,13 +61,22 @@ static_assert(MAGEEC_GCC_PLUGIN_VERSION_MAJOR == 2 &&
 /// Plugin information to pass to GCC
 #define QUOTE(name) #name
 #define STRINGIFY(macro) QUOTE(macro)
-static struct plugin_info mageec_plugin_version =
-{
-  .version = STRINGIFY(MAGEEC_GCC_PLUGIN_VERSION_MAJOR) "."
-             STRINGIFY(MAGEEC_GCC_PLUGIN_VERSION_MINOR) "."
-             STRINGIFY(MAGEEC_GCC_PLUGIN_VERSION_PATCH),
-  .help = NULL
+
+struct MAGEECPluginInfo {
+  MAGEECPluginInfo()
+  {}
+
+  operator struct plugin_info() {
+    struct plugin_info info;
+    info.version = STRINGIFY(MAGEEC_GCC_PLUGIN_VERSION_MAJOR) "."
+                   STRINGIFY(MAGEEC_GCC_PLUGIN_VERSION_MINOR) "."
+                   STRINGIFY(MAGEEC_GCC_PLUGIN_VERSION_PATCH),
+    info.help = NULL;
+    return info;
+  }
 };
+static struct plugin_info mageec_plugin_version = MAGEECPluginInfo();
+
 #undef QUOTE
 #undef STRINGIFY
 
@@ -77,7 +86,6 @@ const char *mageec_gcc_plugin_name;
 
 /// Context shared by all components of the plugin
 MAGEECContext mageec_context;
-
 
 
 /// \brief Parse arguments provided to the plugin
@@ -370,8 +378,8 @@ static bool parseArguments(int argc, struct plugin_argument *argv)
 ///
 /// This initializes the call backs used by GCC to interact with the plugin
 ///
-/// \param plugin_name_args GCC plugin information
-/// \param plugin_gcc_version GCC version information
+/// \param plugin_info GCC plugin information
+/// \param version GCC version information
 ///
 /// \return 0 if MAGEEC successfully set up, 1 otherwise.
 int plugin_init (struct plugin_name_args *plugin_info,

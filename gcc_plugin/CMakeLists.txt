@@ -61,7 +61,14 @@ endif ()
 
 # Set compiler options depending on the compiler
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  message (FATAL_ERROR "GCC plugin cannot be built with Clang yet, sorry")
+  set (CMAKE_CXX_FLAGS "\
+-fPIC -fno-rtti -std=gnu++11 -Werror -Weverything \
+-Wno-c++98-compat-pedantic -Wno-global-constructors -Wno-padded \
+-Wno-weak-vtables -Wno-switch-enum -Wno-reserved-id-macro \
+-Wno-old-style-cast -Wno-undef -Wno-sign-conversion \
+-Wno-mismatched-tags -Wno-reserved-user-defined-literal \
+-Wno-shadow -Wno-shorten-64-to-32 -Wno-cast-align -Wno-conversion \
+-Wno-disabled-macro-expansion -Wno-exit-time-destructors")
   if (MAGEEC_GCC_PLUGIN_DEBUG)
     set (CMAKE_CXX_FLAGS "-g3 ${CMAKE_CXX_FLAGS}")
   endif ()
