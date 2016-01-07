@@ -64,7 +64,7 @@ public:
   /// \param blob  A blob of training data to be passed to the machine
   /// learner when making a decision
   TrainedML(sqlite3& db,
-            const IMachineLearner& ml,
+            IMachineLearner& ml,
             Metric metric,
             const std::vector<uint8_t> blob);
 
@@ -76,6 +76,18 @@ public:
 
   /// \brief Get the metric which this machine learner was trained against
   Metric getMetric(void) const;
+
+  /// \brief Check whether the machine learner interfaces requires a
+  /// configuration file to make a decision
+  bool requiresDecisionConfig() const;
+
+  /// \brief Set the configuration the machine learner interface should
+  /// use when making decisions.
+  ///
+  /// It is invalid to call this if requiresDecisionConfig returns false.
+  ///
+  /// \return True if the configuration was set succesfully.
+  bool setDecisionConfig(std::string config_path);
 
   /// \brief Make a single decision using the machine learner interfaces
   ///
@@ -97,7 +109,7 @@ private:
   sqlite3& m_db;
 
   /// Interface to the underlying machine learner.
-  const IMachineLearner& m_ml;
+  IMachineLearner& m_ml;
 
   /// Metric which this machine learner is trained for.
   const Metric m_metric;

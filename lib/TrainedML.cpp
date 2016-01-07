@@ -44,7 +44,7 @@ namespace mageec {
 
 
 TrainedML::TrainedML(sqlite3 &db,
-                     const IMachineLearner &ml,
+                     IMachineLearner &ml,
                      Metric metric,
                      const std::vector<uint8_t> blob)
   : m_db(db), m_ml(ml), m_metric(metric), m_blob(blob)
@@ -65,6 +65,18 @@ std::string TrainedML::getName(void) const
 Metric TrainedML::getMetric(void) const
 {
   return m_metric;
+}
+
+bool TrainedML::requiresDecisionConfig() const
+{
+  return m_ml.requiresDecisionConfig();
+}
+
+bool TrainedML::setDecisionConfig(std::string config_path)
+{
+  assert(requiresDecisionConfig() && "Cannot provide decision config to "
+         "a machine learner which does not require one");
+  return m_ml.setDecisionConfig(config_path);
 }
 
 std::unique_ptr<DecisionBase>

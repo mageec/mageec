@@ -1,5 +1,28 @@
 2016-01-07  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Add FileML.cpp to ML_SOURCES
+	* include/mageec/ML.h (IMachineLearner::requiresTraining)
+	(IMachineLearner::requiresTrainingConfig)
+	(IMachineLearner::setTrainingConfig)
+	(IMachineLearner::requiresDecisionConfig)
+	(IMachineLearner::setDecisionConfig): Added methods.
+	* include/mageec/ML/C5.h (C5Driver::requiresTraining)
+	(C5Driver::requiresTrainingConfig C5Driver::setTrainingConfig)
+	(C5Driver::requiresDecisionConfig C5Driver::setDecisionConfig):
+	Likewise.
+	* include/mageec/ML/FileML.h (FileML): Added definition of FileML.
+	* include/mageec/TrainedML.h (TrainedML::requiresDecisionConfig)
+	(TrainedML::setDecisionConfig): Added methods.
+	* lib/Database.cpp (getTrainedMachineLearners): Make IMachineLearner
+	non-const.
+	* lib/FileML.cpp (FileML): Added implementation of FileML.
+	* lib/TrainedML.cpp (TrainedML::TrainedML): Make IMachineLearner
+	parameter non-const.
+	(TrainedML::requiresDecisionConfig)
+	(TrainedML::setDecisionConfig): Added implementations.
+
+2016-01-07  Edward Jones  <ed.jones@embecosm.com>
+
 	* CMakeLists.txt: Renamed MAGEEC_DEBUG definition to MAGEEC_WITH_DEBUG.
 	* include/mageec/Framework.h (Framework::Framework): Add debug
 	parameter.

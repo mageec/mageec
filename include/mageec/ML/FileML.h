@@ -16,26 +16,30 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 
-//===------------------------ MAGEEC C5.0 Driver --------------------------===//
+//===------------------------ File Machine Learner ------------------------===//
 //
-// This defines a machine learner interface which uses a driver to drive an
-// external C5.0 machine learner. It calls out to the C5.0 command line in
-// order to make decisions and train.
+// This defines the file based machine learner for MAGEEC. FileML does
+// not make any decisions of its own, instead relying on the user to
+// predefine the decisions that should be made.
+//
+// As the user provides the decisions, it does not need to store anything
+// in the database.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MAGEEC_C5_DRIVER_H
-#define MAGEEC_C5_DRIVER_H
+#ifndef MAGEEC_FILE_ML_H
+#define MAGEEC_FILE_ML_H
+
+#include <cstdint>
+#include <map>
+#include <set>
+#include <string>
+#include <vector>
 
 #include "mageec/ML.h"
 #include "mageec/Result.h"
 #include "mageec/Types.h"
 #include "mageec/Util.h"
-
-#include <cstdint>
-#include <set>
-#include <string>
-#include <vector>
 
 
 namespace mageec {
@@ -44,21 +48,17 @@ class DecisionRequestBase;
 class FeatureSet;
 
 
-/// \class C5Driver
+/// \class FileML
 ///
-/// \brief Machine learner which drives an external C5.0 classifier
-class C5Driver : public IMachineLearner {
+/// \brief Machine learner which makes decisions based on a predefined
+/// file of user input features.
+class FileML : public IMachineLearner {
 private:
-  /// Version 4 UUID
-  ///
-  /// This identifies both the machine learner and its version. If a
-  /// breaking change is made to the machine learner then a new UUID should
-  /// be generated in order to avoid conflicts.
   static const util::UUID uuid;
 
 public:
-  C5Driver();
-  ~C5Driver() override;
+  FileML();
+  ~FileML() override;
 
   /// \brief Get the unique identifier for this machine learner
   util::UUID getUUID(void) const override {
@@ -66,23 +66,18 @@ public:
   }
 
   /// \brief Get the name of the machine learner
-  /// 
-  /// Note that this is a driver in case a C5.0 classifier is later included
-  /// with MAGEEC.
-  std::string getName(void) const override { return "C5.0 Driver"; }
+  std::string getName(void) const override { return "File Machine Learner"; }
 
-  bool requiresTraining(void) const override { return true; }
+  bool requiresTraining(void) const override { return false; }
 
   bool requiresTrainingConfig(void) const override { return false; }
   bool setTrainingConfig(std::string) override {
-    assert(0 && "C5.0 should not be provided a training config");
+    assert(0 && "FileML should not be provided a training config");
     return false;
   }
-  bool requiresDecisionConfig(void) const override { return false; }
-  bool setDecisionConfig(std::string) override {
-    assert(0 && "C5.0 should not be provided a decision config");
-    return false;
-  }
+
+  bool requiresDecisionConfig(void) const override { return true; }
+  bool setDecisionConfig(std::string) override;
 
   std::unique_ptr<DecisionBase>
   makeDecision(const DecisionRequestBase& request,
@@ -101,10 +96,20 @@ public:
         std::set<std::string> passes,
         ResultIterator results,
         std::vector<uint8_t> old_blob) const override;
+
+
+private:
+  /// Set when the a decision config has been provided to the machine
+  /// learner. This is required before any decisions can be made.
+  bool m_have_decision_config;
+
+  /// Maps from a decision request identifier to the user provided result.
+  /// This is parsed in from the decision making config file.
+  std::map<std::string, std::string> m_decision_map;
 };
 
 
 } // end of namespace mageec
 
 
-#endif // MAGEEC_C5_DRIVER_H
+#endif // MAGEEC_FILE_ML_H

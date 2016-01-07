@@ -55,6 +55,42 @@ public:
   /// \brief Get the name of this machine learner as a string
   virtual std::string getName(void) const = 0;
 
+
+  /// \brief Return whether this machine learner must be trained before
+  /// making a decision.
+  virtual bool requiresTraining(void) const = 0;
+
+  /// \brief Return whether this machine learner should be provided with
+  /// a path to a configuration file for training.
+  virtual bool requiresTrainingConfig(void) const = 0;
+
+  /// \brief Set the training configuration to be used by this machine
+  /// learner.
+  ///
+  /// It is an error to call this method if requiresTrainingConfig
+  /// returns false.
+  ///
+  /// \param config_path Path to the training configuration file
+  ///
+  /// \return True if the config was set successfully.
+  virtual bool setTrainingConfig(std::string config_path) = 0;
+
+  /// \brief Return whether this machine learner should be provided with
+  /// a path to a configuration file for decision making
+  virtual bool requiresDecisionConfig(void) const = 0;
+
+  /// \brief Set the decision making configuration to be used by this
+  /// machine learner.
+  ///
+  /// It is an error to call this method if requiresDecisionConfig
+  /// returns false.
+  ///
+  /// \param config_path Path to the decision configuration file
+  ///
+  /// \return True if the config was set successfully.
+  virtual bool setDecisionConfig(std::string config_path) = 0;
+
+
   /// \brief Get the type of decisions which can be requested of this machine
   /// learner.
   ///
@@ -62,7 +98,7 @@ public:
   /// requested.
   /// TODO: Support this
   // std::set<DecisionRequestType> getSupportedDecisions(void) const = 0;
-  
+
 
   /// \brief Make a single decision based on a provided request, the features
   /// of a program unit, and a blob of training data for the machine learner.

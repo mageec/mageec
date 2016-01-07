@@ -388,7 +388,7 @@ std::vector<TrainedML> Database::getTrainedMachineLearners(void)
   
   for (auto I : m_mls) {
     const util::UUID uuid = I.first;
-    const IMachineLearner& ml = *I.second;
+    IMachineLearner& ml = *I.second;
 
     query.clearAllBindings();
     query << std::vector<uint8_t>(uuid.data().begin(), uuid.data().end());

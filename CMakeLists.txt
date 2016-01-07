@@ -101,7 +101,7 @@ set_target_properties(mageec_core PROPERTIES OUTPUT_NAME mageec)
 target_link_libraries(mageec_core sqlite3)
 
 # Machine learners incorporated into MAGEEC
-set (ML_SOURCES "lib/ML/C5.cpp")
+set (ML_SOURCES "lib/ML/C5.cpp" "lib/ML/FileML.cpp")
 
 add_library (mageec_ml ${ML_SOURCES})
 target_link_libraries(mageec_ml mageec_core)
