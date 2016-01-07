@@ -228,6 +228,9 @@ static bool parseArguments(int argc, struct plugin_argument *argv)
     }
   }
 
+  // Enable debug now that parsing arguments is finished
+  mageec_context.framework->setDebug(seen_debug);
+
   // Default mode
   if (!seen_mode) {
     MAGEEC_WARN("No mode specified, defaulting to 'feature_extract'");

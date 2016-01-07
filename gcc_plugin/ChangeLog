@@ -1,3 +1,11 @@
+2016-01-07  Edward Jones  <ed.jones@embecosm.com>
+
+	* FeatureExtract.cpp: Refactor debug handling.
+	* GCCCallbacks.cpp: Likewise.
+	* GCCPlugin.cpp (parseArguments): Handle debug argument.
+	* PluginInfo.cpp (mageecPluginInfo): Output plugin into through
+	MAGEEC_STATUS instead of MAGEEC_DBG.
+
 2016-01-06  Edward Jones  <ed.jones@embecosm.com>
 
 	* CMakeLists.txt: Allow Clang to build the gcc plugin.

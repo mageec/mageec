@@ -61,7 +61,8 @@ static std::string passTypeString(opt_pass *pass)
 void mageecStartFile(void *, void *)
 {
   if (mageec_context.with_debug) {
-    MAGEEC_STATUS("Start file");
+    // FIXME: Output filename
+    MAGEEC_DEBUG("Start file");
   }
 
   // Check that the feature set and pass sequence is empty
@@ -80,8 +81,8 @@ void mageecFinishFile(void *, void *)
     for (const auto &features : mageec_context.func_features) {
       // Features
       if (mageec_context.with_debug) {
-        MAGEEC_STATUS("Saving features for function '" << features.first
-                   << "' in the database");
+        MAGEEC_DEBUG("Saving features for function '" << features.first
+                  << "' in the database");
       }
       mageec::FeatureSetID feature_set_id =
           mageec_context.database->newFeatureSet(*features.second);
@@ -91,8 +92,8 @@ void mageecFinishFile(void *, void *)
       // Parameters
       // FIXME: Using an empty parameter set for now
       if (mageec_context.with_debug) {
-        MAGEEC_STATUS("Saving parameters for function '" << features.first
-                   << "' in the database");
+        MAGEEC_DEBUG("Saving parameters for function '" << features.first
+                  << "' in the database");
       }
       std::unique_ptr<mageec::ParameterSet> params(new mageec::ParameterSet());
       mageec::ParameterSetID parameter_set_id =
@@ -100,8 +101,8 @@ void mageecFinishFile(void *, void *)
 
       // Pass sequence
       if (mageec_context.with_debug) {
-        MAGEEC_STATUS("Saving pass sequence for function '" << features.first
-                   << "' in the database");
+        MAGEEC_DEBUG("Saving pass sequence for function '" << features.first
+                  << "' in the database");
       }
       assert(mageec_context.func_passes.count(features.first) &&
              "Function with no pass sequence");
@@ -128,7 +129,8 @@ void mageecFinishFile(void *, void *)
   mageec_context.func_passes.clear();
 
   if (mageec_context.with_debug) {
-    MAGEEC_STATUS("End file");
+    // FIXME: Output filename
+    MAGEEC_DEBUG("End file");
   }
 }
 
@@ -136,7 +138,7 @@ void mageecFinish(void *gcc_data __attribute__((unused)),
                      void *user_data __attribute__((unused)))
 {
   if (mageec_context.with_debug) {
-    MAGEEC_STATUS("Finish");
+    MAGEEC_DEBUG("Finish");
   }
 }
 
@@ -183,10 +185,10 @@ void mageecPassGate(void *gcc_data, void *user_data __attribute__((unused)))
 
     if (mageec_context.with_debug) {
       std::string pass_type_str = passTypeString(current_pass);
-      MAGEEC_STATUS("Updating pass '" << current_pass->name <<
-                    "' for function '" << func_name << "'");
-      MAGEEC_DBG(" |- Old Gate: " << old_gate << '\n'
-              << " |- New Gate: " << new_gate << '\n');
+      MAGEEC_DEBUG("Updating pass '" << current_pass->name
+                << "' for function '" << func_name << "'");
+      MAGEEC_DEBUG(" |- Old Gate: " << old_gate << '\n'
+                << " |- New Gate: " << new_gate << '\n');
     }
   }
 

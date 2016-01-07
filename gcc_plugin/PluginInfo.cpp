@@ -43,19 +43,19 @@
 void mageecPluginInfo(struct plugin_name_args *plugin_info,
                       struct plugin_gcc_version *version)
 {
-  MAGEEC_DBG("MAGEEC Plugin Information" << '\n'
-          << "=========================" << '\n'
-          << "base_name: " << plugin_info->base_name << '\n'
-          << "full_name: " << plugin_info->full_name << '\n'
-          << "    #args: " << plugin_info->argc << '\n'
-          << "  version: " << plugin_info->version << '\n'
-          << "     help: " << plugin_info->help << '\n');
+  MAGEEC_STATUS("MAGEEC Plugin Information" << '\n'
+             << "=========================" << '\n'
+             << "base_name: " << plugin_info->base_name << '\n'
+             << "full_name: " << plugin_info->full_name << '\n'
+             << "    #args: " << plugin_info->argc << '\n'
+             << "  version: " << plugin_info->version << '\n'
+             << "     help: " << plugin_info->help << '\n');
 
-  MAGEEC_DBG("GCC Information" << '\n'
-          << "---------------" << '\n'
-          << "  basever: " << version->basever << '\n'
-          << "datestamp: " << version->datestamp << '\n'
-          << " devphase: " << version->devphase << '\n'
-          << " revision: " << version->revision << '\n'
-          << " confargs: " << version->configuration_arguments << '\n');
+  MAGEEC_STATUS("GCC Information" << '\n'
+             << "---------------" << '\n'
+             << "  basever: " << version->basever << '\n'
+             << "datestamp: " << version->datestamp << '\n'
+             << " devphase: " << version->devphase << '\n'
+             << " revision: " << version->revision << '\n'
+             << " confargs: " << version->configuration_arguments << '\n');
 }
