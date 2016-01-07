@@ -62,10 +62,13 @@ private:
 
 public:
   /// \brief Create the framework
-  Framework(void);
+  Framework(bool with_debug = false);
 
   /// \brief Destroy the framework, deleting help machine learner interfaces
   ~Framework(void);
+
+  /// \brief Enable debug in the framework
+  void setDebug(bool with_debug) const;
 
   /// \brief Get the version of the mageec framework
   util::Version getVersion(void) const;

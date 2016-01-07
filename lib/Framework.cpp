@@ -44,9 +44,12 @@ Framework::version(MAGEEC_VERSION_MAJOR,
                    MAGEEC_VERSION_PATCH);
 
 
-Framework::Framework(void)
+Framework::Framework(bool with_debug)
   : m_mls()
 {
+  if (with_debug) {
+    util::setDebug(true);
+  }
 }
 
 Framework::~Framework(void)
@@ -55,6 +58,11 @@ Framework::~Framework(void)
   for (auto ml : m_mls) {
     delete ml.second;
   }
+}
+
+void Framework::setDebug(bool with_debug) const
+{
+  util::setDebug(with_debug);
 }
 
 

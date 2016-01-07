@@ -35,14 +35,17 @@ namespace util {
 
 
 // Debug functionality.
+extern bool withDebug();
+extern void setDebug(bool debug = true);
+
 std::ostream &dbg();
 std::ostream &out();
 
 #define MAGEEC_PREFIX "-- "
 #define MAGEEC_ERR(msg)    mageec::util::dbg() << MAGEEC_PREFIX << "error: " << msg << '\n'
 #define MAGEEC_WARN(msg)   mageec::util::dbg() << MAGEEC_PREFIX << "warning: " << msg << '\n'
-#define MAGEEC_DBG(msg)    mageec::util::dbg() << MAGEEC_PREFIX << msg << '\n'
 #define MAGEEC_STATUS(msg) mageec::util::dbg() << MAGEEC_PREFIX << msg << '\n'
+#define MAGEEC_DEBUG(msg)  if (mageec::util::withDebug()) { mageec::util::dbg() << MAGEEC_PREFIX << msg << '\n'; }
 
 
 /// \class Version

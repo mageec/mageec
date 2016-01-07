@@ -35,10 +35,6 @@
 #include <string>
 #include <vector>
 
-#ifdef MAGEEC_DEBUG
-  #include <iostream>
-#endif // MAGEEC_DEBUG
-
 #include "mageec/DatabaseQuery.h"
 #include "mageec/ML.h"
 #include "mageec/TrainedML.h"
@@ -288,12 +284,10 @@ Database::Database(sqlite3 &db,
 Database::~Database(void)
 {
   int res = sqlite3_close(m_db);
-#ifdef MAGEEC_DEBUG
   if (res != SQLITE_OK) {
-    std::cerr << "Unable to close mageec database\n"
-      << sqlite3_errmsg(m_db) << '\n';
+    MAGEEC_DEBUG("Unable to close mageec database:\n"
+        << sqlite3_errmsg(m_db));
   }
-#endif // MAGEEC_DEBUG
   assert(res == SQLITE_OK && "Unable to close mageec database!");
 }
 

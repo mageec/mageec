@@ -33,6 +33,18 @@ namespace mageec {
 namespace util {
 
 
+/// Tracks whether debug is enabled.
+static bool with_debug = false;
+
+/// Returns whether debug is enabled at runtime
+bool withDebug() {
+  return with_debug & MAGEEC_WITH_DEBUG;
+}
+/// Sets whether debug is enabled.
+void setDebug(bool debug) {
+  with_debug = debug & MAGEEC_WITH_DEBUG;
+}
+
 std::ostream &dbg() { return std::cerr; }
 std::ostream &out() { return std::cout; }
 

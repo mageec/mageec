@@ -77,7 +77,7 @@ add_definitions(
 )
 # Add debug flag
 if (MAGEEC_DEBUG)
-  add_definitions (-DMAGEEC_DEBUG)
+  add_definitions (-DMAGEEC_WITH_DEBUG)
 endif ()
 
 # Install header files

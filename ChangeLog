@@ -1,4 +1,25 @@
-2015-01-06  Edward Jones  <ed.jones@embecosm.com>
+2016-01-07  Edward Jones  <ed.jones@embecosm.com>
+
+	* CMakeLists.txt: Renamed MAGEEC_DEBUG definition to MAGEEC_WITH_DEBUG.
+	* include/mageec/Framework.h (Framework::Framework): Add debug
+	parameter.
+	(Framework::setDebug): Added function.
+	* include/mageec/Util.h (withDebug setDebug): Added method.
+	(MAGEEC_DBG): Renamed to MAGEEC_DEBUG.
+	* lib/Database.cpp: Refactor debug handling.
+	* lib/DatabaseQuery.cpp: Likewise.
+	* lib/Driver.cpp (DriverMode): Add kAddResult enum value.
+	(printHelp): Update help to reflect new interface.
+	(main): Refactor argc parsing, add support for debug flag and
+	add-result mode.
+	* lib/Framework.cpp (Framework::Framework): Add debug parameter.
+	(Framework::setDebug): Added method.
+	* lib/Main.cpp: Refactor debug handling.
+	* lib/Util.cpp (with_debug): Added global value to determine if debug
+	is enabled.
+	(withDebug setDebug): Added functions.
+
+2016-01-06  Edward Jones  <ed.jones@embecosm.com>
 
 	* CMakeLists.txt: Disable two more clang warnings.
 	* include/mageec/Util.h: Fix clang warnings.
@@ -7,7 +28,7 @@
 	* lib/C5.cpp: Likewise.
 	* lib/Util.cpp: Likewise.
 
-2015-01-06  Edward Jones  <ed.jones@embecosm.com>
+2016-01-06  Edward Jones  <ed.jones@embecosm.com>
 
 	* include/mageec/Database.h (DatabaseTransaction): New wrapper class
 	around a database transaction.

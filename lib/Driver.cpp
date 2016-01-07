@@ -37,8 +37,9 @@ namespace mageec {
 
 enum class DriverMode {
   kNone,
-  kCreateDatabase,
-  kTrainDatabase,
+  kCreate,
+  kTrain,
+  kAddResults
 };
 
 } // end of namespace mageec
@@ -101,34 +102,37 @@ static void printHelp()
 {
   util::out() <<
 "Usage: mageec [options]\n"
-"       mageec (create | train) [options]\n"
+"       mageec foo.db <mode> [options]\n"
 "\n"
-"Utility methods used alongside the MAGEEC frame work. Used to create a new \n"
-"empty database, train using an existing database, or access other framework \n"
-"functionality.\n"
+"Utility methods used alongside the MAGEEC framework. Used to create a new\n"
+"database, train an existing database, add results, or access other\n"
+"framework functionality.\n"
 "\n"
-"Options:\n"
-"  --help                   Print this help information\n"
-"  --version                Print the version of the MAGEEC framework.\n"
-"  --database <path>        Name of the database to be created, trained or\n"
-"                           queried.\n"
-"  --database-version       Print the version of the provided database.\n"
-"  --machine-learner <arg>  UUID or shared object identifing the machine\n"
-"                           learner to be used for training. A wildcard '*'\n"
-"                           argument corresponds to all available machine\n"
-"                           learners\n"
-"  --print-trained-machine-learners    Print information about the machine\n"
-"                           learners which are trained in the provided\n"
-"                           database\n"
-"  --print-machine-learner-interfaces  Print the interfaces registers with\n"
-"                           the framework, and therefore usable for training\n"
-"                           and decision making.\n"
+"mode:\n"
+"  --create                Create a new empty database.\n"
+"  --train                 Train an existing database, using machine\n"
+"                          learners provided via the --ml flag\n"
+"  --add-results <arg>     Add results from the provided file into the\n"
+"                          database\n"
+"\n"
+"options:\n"
+"  --help                  Print this help information\n"
+"  --version               Print the version of the MAGEEC framework\n"
+"  --debug                 Enable debug output in the framework\n"
+"  --database-version      Print the version of the provided database\n"
+"  --ml <arg>              UUID or shared object identifying a machine\n"
+"                          learner interface to be used\n"
+"  --print-trained-mls     Print information about the machine learners\n"
+"                          which are trained in the provided database\n"
+"  --print-ml-interfaces   Print the interfaces registered with the MAGEEC\n"
+"                          framework, and therefore usable for training and\n"
+"                          decision making\n"
+"\n"
 "Examples:\n"
-"  mageec --help\n"
-"  mageec create --database foo.db\n"
-"  mageec train --database bar.db --machine-learner my_ml.so\n"
-"  mageec train --database foo.db\n"
-"               --machine-learner ccf7593c-78d9-429a-b544-2a7339d4325e\n";
+"  mageec --help --version\n"
+"  mageec foo.db --create\n"
+"  mageec bar.db --train --ml path/to/ml_plugin.so\n"
+"  mageec baz.db --train --ml deadbeef-ca75-4096-a935-15cabba9e5\n";
 }
 
 
@@ -286,33 +290,56 @@ int main(int argc, const char *argv[])
 
   // The database to be created or trained
   util::Option<std::string> db_str;
-  // The machine learners to train
+  // Metrics to train the machine learners
+  std::set<std::string> metric_strs;
+  // Machine learners to train
   std::set<std::string> ml_strs;
-  // Metrics to train the machine learners against
-  std::set<std::string> metrics;
+  // The path to the results to be inserted into the database
+  util::Option<std::string> results_path;
 
-  bool seen_database = false;
-  bool seen_mls = false;
-  bool seen_metrics = false;
+  bool seen_db      = false;
+  bool seen_metric  = false;
+  bool seen_ml      = false;
+  bool seen_results = false;
 
-  bool with_help = false;
-  bool with_version = false;
-  bool with_database_version = false;
-  bool with_print_trained_mls = false;
+  bool with_db_version          = false;
+  bool with_debug               = false;
+  bool with_help                = false;
   bool with_print_ml_interfaces = false;
+  bool with_print_trained_mls   = false;
+  bool with_version             = false;
 
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
 
-    // If this is the first argument, it may specify the mode which the tool
-    // is running in.
+    // If this is the first argument, it may specify the database which the
+    // tool is to use.
     if (i == 1) {
-      if (arg == "create") {
-        mode = DriverMode::kCreateDatabase;
+      if (arg[0] != '-') {
+        db_str = arg;
+        seen_db = true;
         continue;
       }
-      if (arg == "train") {
-        mode = DriverMode::kTrainDatabase;
+    }
+
+    // If a database is specified, then the second argument *might* be the
+    // mode
+    if ((i == 2) && seen_db) {
+      if (arg == "--create") {
+        mode = DriverMode::kCreate;
+        continue;
+      }
+      else if (arg == "--train") {
+        mode = DriverMode::kTrain;
+        continue;
+      }
+      else if (arg == "--add-result") {
+        ++i;
+        if (i >= argc) {
+          MAGEEC_ERR("No '--add-result' value provided");
+          return -1;
+        }
+        mode = DriverMode::kAddResults;
         continue;
       }
     }
@@ -324,14 +351,17 @@ int main(int argc, const char *argv[])
     else if (arg == "--version") {
       with_version = true;
     }
-    else if (arg == "--print-machine-learner-interfaces") {
+    else if (arg == "--debug") {
+      with_debug = true;
+    }
+    else if (arg == "--print-ml-interfaces") {
       with_print_ml_interfaces = true;
     }
-    else if (arg == "--print-trained-machine-learners") {
+    else if (arg == "--print-trained-mls") {
       with_print_trained_mls = true;
     }
     else if (arg == "--database-version") {
-      with_database_version = true;
+      with_db_version = true;
     }
 
     else if (arg == "--metric") {
@@ -340,74 +370,77 @@ int main(int argc, const char *argv[])
         MAGEEC_ERR("No '--metric' value provided");
         return -1;
       }
-      metrics.insert(std::string(argv[i]));
-      seen_metrics = true;
+      metric_strs.insert(std::string(argv[i]));
+      seen_metric = true;
     }
-    else if (arg == "--database") {
-      if (seen_database) {
-        MAGEEC_ERR("Argument '--database' already seen");
-        return -1;
-      }
-      ++i;
-      if (i >= argc) {
-        MAGEEC_ERR("No '--database' value provided");
-      }
-      db_str = std::string(argv[i]);
-      seen_database = true;
-    }
-    else if (arg == "--machine-learner") {
+    else if (arg == "--ml") {
       ++i;
       if (i >= argc) {
         MAGEEC_ERR("No '--machine-learner' value provided");
         return -1;
       }
       ml_strs.insert(std::string(argv[i]));
-      seen_mls = true;
+      seen_ml = true;
+    }
+    else if (arg == "--add-results") {
+      ++i;
+      if (i >= argc) {
+        MAGEEC_ERR("No '--add-results' value provided");
+        return -1;
+      }
+      results_path = std::string(argv[i]);
+      seen_results = true;
     }
     else {
-      MAGEEC_ERR("Unrecognized argument: " << arg);
+      MAGEEC_ERR("Unrecognized argument: '" << arg << "'");
       return -1;
     }
   }
 
   // Errors
-  if (mode == DriverMode::kTrainDatabase && !seen_mls) {
+  if (mode == DriverMode::kTrain && !seen_ml) {
     MAGEEC_ERR("Training mode specified without machine learners");
     return -1;
   }
-  if (mode == DriverMode::kTrainDatabase && !seen_metrics) {
-    MAGEEC_ERR("Training mode specified without any metrics to train for");
-    return -1;
-  }
-  if (mode == DriverMode::kCreateDatabase && !seen_database) {
-    MAGEEC_ERR("Create mode specified without any database to create");
+  if (mode == DriverMode::kTrain && !seen_metric) {
+    MAGEEC_ERR("Training mode specified without any metric to train for");
     return -1;
   }
 
   // Warnings
-  if (mode == DriverMode::kCreateDatabase && seen_mls) {
-    MAGEEC_WARN("Creation mode specified, '--machine-learner arguments "
-                "will be ignored");
+  if (mode == DriverMode::kCreate && seen_ml) {
+    MAGEEC_WARN("Creation mode specified, '--ml' arguments will be ignored");
   }
-  if (with_database_version && !seen_database) {
-    MAGEEC_WARN("Cannot get database version, as no database was specified");
+  if (with_db_version && !seen_db) {
+    MAGEEC_WARN("Cannot get database version as no database was specified");
   }
-  if (with_print_trained_mls && !seen_database) {
+  if (with_print_trained_mls && !seen_db) {
     MAGEEC_WARN("Cannot print trained machine learners as no database was "
                 "specified");
   }
+  // Unused arguments
+  if ((mode == DriverMode::kNone) ||
+      (mode == DriverMode::kCreate) ||
+      (mode == DriverMode::kAddResults)) {
+    if (seen_metric) {
+      MAGEEC_WARN("--metric arguments will be ignored for the specified mode");
+    }
+    if (seen_ml) {
+      MAGEEC_WARN("--ml arguments will be ignored for the specified mode");
+    }
+  }
 
-  // Initialize the framework, and register some builtin machine learner
-  // interfaces so that they can be selected by UUID by the user.
-  Framework framework;
+  // Initialize the framework, and register some built in machine learners
+  // so that they can be selected by UUID by the user.
+  Framework framework(with_debug);
+
   // C5 classifier
   std::unique_ptr<IMachineLearner> c5_ml(new C5Driver());
   framework.registerMachineLearner(std::move(c5_ml));
 
-  // Get the UUIDs of the available machine learners provided on the command
-  // line.
+  // Get the UUIDs of the machine learners provided on the command line
   std::set<util::UUID> mls;
-  if (seen_mls) {
+  if (seen_ml) {
     assert(ml_strs.size() != 0);
     mls = getMachineLearners(framework, ml_strs);
     if (mls.size() <= 0) {
@@ -422,7 +455,7 @@ int main(int argc, const char *argv[])
   if (with_help) {
     printHelp();
   }
-  if (with_database_version) {
+  if (with_db_version) {
     if (!printDatabaseVersion(framework, db_str.get())) {
       return -1;
     }
@@ -438,12 +471,14 @@ int main(int argc, const char *argv[])
 
   // Handle modes
   switch (mode) {
-    case DriverMode::kCreateDatabase:
-      return createDatabase(framework, db_str.get());
-    case DriverMode::kTrainDatabase:
-      return trainDatabase(framework, db_str.get(), mls, metrics);
-    default:
-      break;
+  case DriverMode::kNone:
+    return 0;
+  case DriverMode::kCreate:
+    return createDatabase(framework, db_str.get());
+  case DriverMode::kTrain:
+    return trainDatabase(framework, db_str.get(), mls, metric_strs);
+  case DriverMode::kAddResults:
+    assert(0 && "Cannot add results to the database yet");
   }
   return 0;
 }

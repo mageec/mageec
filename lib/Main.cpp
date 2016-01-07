@@ -16,10 +16,6 @@ int main(void)
   Framework framework;
   std::unique_ptr<Database> db = framework.getDatabase("tmp", true);
 
-#ifdef MAGEEC_DEBUG
-  std::cout << std::string(db->getVersion()) << '\n';
-#endif // MAGEEC_DEBUG
-
   // Emulate some feature extraction
   FeatureSet func_features = {
     std::make_shared<IntFeature>(1, 15, "function basic block count"),
