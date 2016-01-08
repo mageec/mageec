@@ -1,3 +1,18 @@
+2016-01-08  Edward Jones  <ed.jones@embecosm.com>
+
+	* CMakeLists.txt: Link the plugin library with the machine learners.
+	* FeatureExtract.cpp (featureExtractExecute): Update uses of the
+	debug interface.
+	* GCCCallBacks.cpp: Likewise.
+	(mageecStartFile): Update to use new MAGEECContext structure.
+	(mageecPassGate): Likewise.
+	* GCCPlugin.cpp (parseArguments): Refactor argument parsing. Add
+	debug, ml-config, metric and print-trained-mls arguments. Remove
+	the old 'mode' argument in favor of seperate optimize and save
+	features flags.
+	(plugin_init): Initialize the built in C5 and FileML machine learners.
+	* MAGEECPlugin.h (MAGEECContext): Redefine the context structure.
+
 2016-01-07  Edward Jones  <ed.jones@embecosm.com>
 
 	* FeatureExtract.cpp: Refactor debug handling.

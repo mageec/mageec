@@ -35,6 +35,9 @@
 
 #include "mageec/FeatureSet.h"
 #include "mageec/Framework.h"
+#include "mageec/ML.h"
+#include "mageec/ML/C5.h"
+#include "mageec/ML/FileML.h"
 #include "mageec/TrainedML.h"
 #include "mageec/Util.h"
 #include "MAGEECPlugin.h"
@@ -89,290 +92,319 @@ MAGEECContext mageec_context;
 
 
 /// \brief Parse arguments provided to the plugin
+///
+/// FIXME: This method is rather large an unweildy as we mutate
+/// the configuration of the framework and context all over the place.
+/// It needs to be factored out to make it more manageable.
+/// Factor this out to make it more manageable.
 static bool parseArguments(int argc, struct plugin_argument *argv)
 {
   assert(!mageec_context.is_init);
   assert(mageec_context.framework &&
          "Cannot parse plugin arguments with uninitialized framework");
 
-  mageec::util::Option<std::string> ml_str;
-  mageec::util::Option<std::string> db_str;
+  mageec::util::Option<std::string>    db_str;
+  mageec::util::Option<std::string>    ml_str;
+  mageec::util::Option<std::string>    ml_config_str;
+  mageec::util::Option<mageec::Metric> metric;
 
-  bool with_plugin_info = false;
-  bool with_print_machine_learners = false;
-  bool with_feature_extract = false;
-  bool with_optimize = false;
-  bool with_save_features = false;
+  // Simple flags
+  bool with_plugin_info         = false;
+  bool with_debug               = false;
+  bool with_print_ml_interfaces = false;
+  bool with_print_trained_mls   = false;
+  bool with_feature_extract     = false;
+  bool with_optimize            = false;
 
-  bool seen_debug = false;
-  bool seen_mode  = false;
-  bool seen_machine_learner = false;
-  bool seen_database = false;
-  bool seen_save_features = false;
+  // Flags with arguments
+  bool with_db        = false;
+  bool with_ml        = false;
+  bool with_ml_config = false;
+  bool with_metric    = false;
 
   for (int i = 0; i < argc; ++i) {
     std::string arg_str = argv[i].key;
 
-    if (arg_str == "debug" || arg_str == "no_debug") {
-      if (seen_debug) {
-        MAGEEC_ERR("Plugin argument 'debug' already seen");
+    // Simple flags
+    if (arg_str == "plugin-info") {
+      if (argv[i].value) {
+        MAGEEC_ERR("Plugin argument 'plugin-info' does not take a value");
         return false;
       }
-
-      if (arg_str == "debug") {
-        if (argv[i].value) {
-          std::string arg_value = argv[i].value;
-          if (arg_value == "true") {
-            mageec_context.with_debug = true;
-          }
-          else if (arg_value == "false") {
-            mageec_context.with_debug = false;
-          }
-        }
-        else {
-          mageec_context.with_debug = true;
-        }
+      with_plugin_info = true;
+    }
+    else if (arg_str == "debug") {
+      if (argv[i].value) {
+        MAGEEC_ERR("Plugin argument 'debug' does not take a value");
+        return false;
       }
-      else if (arg_str == "no_debug") {
-        mageec_context.with_debug = false;
+      with_debug = true;
+    }
+    else if (arg_str == "print-ml-interfaces") {
+      if (argv[i].value) {
+        MAGEEC_ERR("Plugin argument 'print-ml-interfaces' does not take a "
+                   "value");
+        return false;
       }
-      seen_debug = true;
+      with_print_ml_interfaces = true;
+    }
+    else if (arg_str == "print-trained-mls") {
+      if (argv[i].value) {
+        MAGEEC_ERR("Plugin argument 'print-trained-mls' does not take a value");
+        return false;
+      }
+      with_print_trained_mls = true;
+    }
+    else if (arg_str == "feature-extract") {
+      if (argv[i].value) {
+        MAGEEC_ERR("Plugin argument 'feature-extract' does not take a value");
+        return false;
+      }
+      with_feature_extract = true;
+    }
+    else if (arg_str == "optimize") {
+      if (argv[i].value) {
+        MAGEEC_ERR("Plugin argument 'optimize' does not take a value");
+        return false;
+      }
+      with_optimize = true;
     }
 
-    else if (arg_str == "mode") {
-      if (seen_mode) {
-        MAGEEC_ERR("Plugin argument 'mode' already seen");
-        return false;
-      }
-      if (!argv[i].value) {
-        MAGEEC_ERR("No 'mode' argument value provided");
-        return false;
-      }
-
-      std::string arg_value = argv[i].value;
-      
-      if (arg_value == "plugin_info") {
-        with_plugin_info = true;
-      }
-      else if (arg_value == "print_machine_learners") {
-        with_print_machine_learners = true;
-      }
-      else if (arg_value == "feature_extract") {
-        with_feature_extract = true;
-      }
-      else if (arg_value == "optimize") {
-        with_feature_extract = true;
-        with_optimize = true;
-      }
-      else {
-        MAGEEC_ERR("Unknown 'mode' for plugin: " << arg_value);
-        return false;
-      }
-      seen_mode = true;
-    }
-
-    else if (arg_str == "machine_learner") {
-      if (seen_machine_learner) {
-        MAGEEC_ERR("Plugin argument 'machine_learner' already seen");
-        return false;
-      }
-      if (!argv[i].value) {
-        MAGEEC_ERR("Missing 'machine_learner' argument value");
-        return false;
-      }
-      ml_str = std::string(argv[i].value);
-      seen_machine_learner = true;
-    }
-
+    // Flags with arguments
     else if (arg_str == "database") {
-      if (seen_database) {
+      if (with_db) {
         MAGEEC_ERR("Plugin argument 'database' already seen");
         return false;
       }
       if (!argv[i].value) {
-        MAGEEC_ERR("Missing 'database' argument value");
+        MAGEEC_ERR("No value provided to 'database' argument");
         return false;
       }
       db_str = std::string(argv[i].value);
-      seen_database = true;
+      with_db = true;
     }
-
-    else if (arg_str == "save_features" || arg_str == "no_save_features") {
-      if (seen_save_features) {
-        MAGEEC_ERR("Plugin argument 'save_features' already seen");
+    else if (arg_str == "ml") {
+      if (with_ml) {
+        MAGEEC_ERR("Plugin argument 'ml' already seen");
         return false;
       }
-
-      if (arg_str == "save_features") {
-        if (argv[i].value) {
-          std::string arg_value = argv[i].value;
-          if (arg_value == "true") {
-            with_save_features = true;
-          }
-          else if (arg_value == "false") {
-            with_save_features = false;
-          }
-        }
-        else {
-          with_save_features = true;
-        }
+      if (!argv[i].value) {
+        MAGEEC_ERR("No value provided to 'ml' argument");
+        return false;
       }
-      if (arg_str == "no_save_features") {
-        with_save_features = false;
+      ml_str = std::string(argv[i].value);
+      with_ml = true;
+    }
+    else if (arg_str == "ml-config") {
+      if (with_ml_config) {
+        MAGEEC_ERR("Plugin argument 'ml-config' already seen");
+        return false;
       }
-      seen_save_features = true;
+      if (!argv[i].value) {
+        MAGEEC_ERR("No value provided to 'ml-config' argument");
+        return false;
+      }
+      ml_config_str = std::string(argv[i].value);
+      with_ml_config = true;;
+    }
+    else if (arg_str == "metric") {
+      if (with_metric) {
+        MAGEEC_ERR("Plugin argument 'metric' already seen");
+        return false;
+      }
+      if (!argv[i].value) {
+        MAGEEC_ERR("No value provided to 'metric' argument");
+        return false;
+      }
+      std::string metric_str = argv[i].value;
+      metric = mageec::util::stringToMetric(argv[i].value);
+      if (!metric) {
+        MAGEEC_ERR("Invalid metric value specified '" << metric_str <<"'");
+        return false;
+      }
+      with_metric = true;
     }
     else {
-      MAGEEC_ERR("Unknown argument to plugin: " << arg_str);
-      return false;
+      MAGEEC_WARN("Unrecognized argument '" << arg_str << "' ignored");
     }
   }
 
-  // Enable debug now that parsing arguments is finished
-  mageec_context.framework->setDebug(seen_debug);
-
-  // Default mode
-  if (!seen_mode) {
-    MAGEEC_WARN("No mode specified, defaulting to 'feature_extract'");
-    with_feature_extract = true;
-  }
-
-  // Determine the mode we are running in
-  if (with_plugin_info) {
-    mageec_context.mode.reset(new MAGEECMode(MAGEECMode::kPluginInfo));
-  }
-  else if (with_print_machine_learners) {
-    mageec_context.mode.reset(
-        new MAGEECMode(MAGEECMode::kPrintMachineLearners));
-  }
-  else {
-    if (with_feature_extract && !with_save_features && !with_optimize) {
-      mageec_context.mode.reset(
-          new MAGEECMode(MAGEECMode::kFeatureExtract));
-    }
-    else if (with_feature_extract && with_save_features && !with_optimize) {
-      mageec_context.mode.reset(
-          new MAGEECMode(MAGEECMode::kFeatureExtractAndSave));
-    }
-    else if (with_feature_extract && !with_save_features && with_optimize) {
-      mageec_context.mode.reset(
-          new MAGEECMode(MAGEECMode::kFeatureExtractAndOptimize));
-    }
-    else if (with_feature_extract && with_save_features && with_optimize) {
-      mageec_context.mode.reset(
-          new MAGEECMode(MAGEECMode::kFeatureExtractSaveAndOptimize));
-    }
-    else {
-      assert(0 && "Invalid mode flags");
-    }
-  }
+  // Enable debug now that parsing arguments is finished.
+  mageec_context.framework->setDebug(with_debug);
 
   // Sanity checks
-  assert(mageec_context.mode);
-  assert(seen_machine_learner == (ml_str == true));
-  assert(seen_database == (db_str == true));
+  assert(with_ml == (ml_str == true));
+  assert(with_db == (db_str == true));
+  assert(with_ml_config == (ml_config_str == true));
+
+  bool may_require_db = with_feature_extract || with_print_trained_mls ||
+                        with_optimize;
+  bool may_use_ml = with_print_trained_mls || with_print_ml_interfaces ||
+                    with_optimize;
 
   // Warnings
-  MAGEECMode mode = *mageec_context.mode;
-  if (seen_save_features) {
-    if ((mode == MAGEECMode::kPluginInfo) ||
-        (mode == MAGEECMode::kPrintMachineLearners)) {
-      MAGEEC_WARN("Ignored argument 'save_features'");
-    }
+  if (with_db && !may_require_db) {
+    MAGEEC_WARN("Database provided but no option specified which requires "
+                "a database");
   }
-  if (seen_database) {
-    if ((mode == MAGEECMode::kPluginInfo) ||
-        (mode == MAGEECMode::kPrintMachineLearners) ||
-        (mode == MAGEECMode::kFeatureExtract)) {
-      MAGEEC_WARN("Ignored argument 'database'");
-    }
-  }
-  if (seen_machine_learner) {
-    if ((mode == MAGEECMode::kPluginInfo) ||
-        (mode == MAGEECMode::kPrintMachineLearners) ||
-        (mode == MAGEECMode::kFeatureExtract) ||
-        (mode == MAGEECMode::kFeatureExtractAndSave)) {
-      MAGEEC_WARN("Ignored argument 'machine_learner'");
-    }
+  if (with_ml_config && !with_ml) {
+    MAGEEC_WARN("Configuration for machine learner provided but no machine "
+                "learner was specified");
   }
 
   // Errors
-  if ((mode == MAGEECMode::kFeatureExtractAndSave) ||
-      (mode == MAGEECMode::kFeatureExtractSaveAndOptimize)) {
-    if (!seen_database) {
-      MAGEEC_ERR("Cannot save features without a database");
-      return false;
-    }
+  if (with_feature_extract && !with_db) {
+    MAGEEC_ERR("Cannot feature extract without a database to save features "
+               "to");
+    return false;
   }
-  if ((mode == MAGEECMode::kFeatureExtractAndOptimize) ||
-      (mode == MAGEECMode::kFeatureExtractSaveAndOptimize)) {
-    if (!seen_machine_learner) {
-      MAGEEC_ERR("Cannot optimize without a machine learner");
-      return false;
-    }
-  }
-  if (mode == MAGEECMode::kFeatureExtractAndOptimize) {
-    if (!seen_database) {
-      MAGEEC_ERR("Cannot optimize without a database");
-      return false;
-    }
+  if (with_optimize && !with_ml) {
+    MAGEEC_ERR("Cannot optimize without specifying a machine learner");
+    return false;
   }
 
-
-  // Load in the appropriate database if required.
-  // TODO: Allow this to create a new database
-  if ((mode == MAGEECMode::kFeatureExtractAndSave) ||
-      (mode == MAGEECMode::kFeatureExtractAndOptimize) ||
-      (mode == MAGEECMode::kFeatureExtractSaveAndOptimize)) {
-    assert(seen_database);
-    mageec_context.database =
-        mageec_context.framework->getDatabase(db_str.get(), false);
-    assert(mageec_context.database);
-  }
-
-  // If we are in a mode which requires a machine learner, try and parse the
-  // machine learner string as a UUID.
+  // If we are optimizing, or querying machine learner interfaces or
+  // trained machine learners, and we have a machine learner argument, try
+  // and parse it as a UUID.
   mageec::util::Option<mageec::util::UUID> ml_uuid;
-  if ((mode == MAGEECMode::kFeatureExtractAndOptimize) ||
-      (mode == MAGEECMode::kFeatureExtractSaveAndOptimize)) {
-    assert(seen_machine_learner);
-    assert(mageec_context.database);
-    ml_uuid = mageec::util::UUID::parse(ml_str.get());
+  if (may_use_ml && with_ml) {
+    assert(ml_str);
 
-    // Not a UUID, try and load as a shared object
+    ml_uuid = mageec::util::UUID::parse(ml_str.get());
     if (!ml_uuid) {
+      // Not a UUID, try and load as a shared object
       ml_uuid = mageec_context.framework->loadMachineLearner(ml_str.get());
     }
-
     if (!ml_uuid) {
-      MAGEEC_ERR("Unable to load machine learner: " << ml_str);
+      MAGEEC_ERR("Unable to load provided machine learner: " << ml_str);
       return false;
     }
     assert(ml_uuid);
-    
-    // Get all of the trained machine learners in the database
-    // Find the machine learner we are interested in save it in the context
-    std::vector<mageec::TrainedML> machine_learners =
-        mageec_context.database->getTrainedMachineLearners();
-
-    bool ml_found = false;
-    for (auto &ml : machine_learners) {
-      if (ml.getUUID() == ml_uuid.get()) {
-        mageec_context.machine_learner.reset(new mageec::TrainedML(ml));
-        ml_found = true;
-        break;
-      }
-    }
-    if (!ml_found) {
-      MAGEEC_ERR("The provided machine learner has no training data in this "
-                 "database");
-      return false;
-    }
-    assert(mageec_context.machine_learner);
   }
 
-  assert(mageec_context.mode);
+  // If printing the interfaces or optimizing, get the machine learners.
+  // For optimizing, we need to know whether the user needs to specify
+  // a metric to the machine learner. We also need to know whether the
+  // machine learner needs the database to make decisions.
+  bool ml_requires_db = false;
+  bool ml_requires_metric = false;
+  if (with_print_ml_interfaces || with_optimize) {
+    std::set<mageec::IMachineLearner *> ml_interfaces =
+        mageec_context.framework->getMachineLearners();
+
+    // Print the machine learner interfaces
+    // FIXME: PRINT
+
+    // Check if the user must specify a metric to the machine learner
+    // An interface which requires training also requires a database,
+    // and a metric to be specified by the user.
+    for (auto ml : ml_interfaces) {
+      if ((ml->getUUID() == ml_uuid.get()) && ml->requiresTraining()) {
+        ml_requires_metric = true;
+        ml_requires_db = true;
+      }
+    }
+    if (ml_requires_metric && !with_metric) {
+      MAGEEC_ERR("The provided machine learner requires a metric, but "
+                 "one was not specified");
+      return false;
+    }
+    else if (!ml_requires_metric && with_metric) {
+      MAGEEC_ERR("Machine learner does not require a metric, but one was "
+                 "specified");
+      return false;
+    }
+  }
+
+  if (ml_requires_db && !with_db) {
+    MAGEEC_ERR("Machine learners requires database to make decisions, but "
+               "a database was not provided");
+    return false;
+  }
+
+  // Now we know whether a database is required we can load it.
+  if ((with_feature_extract || ml_requires_db || with_print_trained_mls)
+      && with_db) {
+    assert(db_str);
+    mageec_context.db =
+        mageec_context.framework->getDatabase(db_str.get(), false);
+    assert(mageec_context.db);
+  }
+
+  // If we are optimizing, or querying for trained machine learners, then
+  // retrieve them from the database if it is available.
+  std::vector<mageec::TrainedML> trained_mls;
+  if ((with_print_trained_mls || with_optimize) && with_db) {
+    trained_mls = mageec_context.db->getTrainedMachineLearners();
+  }
+  // There are also some machine learners which don't need training, and for
+  // these we can create a trained machine learner directly.
+  // FIXME: May be better for this to be in the framework.
+  for (const auto ml : mageec_context.framework->getMachineLearners()) {
+    if (!ml->requiresTraining()) {
+      trained_mls.push_back(mageec::TrainedML(*ml));
+    }
+  }
+
+  // Print out the trained machine learners if desired
+  if (with_print_trained_mls) {
+    // FIXME: Print them out
+  }
+
+  // If we are optimizing, find the trained machine learner specified earlier
+  // which has the desired UUID and (if required) metric.
+  if (with_optimize) {
+    bool ml_found = false;
+    for (auto &ml : trained_mls) {
+      // UUID or metric doesn't match, ignore
+      if (ml.getUUID() != ml_uuid.get()) {
+        continue;
+      }
+      if (ml_requires_metric && (ml.getMetric() != metric.get())) {
+        continue;
+      }
+
+      // We've found the right trained machine learner
+      mageec_context.ml.reset(new mageec::TrainedML(ml));
+
+      // Check that a configuration was provided by the user if it is
+      // required by the ml.
+      if (mageec_context.ml->requiresDecisionConfig()) {
+        if (with_ml_config) {
+          mageec_context.ml->setDecisionConfig(ml_config_str.get());
+        }
+        else {
+          MAGEEC_ERR("The provided machine learner needs a configuration, "
+                     "but one was not provided");
+          return false;
+        }
+      }
+      else {
+        if (with_ml_config) {
+          MAGEEC_ERR("Machine learner does not require a configuration, "
+                     "but one was provided");
+          return false;
+        }
+      }
+      ml_found = true;
+      break;
+    }
+    if (!ml_found) {
+      MAGEEC_ERR("Unable to optimize with the provided machine learner. "
+                 "The machine learner may need to be trained before use");
+      return false;
+    }
+    assert(mageec_context.ml);
+  }
+
+  mageec_context.with_plugin_info = with_plugin_info;
+  mageec_context.with_feature_extract = with_feature_extract;
+  mageec_context.with_optimize = with_optimize;
   mageec_context.is_init = true;
+
+  // Do some sanity checks to validate the mess I have written above.
+  // FIXME
+  
   return true;
 }
 
@@ -392,6 +424,14 @@ int plugin_init (struct plugin_name_args *plugin_info,
   assert(!mageec_context.framework);
   mageec_context.framework.reset(new mageec::Framework());
 
+  // Load built in machine learners into the framework.
+  // C5 classifier
+  std::unique_ptr<mageec::IMachineLearner> c5_ml(new mageec::C5Driver());
+  mageec_context.framework->registerMachineLearner(std::move(c5_ml));
+  // FileML
+  std::unique_ptr<mageec::IMachineLearner> file_ml(new mageec::FileML());
+  mageec_context.framework->registerMachineLearner(std::move(file_ml));
+
   // Register our information, parse arguments
   register_callback(plugin_info->base_name, PLUGIN_INFO, NULL,
                      &mageec_plugin_version);
@@ -403,7 +443,7 @@ int plugin_init (struct plugin_name_args *plugin_info,
     return 1;
   }
 
-  if (*mageec_context.mode == MAGEECMode::kPluginInfo) {
+  if (mageec_context.with_plugin_info) {
     mageecPluginInfo(plugin_info, version);
     return 0;
   }

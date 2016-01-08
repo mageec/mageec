@@ -367,15 +367,13 @@ static unsigned featureExtractExecute(void)
          "Features for function already extracted");
   mageec_context.func_features[func_name] = std::move(features);
 
-  if (mageec_context.with_debug) {
-    MAGEEC_DEBUG("Extracting features for function '" << func_name << "'");
-    MAGEEC_DEBUG("Dumping feature vector");
-    if (util::withDebug()) {
-      mageec_context.func_features[func_name]->print(
-          mageec::util::dbg(), " |- ");
-    }
-    MAGEEC_DEBUG("Finished dumping feature vector");
+  MAGEEC_DEBUG("Extracting features for function '" << func_name << "'");
+  MAGEEC_DEBUG("Dumping feature vector");
+  if (util::withDebug()) {
+    mageec_context.func_features[func_name]->print(
+        mageec::util::dbg(), " |- ");
   }
+  MAGEEC_DEBUG("Finished dumping feature vector");
   return 0;
 }
 
