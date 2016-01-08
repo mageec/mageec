@@ -29,6 +29,8 @@
 #include <cassert>
 #include <vector>
 
+#include "mageec/Types.h"
+
 
 namespace mageec {
 namespace util {
@@ -201,6 +203,7 @@ public:
   UUID& operator=(UUID &&other) = default;
 
   bool operator==(const UUID& other) const { return m_data == other.m_data; }
+  bool operator!=(const UUID& other) const { return m_data != other.m_data; }
   bool operator<(const UUID& other) const { return m_data < other.m_data; }
 
   std::array<uint8_t, 16> data(void) const { return m_data; }
@@ -302,6 +305,16 @@ void write64LE(std::vector<uint8_t> &buf, uint64_t value);
 
 /// \brief Calculate a CRC64 across a blob
 uint64_t crc64(uint8_t *message, unsigned len);
+
+
+/// \brief Convert from a metric to a string
+std::string metricToString(Metric metric);
+
+
+/// \brief Convert from a string to a metric if possible.
+/// 
+/// \return The metric if possible, or an empty Option type if not.
+Option<Metric> stringToMetric(std::string metric);
 
 
 } // end of namespace util

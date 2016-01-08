@@ -48,33 +48,6 @@ enum class DriverMode {
 using namespace mageec;
 
 
-/// \brief Convert from a metric to a string
-static std::string metricToString(Metric metric) {
-  switch (metric) {
-  case Metric::kCodeSize:   return "size";
-  case Metric::kTime:       return "time";
-  case Metric::kEnergy:     return "energy";
-  }
-}
-
-/// \brief Convert from a string to a metric if possible.
-/// 
-/// \return The metric if possible, or an empty Option type if not.
-static util::Option<Metric> stringToMetric(std::string metric) {
-  if (metric == "size") {
-    return Metric::kCodeSize;
-  }
-  else if (metric == "time") {
-    return Metric::kTime;
-  }
-  else if (metric == "energy") {
-    return Metric::kEnergy;
-  }
-  else{
-    return util::Option<Metric>();
-  }
-}
-
 
 /// \brief Print out the version of the MAGEEC framework
 static void printVersion(const Framework &framework)
@@ -193,23 +166,42 @@ getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs)
 /// \brief Print a description of all of the machine learners trained
 /// for this database.
 ///
-/// \return 0 on success, 1 if the database could not be opened.
-static int printTrainedMLs(Framework &framework, const std::string &db_path)
+/// If a database is not provided, then print the machine learners which
+/// do not require training.
+///
+/// \return true on success
+static bool printTrainedMLs(Framework &framework,
+                            const util::Option<std::string> db_path)
 {
-  std::unique_ptr<Database> db = framework.getDatabase(db_path, false);
-  if (!db) {
-    MAGEEC_ERR("Error retrieving database. The database may not exist, "
-               "or you may not have sufficient permissions to read it");
-    return -1;
+  // Add any machine learners which do not require training (and therefore
+  // do not have any entry in the database)
+  std::vector<TrainedML> trained_mls;
+  for (const auto ml : framework.getMachineLearners()) {
+    if (!ml->requiresTraining()) {
+      trained_mls.push_back(TrainedML(*ml));
+    }
+  }
+  
+  if (db_path) {
+    std::unique_ptr<Database> db = framework.getDatabase(db_path.get(), false);
+    if (!db) {
+      MAGEEC_ERR("Error retrieving database. The database may not exist, "
+                 "or you may not have sufficient permissions to read it");
+      return false;
+    }
+    // Add trained machine learners from the database
+    for (const auto ml : db->getTrainedMachineLearners()) {
+      trained_mls.push_back(ml);
+    }
   }
 
-  std::vector<TrainedML> trained_mls = db->getTrainedMachineLearners();
+  // Print out the trained machine learners
   for (auto &ml : trained_mls) {
     util::out() << ml.getName() << '\n'
                 << static_cast<std::string>(ml.getUUID()) << '\n'
-                << metricToString(ml.getMetric()) << "\n\n";
+                << util::metricToString(ml.getMetric()) << "\n\n";
   }
-  return 0;
+  return true;
 }
 
 /// \brief Print a description of all of the machine learner interfaces
@@ -225,33 +217,33 @@ static void printMLInterfaces(Framework &framework)
 
 /// \brief Create a new database
 ///
-/// \return 0 on success, 1 if the database could not be created.
-static int createDatabase(Framework &framework, const std::string &db_path)
+/// \return true on success, false if the database could not be created.
+static bool createDatabase(Framework &framework, const std::string &db_path)
 {
   std::unique_ptr<Database> db = framework.getDatabase(db_path, true);
   if (!db) {
     MAGEEC_ERR("Error creating new database. The database may already exist, "
                "or you may not have sufficient permissions to create the "
                "file");
-    return -1;
+    return false;
   }
-  return 0;
+  return true;
 }
 
 /// \brief Train a database
 ///
-/// \return 0 on success, 1 if the database could not be trained.
-static int trainDatabase(Framework &framework,
-                         const std::string &db_path,
-                         const std::set<util::UUID> mls,
-                         const std::set<std::string> &metric_strs)
+/// \return true on success, false if the database could not be trained.
+static bool trainDatabase(Framework &framework,
+                          const std::string &db_path,
+                          const std::set<util::UUID> mls,
+                          const std::set<std::string> &metric_strs)
 {
   assert(metric_strs.size() > 0);
 
   // Parse the metrics we are training against.
   std::set<Metric> metrics;
   for (auto str : metric_strs) {
-    util::Option<Metric> metric = stringToMetric(str);
+    util::Option<Metric> metric = util::stringToMetric(str);
     if (!metric) {
       MAGEEC_WARN("Unrecognized metric specified '" << str << "'");
     }
@@ -261,7 +253,7 @@ static int trainDatabase(Framework &framework,
   }
   if (metrics.size() == 0) {
     MAGEEC_ERR("No recognized metrics specified");
-    return -1;
+    return false;
   }
 
   // The database to be trained.
@@ -269,7 +261,7 @@ static int trainDatabase(Framework &framework,
   if (!db) {
     MAGEEC_ERR("Error retrieving database. The database may not exist, "
                "or you may not have sufficient permissions to read it");
-    return -1;
+    return false;
   }
 
   // Train. This will put the training blobs from the machine learners into
@@ -279,7 +271,7 @@ static int trainDatabase(Framework &framework,
       db->trainMachineLearner(ml, metric);
     }
   }
-  return 0;
+  return true;
 }
 
 
@@ -297,10 +289,10 @@ int main(int argc, const char *argv[])
   // The path to the results to be inserted into the database
   util::Option<std::string> results_path;
 
-  bool seen_db      = false;
-  bool seen_metric  = false;
-  bool seen_ml      = false;
-  bool seen_results = false;
+  bool with_db      = false;
+  bool with_metric  = false;
+  bool with_ml      = false;
+  bool with_results = false;
 
   bool with_db_version          = false;
   bool with_debug               = false;
@@ -317,14 +309,14 @@ int main(int argc, const char *argv[])
     if (i == 1) {
       if (arg[0] != '-') {
         db_str = arg;
-        seen_db = true;
+        with_db = true;
         continue;
       }
     }
 
     // If a database is specified, then the second argument *might* be the
     // mode
-    if ((i == 2) && seen_db) {
+    if ((i == 2) && with_db) {
       if (arg == "--create") {
         mode = DriverMode::kCreate;
         continue;
@@ -371,7 +363,7 @@ int main(int argc, const char *argv[])
         return -1;
       }
       metric_strs.insert(std::string(argv[i]));
-      seen_metric = true;
+      with_metric = true;
     }
     else if (arg == "--ml") {
       ++i;
@@ -380,7 +372,7 @@ int main(int argc, const char *argv[])
         return -1;
       }
       ml_strs.insert(std::string(argv[i]));
-      seen_ml = true;
+      with_ml = true;
     }
     else if (arg == "--add-results") {
       ++i;
@@ -389,7 +381,7 @@ int main(int argc, const char *argv[])
         return -1;
       }
       results_path = std::string(argv[i]);
-      seen_results = true;
+      with_results = true;
     }
     else {
       MAGEEC_ERR("Unrecognized argument: '" << arg << "'");
@@ -398,34 +390,31 @@ int main(int argc, const char *argv[])
   }
 
   // Errors
-  if (mode == DriverMode::kTrain && !seen_ml) {
+  if (mode == DriverMode::kTrain && !with_ml) {
     MAGEEC_ERR("Training mode specified without machine learners");
     return -1;
   }
-  if (mode == DriverMode::kTrain && !seen_metric) {
+  if (mode == DriverMode::kTrain && !with_metric) {
     MAGEEC_ERR("Training mode specified without any metric to train for");
     return -1;
   }
 
   // Warnings
-  if (mode == DriverMode::kCreate && seen_ml) {
+  if (mode == DriverMode::kCreate && with_ml) {
     MAGEEC_WARN("Creation mode specified, '--ml' arguments will be ignored");
   }
-  if (with_db_version && !seen_db) {
+  if (with_db_version && !with_db) {
     MAGEEC_WARN("Cannot get database version as no database was specified");
   }
-  if (with_print_trained_mls && !seen_db) {
-    MAGEEC_WARN("Cannot print trained machine learners as no database was "
-                "specified");
-  }
+
   // Unused arguments
   if ((mode == DriverMode::kNone) ||
       (mode == DriverMode::kCreate) ||
       (mode == DriverMode::kAddResults)) {
-    if (seen_metric) {
+    if (with_metric) {
       MAGEEC_WARN("--metric arguments will be ignored for the specified mode");
     }
-    if (seen_ml) {
+    if (with_ml) {
       MAGEEC_WARN("--ml arguments will be ignored for the specified mode");
     }
   }
@@ -440,7 +429,7 @@ int main(int argc, const char *argv[])
 
   // Get the UUIDs of the machine learners provided on the command line
   std::set<util::UUID> mls;
-  if (seen_ml) {
+  if (with_ml) {
     assert(ml_strs.size() != 0);
     mls = getMachineLearners(framework, ml_strs);
     if (mls.size() <= 0) {
@@ -461,7 +450,7 @@ int main(int argc, const char *argv[])
     }
   }
   if (with_print_trained_mls) {
-    if (!printTrainedMLs(framework, db_str.get())) {
+    if (!printTrainedMLs(framework, db_str)) {
       return -1;
     }
   }

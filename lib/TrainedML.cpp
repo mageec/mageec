@@ -43,13 +43,20 @@
 namespace mageec {
 
 
-TrainedML::TrainedML(sqlite3 &db,
-                     IMachineLearner &ml,
+TrainedML::TrainedML(IMachineLearner &ml)
+  : m_ml(ml), m_metric(), m_blob()
+{
+  assert(!ml.requiresTraining() && "Machine learner requires training, "
+         "so it must be initialized with a metric and blob");
+}
+
+TrainedML::TrainedML(IMachineLearner &ml,
                      Metric metric,
                      const std::vector<uint8_t> blob)
-  : m_db(db), m_ml(ml), m_metric(metric), m_blob(blob)
+  : m_ml(ml), m_metric(metric), m_blob(blob)
 {
-  (void)m_db;
+  assert(ml.requiresTraining() && "Machine learner does not require training, "
+         "where did the metric and blob come from?");
 }
 
 util::UUID TrainedML::getUUID(void) const
@@ -64,7 +71,9 @@ std::string TrainedML::getName(void) const
 
 Metric TrainedML::getMetric(void) const
 {
-  return m_metric;
+  assert(m_ml.requiresTraining() && "Machine learner does not require "
+         "training. So it has no training metric");
+  return m_metric.get();
 }
 
 bool TrainedML::requiresDecisionConfig() const

@@ -399,7 +399,7 @@ std::vector<TrainedML> Database::getTrainedMachineLearners(void)
       Metric metric = static_cast<Metric>(res.getInteger(0));
       std::vector<uint8_t> ml_blob = res.getBlob(1);
 
-      TrainedML trained_ml(*m_db, ml, metric, ml_blob);
+      TrainedML trained_ml(ml, metric, ml_blob);
       trained_mls.push_back(trained_ml);
     }
     else {

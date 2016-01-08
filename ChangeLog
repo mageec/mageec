@@ -1,3 +1,28 @@
+2016-01-08  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/TrainedML.h (TrainedML::TrainedML): Added constructor
+	which does not take a metric or blob argument.
+	(TrainedML::TrainedML): Removed db argument from constructors as it
+	was unnecessary.
+	(TrainedML::m_db): Removed member.
+	* include/mageec/Util.h (UUID::operator!=): Added method.
+	(metricToString stringToMetric): Moved functions from Driver.cpp so
+	that they are accessible to the plugin.
+	* lib/Database.cpp (Database::getTrainedMachineLearners): Update
+	creation of TrainedML.
+	* lib/Driver.cpp (metricToString stringToMetric): Moved functions
+	to Util.cpp.
+	(printTrainedMLs): Update so that db_path is optional. Return a
+	bool result instead of int.
+	(createDatabase): Return a bool instead of int result.
+	(trainDatabase): Likewise.
+	(main): Minor refactor of variable names.
+	* lib/TrainedML.cpp (TrainedML::TrainedML): Added constructor
+	implementation.
+	(TrainedML::TrainedML): Remove db argument from constructors.
+	* lib/Util.cpp (metricToString stringToMetric): Moved implementation
+	from Driver.cpp.
+
 2016-01-07  Edward Jones  <ed.jones@embecosm.com>
 
 	* CMakeLists.txt: Add FileML.cpp to ML_SOURCES

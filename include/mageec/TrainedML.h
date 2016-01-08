@@ -54,17 +54,25 @@ public:
   TrainedML() = delete;
 
   /// \brief Construct a trained machine learner based on an underlying
+  /// machine learner implemention.
+  ///
+  /// This method is used when the machine learner does not need to be
+  /// trained before use, which means it does not have a training metric
+  /// or blob.
+  ///
+  /// \param ml  Handle to the interface of the machine learner.
+  TrainedML(IMachineLearner& ml);
+
+  /// \brief Construct a trained machine learner based on an underlying
   /// machine learner implementation.
   ///
-  /// \param db  A handle to the underlying sqlite database
   /// \param ml  Handle to the interface of the machine learner. There must be
   /// an entry for this machine learner in the database for the provided
   /// metric.
   /// \param metric  The metric this machine learner has been trained against
   /// \param blob  A blob of training data to be passed to the machine
   /// learner when making a decision
-  TrainedML(sqlite3& db,
-            IMachineLearner& ml,
+  TrainedML(IMachineLearner& ml,
             Metric metric,
             const std::vector<uint8_t> blob);
 
@@ -105,14 +113,11 @@ public:
   makeDecision(const DecisionRequestBase& request, const FeatureSet& features);
 
 private:
-  /// Database containing this trained machine learner.
-  sqlite3& m_db;
-
   /// Interface to the underlying machine learner.
   IMachineLearner& m_ml;
 
   /// Metric which this machine learner is trained for.
-  const Metric m_metric;
+  const util::Option<Metric> m_metric;
 
   /// Blob of training data for this machine learner
   const std::vector<uint8_t> m_blob;
