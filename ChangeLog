@@ -1,5 +1,17 @@
 2016-01-12  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Remove mageec_test target, as it is unused.
+	* include/mageec/Database.h (Database::InputResult): New structure for
+	result input into the database.
+	(Database::addResults): Update args to use a set of InputResult data.
+	* lib/Database.cpp (addResults): Likewise.
+	* lib/Driver.cpp (addResults parseResults): Added function to
+	parse in results data and insert it into the database.
+	(main): Call addResults when the --add-results argument is specified.
+	* lib/Main.cpp: Removed file, as it was unused.
+
+2016-01-12  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Util.h: Simplify MAGEEC_ERR and MAGEEC_WARN macros.
 	* lib/Driver.cpp (printVersion printDatabaseVersion): Prefix version
 	and database versions in print out so they can be differentiated.

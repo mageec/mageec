@@ -957,9 +957,7 @@ PassSequenceID Database::newPassSequence(std::vector<std::string> pass_names)
 //===------------------------ Results interface ---------------------------===//
 
 
-void Database::
-addResults(Metric metric,
-           std::vector<std::pair<CompilationID, uint64_t> > results)
+void Database::addResults(std::set<InputResult> results)
 {
   DatabaseQuery insert_result = DatabaseQueryBuilder(*m_db)
     << "INSERT INTO RESULT(compilation_id, metric, result) VALUES("
@@ -971,15 +969,14 @@ addResults(Metric metric,
   DatabaseTransaction db_transaction(m_db);
 
   for (const auto &res : results) {
-    CompilationID compilation = res.first;
-    uint64_t value = res.second;
-
     insert_result.clearAllBindings();
     insert_result
-      << static_cast<int64_t>(compilation)
-      << static_cast<int64_t>(metric)
-      << static_cast<int64_t>(value);
+      << static_cast<int64_t>(res.compilation_id)
+      << static_cast<int64_t>(res.metric)
+      << static_cast<int64_t>(res.value);
     insert_result.execute().assertDone();
+    // FIXME: This will trigger an assertion if the compilation id fails
+    // the foreign key constraint.
   }
   db_transaction.commit();
 }

@@ -237,15 +237,37 @@ public:
 
 //===------------------------ Results interface ---------------------------===//
 
+  /// \struct Structure for results to be added to the database
+  struct InputResult {
+    InputResult(CompilationID id, Metric m, uint64_t val)
+      : compilation_id(id), metric(m), value(val)
+    {}
 
-  /// \brief Add result entries to the database for a previously established
-  /// compilation.
+    bool operator<(const InputResult &other) const
+    {
+      if (compilation_id < other.compilation_id) {
+        return true;
+      }
+      if (metric < other.metric) {
+        return true;
+      }
+      if (value < other.value) {
+        return true;
+      }
+      return false;
+    }
+
+    const CompilationID compilation_id;
+    const Metric        metric;
+    const uint64_t      value;
+  };
+
+
+  /// \brief Add results entries to the database for previously
+  // established compilations.
   ///
-  /// \param metric  The metric which the result measured
-  /// \param results  A list of results consisting of a pair of the
-  /// compilation id and result value for the provided metric.
-  void addResults(Metric metric,
-                  std::vector<std::pair<CompilationID, uint64_t> > results);
+  /// \param results A set of results to be added to the database
+  void addResults(std::set<InputResult> results);
 
 
 //===----------------------- Training interface ---------------------------===//

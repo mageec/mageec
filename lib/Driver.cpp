@@ -24,13 +24,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <memory>
-#include <set>
-
 #include "mageec/Database.h"
 #include "mageec/Framework.h"
 #include "mageec/ML/C5.h"
 #include "mageec/Util.h"
+
+#include <fstream>
+#include <memory>
+#include <set>
+#include <sstream>
 
 
 namespace mageec {
@@ -281,6 +283,124 @@ static bool trainDatabase(Framework &framework,
 }
 
 
+static util::Option<std::set<Database::InputResult>>
+parseResults(const std::string &result_path)
+{
+  std::set<Database::InputResult> results;
+
+  std::ifstream result_file(result_path);
+  if (!result_file) {
+    MAGEEC_ERR("Could not open results file '" << result_path << "', the "
+               "file may not exist, or you may not have permissions to "
+               "read it");
+    return nullptr;
+  }
+
+  std::string line;
+  while (std::getline(result_file, line)) {
+    std::string id_str;
+    std::string metric_str;
+    std::string value_str;
+
+    auto line_it = line.begin();
+    for (; std::isspace(*line_it) && line_it != line.end(); line_it++);
+    if (line_it == line.end() || *line_it == '#') {
+      continue;
+    }
+
+    // read the id
+    for (; !std::isspace(*line_it) && line_it != line.end(); line_it++) {
+      id_str.push_back(*line_it);
+    }
+    for (; std::isspace(*line_it) && line_it != line.end(); line_it++);
+
+    // metric string
+    if (line_it == line.end() || *line_it == '#') {
+      MAGEEC_ERR("Malformed results file line:\n" << line);
+      return nullptr;
+    }
+    for (; !std::isspace(*line_it) && line_it != line.end(); line_it++) {
+      metric_str.push_back(*line_it);
+    }
+    for (; std::isspace(*line_it) && line_it != line.end(); line_it++);
+
+    // value string
+    if (line_it == line.end() || *line_it == '#') {
+      MAGEEC_ERR("Malformed results file line:\n" << line);
+      return nullptr;
+    }
+    for (; !std::isspace(*line_it) && line_it != line.end(); line_it++) {
+      value_str.push_back(*line_it);
+    }
+
+    for (; std::isspace(*line_it) && line_it != line.end(); line_it++);
+    if (line_it != line.end() && *line_it != '#') {
+      // junk on the end of the line
+      MAGEEC_ERR("Malformed results file line:\n" << line);
+      return nullptr;
+    }
+
+    // Convert each field to its expected type.
+    uint64_t tmp;
+
+    std::istringstream id_stream(id_str);
+    id_stream >> tmp;
+    if (id_stream.fail()) {
+      MAGEEC_ERR("Malformed compilation id in results file line:\n" << line);
+      return nullptr;
+    }
+    CompilationID compilation_id = static_cast<CompilationID>(tmp);
+
+    util::Option<Metric> metric = util::stringToMetric(metric_str);
+    if (!metric) {
+      MAGEEC_ERR("Unknown metric '" << metric_str << "' in results file line:\n"
+          << line);
+      return nullptr;
+    }
+
+    uint64_t value;
+    std::istringstream value_stream(value_str);
+    value_stream >> value;
+    if (id_stream.fail()) {
+      MAGEEC_ERR("Malformed result value '" << value_str << "' in result "
+                 "file line:\n" << line);
+      return nullptr;
+    }
+
+    // Add the now parsed results into the dataset
+    results.insert({compilation_id, metric.get(), value});
+  }
+  return results;
+}
+
+
+static bool addResults(Framework &framework,
+                       const std::string &db_path,
+                       const std::string &results_path)
+{
+  std::unique_ptr<Database> db = framework.getDatabase(db_path, false);
+  if (!db) {
+    MAGEEC_ERR("Error retrieving database. The database may not exist, "
+               "or you may not have sufficient permissions to read it");
+    return false;
+  }
+
+  // Parse the results file, then add them to the database.
+  auto results = parseResults(results_path);
+  if (!results) {
+    MAGEEC_ERR("Error parsing results file");
+    return false;
+  }
+  if (results.get().size() == 0) {
+    MAGEEC_WARN("No results found in the provided file, nothing will be "
+                "added to the database");
+    return true;
+  }
+  db->addResults(results.get());
+  return true;
+}
+
+
 /// \brief Entry point for the MAGEEC driver
 int main(int argc, const char *argv[])
 {
@@ -473,7 +593,7 @@ int main(int argc, const char *argv[])
   case DriverMode::kTrain:
     return trainDatabase(framework, db_str.get(), mls, metric_strs);
   case DriverMode::kAddResults:
-    assert(0 && "Cannot add results to the database yet");
+    return addResults(framework, db_str.get(), results_path.get());
   }
   return 0;
 }

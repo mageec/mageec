@@ -113,14 +113,8 @@ add_executable (mageec_driver
 set_target_properties(mageec_driver PROPERTIES OUTPUT_NAME mageec)
 target_link_libraries(mageec_driver mageec_core mageec_ml)
 
-# Test file
-add_executable (mageec_test
-  lib/Main.cpp
-)
-target_link_libraries(mageec_test mageec_core)
-
 # Install libraries and executables
-install(TARGETS mageec_test mageec_driver mageec_ml mageec_core
+install(TARGETS mageec_driver mageec_ml mageec_core
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
