@@ -150,7 +150,6 @@ add_library(mageec_gcc SHARED
   FeatureExtract.cpp
   GCCCallbacks.cpp
   GCCPlugin.cpp
-  PluginInfo.cpp
 )
 target_link_libraries(mageec_gcc mageec_core mageec_ml)
 

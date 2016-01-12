@@ -35,10 +35,21 @@
 #include "mageec/Util.h"
 
 
+#if !defined(MAGEEC_GCC_PLUGIN_VERSION_MAJOR) || \
+    !defined(MAGEEC_GCC_PLUGIN_VERSION_MINOR) || \
+    !defined(MAGEEC_GCC_PLUGIN_VERSION_PATCH)
+#error "MAGEEC GCC plugin version not defined by the build system"
+#endif
+
+static_assert(MAGEEC_GCC_PLUGIN_VERSION_MAJOR == 2 &&
+              MAGEEC_GCC_PLUGIN_VERSION_MINOR == 0 &&
+              MAGEEC_GCC_PLUGIN_VERSION_PATCH == 0,
+              "MAGEEC GCC plugin version does not match");
+
+
 namespace mageec {
   class FeatureSet;
 } // end of namespace mageec
-
 
 
 /// \brief The different modes which the plugin may run in
@@ -56,13 +67,12 @@ enum class MAGEECMode : unsigned {
 struct MAGEECContext {
   MAGEECContext()
     : is_init(),
-      with_plugin_info(), with_feature_extract(), with_optimize(),
+      with_feature_extract(), with_optimize(),
       framework(), db(), ml(), func_features(), func_passes()
   {}
 
   bool is_init;
 
-  bool with_plugin_info;
   bool with_feature_extract;
   bool with_optimize;
 
@@ -78,19 +88,15 @@ struct MAGEECContext {
 };
 
 
+/// Version number for the plugin
+extern const mageec::util::Version mageec_plugin_version;
+
 /// The plugin base_name for our hooks to use to schedule new passes
 extern const char *mageec_gcc_plugin_name;
 
 /// Context shared by all components of the plugin
 extern MAGEECContext mageec_context;
 
-
-/// \brief Prints information about the plugin to stdout.
-/// 
-/// \param plugin_info  GCC plugin information.
-/// \param version  GCC version information.
-void mageecPluginInfo(struct plugin_name_args *plugin_info,
-                      struct plugin_gcc_version *version);
 
 // GCC callbacks
 void mageecStartFile(void *gcc_data, void *user_data);

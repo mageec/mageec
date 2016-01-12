@@ -1,3 +1,23 @@
+2016-01-12  Edward Jones  <ed.jones@embecosm.com>
+
+	* CMakeLists.txt: Remove PluginInfo.cpp from files to build.
+	* GCCPlugin.cpp (mageec_plugin_version): Added global to track the
+	version number. Move the check for the correct version number to
+	MAGEECPlugin.h.
+	(printHelp printMLs printDatabaseVersion): Added functions.
+	(printPluginInfo): Moved from PluginInfo.cpp and renamed from
+	mageecPluginInfo.
+	(parseArguments): Take the raw plugin info and version as arguments.
+	Add handling for help, version, framework-version and database-version
+	arguments. Add printing of machine learners.
+	* MAGEECPlugin.h: Moved version number check from GCCPlugin.cpp.
+	(MAGEECContext::with_plugin_info): Removed member.
+	(mageec_plugin_version): Added global to keep track of the plugin
+	version number.
+	(mageecPluginInfo): Removed declaration.
+	* PluginInfo.cpp: Removed file, printing of plugin info is now handled
+	in GCCPlugin.cpp.
+
 2016-01-08  Edward Jones  <ed.jones@embecosm.com>
 
 	* CMakeLists.txt: Link the plugin library with the machine learners.
