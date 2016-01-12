@@ -45,16 +45,14 @@
 #include <map>
 #include <string>
 
-
 /// Declared to allow GCC to load the plugin
 int plugin_is_GPL_compatible;
 
-
 /// Init version of the plugin
 const mageec::util::Version
-mageec_plugin_version(MAGEEC_GCC_PLUGIN_VERSION_MAJOR,
-                      MAGEEC_GCC_PLUGIN_VERSION_MINOR,
-                      MAGEEC_GCC_PLUGIN_VERSION_PATCH);
+    mageec_plugin_version(MAGEEC_GCC_PLUGIN_VERSION_MAJOR,
+                          MAGEEC_GCC_PLUGIN_VERSION_MINOR,
+                          MAGEEC_GCC_PLUGIN_VERSION_PATCH);
 
 /// Stored GCC Plugin name for future register_callbacks.
 const char *mageec_gcc_plugin_name;
@@ -62,14 +60,12 @@ const char *mageec_gcc_plugin_name;
 /// Context shared by all components of the plugin
 MAGEECContext mageec_context;
 
-
 /// Plugin information to pass to GCC
 #define QUOTE(name) #name
 #define STRINGIFY(macro) QUOTE(macro)
 
 struct MAGEECPluginInfo {
-  MAGEECPluginInfo()
-  {}
+  MAGEECPluginInfo() {}
 
   operator struct plugin_info() {
     struct plugin_info info;
@@ -84,7 +80,6 @@ static struct plugin_info mageec_plugin_info = MAGEECPluginInfo();
 
 #undef QUOTE
 #undef STRINGIFY
-
 
 /// \brief Print help information to stdout
 static void printHelp()
@@ -124,7 +119,6 @@ static void printHelp()
 "      -fplugin-libmageec_gcc-feature-extract foo.c\n";
 }
 
-
 /// \brief Print information about the plugin to stdout
 ///
 /// \param plugin_info  GCC plugin information
@@ -147,14 +141,12 @@ MAGEEC_PREFIX "GCC information\n"
 "|- confargs:  " << version->configuration_arguments << "\n";
 }
 
-
 /// \brief Print out the plugin version
 static void printPluginVersion()
 {
   mageec::util::out() << MAGEEC_PREFIX "Plugin version: "
       << static_cast<std::string>(mageec_plugin_version) << '\n';
 }
-
 
 /// \brief Print the framework version
 static void printFrameworkVersion(const mageec::Framework &framework)
@@ -163,41 +155,34 @@ static void printFrameworkVersion(const mageec::Framework &framework)
       << static_cast<std::string>(framework.getVersion()) << '\n';
 }
 
-
 /// \brief Print information about the available machine learner
 /// interfaces to stdout
 ///
 /// \param mls The interfaces to be printed
-static void printMLInterfaces(std::set<mageec::IMachineLearner *> mls)
-{
+static void printMLInterfaces(std::set<mageec::IMachineLearner *> mls) {
   for (const auto *ml : mls) {
     mageec::util::out() << ml->getName() << '\n'
-        << static_cast<std::string>(ml->getUUID()) << "\n\n";
+                        << static_cast<std::string>(ml->getUUID()) << "\n\n";
   }
 }
-
 
 /// \brief Print information about usable machine learners to stdout
 ///
 /// \param mls The machine learners which are trained and ready for use.
-static void printMLs(std::vector<mageec::TrainedML> mls)
-{
+static void printMLs(std::vector<mageec::TrainedML> mls) {
   for (auto &ml : mls) {
-    mageec::util::out()
-      << ml.getName() << '\n'
-      << static_cast<std::string>(ml.getUUID()) << '\n'
-      << mageec::util::metricToString(ml.getMetric()) << "\n\n";
+    mageec::util::out() << ml.getName() << '\n'
+                        << static_cast<std::string>(ml.getUUID()) << '\n'
+                        << mageec::util::metricToString(ml.getMetric())
+                        << "\n\n";
   }
 }
 
-
 /// \brief Print the database version number to stdout
-static void printDatabaseVersion(mageec::Database &db)
-{
+static void printDatabaseVersion(mageec::Database &db) {
   mageec::util::out() << MAGEEC_PREFIX "Database version: "
       << static_cast<std::string>(db.getVersion()) << '\n';
 }
-
 
 /// \brief Parse arguments provided to the plugin
 ///
@@ -205,8 +190,7 @@ static void printDatabaseVersion(mageec::Database &db)
 /// the configuration of the framework and context all over the place.
 /// It needs to be factored out to make it more manageable.
 static bool parseArguments(struct plugin_name_args *plugin_info,
-                           struct plugin_gcc_version *version)
-{
+                           struct plugin_gcc_version *version) {
   assert(!mageec_context.is_init);
   assert(mageec_context.framework &&
          "Cannot parse plugin arguments with uninitialized framework");
@@ -214,9 +198,9 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
   int argc = plugin_info->argc;
   struct plugin_argument *argv = plugin_info->argv;
 
-  mageec::util::Option<std::string>    db_str;
-  mageec::util::Option<std::string>    ml_str;
-  mageec::util::Option<std::string>    ml_config_str;
+  mageec::util::Option<std::string> db_str;
+  mageec::util::Option<std::string> ml_str;
+  mageec::util::Option<std::string> ml_config_str;
   mageec::util::Option<mageec::Metric> metric;
 
   // Simple flags
@@ -247,65 +231,56 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
         return false;
       }
       with_help = true;
-    }
-    else if (arg_str == "plugin-info") {
+    } else if (arg_str == "plugin-info") {
       if (argv[i].value) {
         MAGEEC_ERR("Plugin argument 'plugin-info' does not take a value");
         return false;
       }
       with_plugin_info = true;
-    }
-    else if (arg_str == "version") {
+    } else if (arg_str == "version") {
       if (argv[i].value) {
         MAGEEC_ERR("Plugin argument 'version' does not take a value");
         return false;
       }
       with_version = true;
-    }
-    else if (arg_str == "framework-version") {
+    } else if (arg_str == "framework-version") {
       if (argv[i].value) {
         MAGEEC_ERR("Plugin argument 'framework-version' does not take a value");
         return false;
       }
       with_framework_version = true;
-    }
-    else if (arg_str == "debug") {
+    } else if (arg_str == "debug") {
       if (argv[i].value) {
         MAGEEC_ERR("Plugin argument 'debug' does not take a value");
         return false;
       }
       with_debug = true;
-    }
-    else if (arg_str == "database-version") {
+    } else if (arg_str == "database-version") {
       if (argv[i].value) {
         MAGEEC_ERR("Plugin argument 'database-version' does not take a value");
         return false;
       }
       with_db_version = true;
-    }
-    else if (arg_str == "print-ml-interfaces") {
+    } else if (arg_str == "print-ml-interfaces") {
       if (argv[i].value) {
         MAGEEC_ERR("Plugin argument 'print-ml-interfaces' does not take a "
                    "value");
         return false;
       }
       with_print_ml_interfaces = true;
-    }
-    else if (arg_str == "print-mls") {
+    } else if (arg_str == "print-mls") {
       if (argv[i].value) {
         MAGEEC_ERR("Plugin argument 'print-mls' does not take a value");
         return false;
       }
       with_print_mls = true;
-    }
-    else if (arg_str == "feature-extract") {
+    } else if (arg_str == "feature-extract") {
       if (argv[i].value) {
         MAGEEC_ERR("Plugin argument 'feature-extract' does not take a value");
         return false;
       }
       with_feature_extract = true;
-    }
-    else if (arg_str == "optimize") {
+    } else if (arg_str == "optimize") {
       if (argv[i].value) {
         MAGEEC_ERR("Plugin argument 'optimize' does not take a value");
         return false;
@@ -325,8 +300,7 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
       }
       db_str = std::string(argv[i].value);
       with_db = true;
-    }
-    else if (arg_str == "ml") {
+    } else if (arg_str == "ml") {
       if (with_ml) {
         MAGEEC_ERR("Plugin argument 'ml' already seen");
         return false;
@@ -337,8 +311,7 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
       }
       ml_str = std::string(argv[i].value);
       with_ml = true;
-    }
-    else if (arg_str == "ml-config") {
+    } else if (arg_str == "ml-config") {
       if (with_ml_config) {
         MAGEEC_ERR("Plugin argument 'ml-config' already seen");
         return false;
@@ -348,9 +321,8 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
         return false;
       }
       ml_config_str = std::string(argv[i].value);
-      with_ml_config = true;;
-    }
-    else if (arg_str == "metric") {
+      with_ml_config = true;
+    } else if (arg_str == "metric") {
       if (with_metric) {
         MAGEEC_ERR("Plugin argument 'metric' already seen");
         return false;
@@ -362,12 +334,11 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
       std::string metric_str = argv[i].value;
       metric = mageec::util::stringToMetric(argv[i].value);
       if (!metric) {
-        MAGEEC_ERR("Invalid metric value specified '" << metric_str <<"'");
+        MAGEEC_ERR("Invalid metric value specified '" << metric_str << "'");
         return false;
       }
       with_metric = true;
-    }
-    else {
+    } else {
       MAGEEC_WARN("Unrecognized argument '" << arg_str << "' ignored");
     }
   }
@@ -380,10 +351,8 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
   assert(with_db == (db_str == true));
   assert(with_ml_config == (ml_config_str == true));
 
-  bool may_require_db = with_feature_extract || with_print_mls ||
-                        with_optimize;
-  bool may_use_ml = with_print_mls || with_print_ml_interfaces ||
-                    with_optimize;
+  bool may_require_db = with_feature_extract || with_print_mls || with_optimize;
+  bool may_use_ml = with_print_mls || with_print_ml_interfaces || with_optimize;
 
   // Warnings
   if (with_db && !may_require_db) {
@@ -424,7 +393,7 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
   if (with_version) {
     printPluginVersion();
   }
-  
+
   // Print framework version
   if (with_framework_version) {
     printFrameworkVersion(*mageec_context.framework.get());
@@ -475,8 +444,7 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
       MAGEEC_ERR("The provided machine learner requires a metric, but "
                  "one was not specified");
       return false;
-    }
-    else if (!ml_requires_metric && with_metric) {
+    } else if (!ml_requires_metric && with_metric) {
       MAGEEC_ERR("Machine learner does not require a metric, but one was "
                  "specified");
       return false;
@@ -490,8 +458,7 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
   }
 
   // Now we know whether a database is required we can load it.
-  if ((with_feature_extract || ml_requires_db || with_print_mls)
-      && with_db) {
+  if ((with_feature_extract || ml_requires_db || with_print_mls) && with_db) {
     assert(db_str);
     mageec_context.db =
         mageec_context.framework->getDatabase(db_str.get(), false);
@@ -542,14 +509,12 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
       if (mageec_context.ml->requiresDecisionConfig()) {
         if (with_ml_config) {
           mageec_context.ml->setDecisionConfig(ml_config_str.get());
-        }
-        else {
+        } else {
           MAGEEC_ERR("The provided machine learner needs a configuration, "
                      "but one was not provided");
           return false;
         }
-      }
-      else {
+      } else {
         if (with_ml_config) {
           MAGEEC_ERR("Machine learner does not require a configuration, "
                      "but one was provided");
@@ -573,10 +538,9 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
 
   // Do some sanity checks to validate the mess I have written above.
   // FIXME
-  
+
   return true;
 }
-
 
 /// \brief Initialize the GCC Plugin
 ///
@@ -586,9 +550,8 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
 /// \param version GCC version information
 ///
 /// \return 0 if MAGEEC successfully set up, 1 otherwise.
-int plugin_init (struct plugin_name_args *plugin_info,
-                 struct plugin_gcc_version *version)
-{
+int plugin_init(struct plugin_name_args *plugin_info,
+                struct plugin_gcc_version *version) {
   // Initialize the MAGEEC framework
   assert(!mageec_context.framework);
   mageec_context.framework.reset(new mageec::Framework());
@@ -603,7 +566,7 @@ int plugin_init (struct plugin_name_args *plugin_info,
 
   // Register our information, parse arguments
   register_callback(plugin_info->base_name, PLUGIN_INFO, NULL,
-                     &mageec_plugin_info);
+                    &mageec_plugin_info);
   mageec_gcc_plugin_name = plugin_info->base_name;
 
   bool res = parseArguments(plugin_info, version);
@@ -612,12 +575,11 @@ int plugin_init (struct plugin_name_args *plugin_info,
     return 1;
   }
 
-  register_callback(plugin_info->base_name, PLUGIN_START_UNIT,
-                    mageecStartFile, NULL);
+  register_callback(plugin_info->base_name, PLUGIN_START_UNIT, mageecStartFile,
+                    NULL);
   register_callback(plugin_info->base_name, PLUGIN_FINISH_UNIT,
                     mageecFinishFile, NULL);
-  register_callback(plugin_info->base_name, PLUGIN_FINISH,
-                    mageecFinish, NULL);
+  register_callback(plugin_info->base_name, PLUGIN_FINISH, mageecFinish, NULL);
   register_callback(plugin_info->base_name, PLUGIN_OVERRIDE_GATE,
                     mageecPassGate, NULL);
 

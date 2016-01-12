@@ -34,23 +34,20 @@
 #include <memory>
 #include <string>
 
-
-#if !defined(MAGEEC_GCC_PLUGIN_VERSION_MAJOR) || \
-    !defined(MAGEEC_GCC_PLUGIN_VERSION_MINOR) || \
+#if !defined(MAGEEC_GCC_PLUGIN_VERSION_MAJOR) ||                               \
+    !defined(MAGEEC_GCC_PLUGIN_VERSION_MINOR) ||                               \
     !defined(MAGEEC_GCC_PLUGIN_VERSION_PATCH)
 #error "MAGEEC GCC plugin version not defined by the build system"
 #endif
 
 static_assert(MAGEEC_GCC_PLUGIN_VERSION_MAJOR == 2 &&
-              MAGEEC_GCC_PLUGIN_VERSION_MINOR == 0 &&
-              MAGEEC_GCC_PLUGIN_VERSION_PATCH == 0,
+                  MAGEEC_GCC_PLUGIN_VERSION_MINOR == 0 &&
+                  MAGEEC_GCC_PLUGIN_VERSION_PATCH == 0,
               "MAGEEC GCC plugin version does not match");
 
-
 namespace mageec {
-  class FeatureSet;
+class FeatureSet;
 } // end of namespace mageec
-
 
 /// \brief The different modes which the plugin may run in
 enum class MAGEECMode : unsigned {
@@ -62,14 +59,11 @@ enum class MAGEECMode : unsigned {
   kFeatureExtractSaveAndOptimize
 };
 
-
 /// \brief Context to hold all of the information needed by the plugin
 struct MAGEECContext {
   MAGEECContext()
-    : is_init(),
-      with_feature_extract(), with_optimize(),
-      framework(), db(), ml(), func_features(), func_passes()
-  {}
+      : is_init(), with_feature_extract(), with_optimize(), framework(), db(),
+        ml(), func_features(), func_passes() {}
 
   bool is_init;
 
@@ -77,7 +71,7 @@ struct MAGEECContext {
   bool with_optimize;
 
   std::unique_ptr<mageec::Framework> framework;
-  std::unique_ptr<mageec::Database>  db;
+  std::unique_ptr<mageec::Database> db;
   std::unique_ptr<mageec::TrainedML> ml;
 
   /// Feature sets for each function in the module
@@ -86,7 +80,6 @@ struct MAGEECContext {
   /// Pass sequence for each function in the module
   std::map<std::string, std::vector<std::string>> func_passes;
 };
-
 
 /// Version number for the plugin
 extern const mageec::util::Version mageec_plugin_version;
@@ -97,7 +90,6 @@ extern const char *mageec_gcc_plugin_name;
 /// Context shared by all components of the plugin
 extern MAGEECContext mageec_context;
 
-
 // GCC callbacks
 void mageecStartFile(void *gcc_data, void *user_data);
 void mageecFinishFile(void *gcc_data, void *user_data);
@@ -106,6 +98,5 @@ void mageecPassGate(void *gcc_data, void *user_data);
 
 /// \brief Register feature extraction pass callbacks
 void mageecRegisterFeatureExtract(void);
-
 
 #endif // MAGEEC_PLUGIN_H

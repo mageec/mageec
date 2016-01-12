@@ -36,8 +36,8 @@
 #undef PACKAGE_VERSION
 
 #ifndef BUILDING_GCC_VERSION
-    #include "bversion.h"
-    #define GCC_VERSION BUILDING_GCC_VERSION
+  #include "bversion.h"
+  #define GCC_VERSION BUILDING_GCC_VERSION
 #endif
 #if (BUILDING_GCC_VERSION < 4009)
   #include "gcc-plugin.h"
@@ -81,17 +81,12 @@
 #include <memory>
 #include <vector>
 
-
 using namespace mageec;
-
 
 /// \brief Gate for whether to run the MAGEEC Feature Extractor.
 ///
 /// \return true to always run
-static bool featureExtractGate(void)
-{
-  return true;
-}
+static bool featureExtractGate(void) { return true; }
 
 /// \brief Execute the MAGEEC feature extractor
 ///
@@ -99,8 +94,7 @@ static bool featureExtractGate(void)
 /// and provides these features to the framework.
 ///
 /// \return 0
-static unsigned featureExtractExecute(void)
-{
+static unsigned featureExtractExecute(void) {
   basic_block bb;
   gimple_stmt_iterator gsi;
   edge e;
@@ -158,9 +152,9 @@ static unsigned featureExtractExecute(void)
   unsigned total_phi_nodes = 0;
 
 #if (GCC_VERSION < 4009)
-  FOR_EACH_BB (bb)
+  FOR_EACH_BB(bb)
 #else
-  FOR_ALL_BB_FN (bb, cfun)
+  FOR_ALL_BB_FN(bb, cfun)
 #endif
   {
     stmt_count = 0;
@@ -170,80 +164,72 @@ static unsigned featureExtractExecute(void)
 
     // For this block count instructions and types
     bb_count++;
-    for (gsi=gsi_start_bb(bb); !gsi_end_p(gsi); gsi_next(&gsi))
-    {
-      gimple stmt = gsi_stmt (gsi);
+    for (gsi = gsi_start_bb(bb); !gsi_end_p(gsi); gsi_next(&gsi)) {
+      gimple stmt = gsi_stmt(gsi);
       stmt_count++;
       // Assignment analysis
-      if (is_gimple_assign (stmt))
-      {
+      if (is_gimple_assign(stmt)) {
         method_assignments++;
         enum gimple_rhs_class grhs_class =
-          get_gimple_rhs_class (gimple_expr_code (stmt));
+            get_gimple_rhs_class(gimple_expr_code(stmt));
         if (grhs_class == GIMPLE_UNARY_RHS)
           method_unary_ops++;
-        if (grhs_class == GIMPLE_BINARY_RHS)
-        {
-          tree arg1 = gimple_assign_rhs1 (stmt);
-          tree arg2 = gimple_assign_rhs2 (stmt);
-          if (FLOAT_TYPE_P (TREE_TYPE (arg1)))
+        if (grhs_class == GIMPLE_BINARY_RHS) {
+          tree arg1 = gimple_assign_rhs1(stmt);
+          tree arg2 = gimple_assign_rhs2(stmt);
+          if (FLOAT_TYPE_P(TREE_TYPE(arg1)))
             float_operations++;
-          else if (INTEGRAL_TYPE_P (TREE_TYPE (arg2)))
+          else if (INTEGRAL_TYPE_P(TREE_TYPE(arg2)))
             int_operations++;
-          //FIXME: Is this correct for detecting pointer arith?
-          if (POINTER_TYPE_P (TREE_TYPE (arg1)) ||
-              POINTER_TYPE_P (TREE_TYPE (arg2)))
+          // FIXME: Is this correct for detecting pointer arith?
+          if (POINTER_TYPE_P(TREE_TYPE(arg1)) ||
+              POINTER_TYPE_P(TREE_TYPE(arg2)))
             pointer_arith++;
         }
       }
 
       // Phi Analysis
-      if (gimple_code (stmt) == GIMPLE_PHI)
-      {
+      if (gimple_code(stmt) == GIMPLE_PHI) {
         phi_nodes++;
         total_phi_nodes++;
         if (in_phi_header)
           phi_header_nodes++;
-        phi_args += gimple_phi_num_args (stmt);
-        total_phi_args += gimple_phi_num_args (stmt);
-      }
-      else
+        phi_args += gimple_phi_num_args(stmt);
+        total_phi_args += gimple_phi_num_args(stmt);
+      } else
         in_phi_header = false;
-      if (gimple_code (stmt) == GIMPLE_SWITCH)
+      if (gimple_code(stmt) == GIMPLE_SWITCH)
         method_switch_stmt++;
 
       // Call analysis
-      if (is_gimple_call (stmt))
-      {
-        if (gimple_call_num_args (stmt) > 4)
+      if (is_gimple_call(stmt)) {
+        if (gimple_call_num_args(stmt) > 4)
           call_gt4_args++;
         // Check if call has a pointer argument
         bool call_has_ptr = false;
-        for (unsigned i = 0; i < gimple_call_num_args (stmt); i++)
-        {
-          tree arg = gimple_call_arg (stmt, i);
-          if (POINTER_TYPE_P (TREE_TYPE (arg)))
+        for (unsigned i = 0; i < gimple_call_num_args(stmt); i++) {
+          tree arg = gimple_call_arg(stmt, i);
+          if (POINTER_TYPE_P(TREE_TYPE(arg)))
             call_has_ptr = true;
         }
         if (call_has_ptr)
           call_ptr_arg++;
         // Get current statement, if not null, then direct
-        tree call_fn = gimple_call_fndecl (stmt);
+        tree call_fn = gimple_call_fndecl(stmt);
         if (call_fn)
           call_direct++;
         else
           call_indirect++;
-        tree call_ret = gimple_call_lhs (stmt);
-        if(call_ret)
-        {
-          if (FLOAT_TYPE_P (TREE_TYPE (call_ret)))
+        tree call_ret = gimple_call_lhs(stmt);
+        if (call_ret) {
+          if (FLOAT_TYPE_P(TREE_TYPE(call_ret)))
             call_ret_float++;
-          else if (INTEGRAL_TYPE_P (TREE_TYPE (call_ret)))
+          else if (INTEGRAL_TYPE_P(TREE_TYPE(call_ret)))
             call_ret_int++;
         }
       }
 
-      if (gimple_code (stmt) == GIMPLE_COND)
+      if (gimple_code(stmt) == GIMPLE_COND)
         method_cond_stmt++;
     } // end gimple iterator
 
@@ -272,15 +258,13 @@ static unsigned featureExtractExecute(void)
       bb_gt2pred_gt2succ++;
 
     // CFG information
-    FOR_EACH_EDGE (e, ei, bb->succs)
-    {
+    FOR_EACH_EDGE(e, ei, bb->succs) {
       edges_in_cfg++;
-      if (EDGE_CRITICAL_P (e))
+      if (EDGE_CRITICAL_P(e))
         edges_critical++;
       if (e->flags & EDGE_ABNORMAL)
         edges_abnormal++;
     }
-
 
     // Store processed data about this block
     insn_counts.push_back(stmt_count);
@@ -369,100 +353,79 @@ static unsigned featureExtractExecute(void)
   MAGEEC_DEBUG("Extracting features for function '" << func_name << "'");
   MAGEEC_DEBUG("Dumping feature vector");
   if (util::withDebug()) {
-    mageec_context.func_features[func_name]->print(
-        mageec::util::dbg(), " |- ");
+    mageec_context.func_features[func_name]->print(mageec::util::dbg(), " |- ");
   }
   MAGEEC_DEBUG("Finished dumping feature vector");
   return 0;
 }
 
-
 //===------------ MAGEEC feature extractor pass definition ----------------===//
 
-
 #if (GCC_VERSION < 4009)
-static struct gimple_opt_pass mageec_feature_extract =
-{
-  {
+static struct gimple_opt_pass mageec_feature_extract = {{
     GIMPLE_PASS,
-    "mageec-feature-extractor",   // name
-    OPTGROUP_NONE,                // optinfo_flags
-    featureExtractGate,           // gate
-    featureExtractExecute,        // execute
-    NULL,                         // sub
-    NULL,                         // next
-    0,                            // static_pass_number
-    TV_NONE,                      // tv_id
-    PROP_ssa,                     // properties_required
-    0,                            // properties_provided
-    0,                            // properties_destroyed
-    0,                            // todo_flags_start
-    0                             // todo_flags_finish
-  }
-};
-#elif (GCC_VERSION >= 4009)
+    "mageec-feature-extractor", // name
+    OPTGROUP_NONE,              // optinfo_flags
+    featureExtractGate,         // gate
+    featureExtractExecute,      // execute
+    NULL,                       // sub
+    NULL,                       // next
+    0,                          // static_pass_number
+    TV_NONE,                    // tv_id
+    PROP_ssa,                   // properties_required
+    0,                          // properties_provided
+    0,                          // properties_destroyed
+    0,                          // todo_flags_start
+    0                           // todo_flags_finish
+}};
+#elif(GCC_VERSION >= 4009)
 namespace {
-  
-const pass_data pass_data_mageec_feature_extract =
-{
-  GIMPLE_PASS,                    // type
-  "mageec-feature-extractor",     // name
-  OPTGROUP_NONE,                  // optinfo_flags
+
+const pass_data pass_data_mageec_feature_extract = {
+    GIMPLE_PASS,                // type
+    "mageec-feature-extractor", // name
+    OPTGROUP_NONE,              // optinfo_flags
 
 #if (GCC_VERSION < 5001)
-  true,                           // has_gate
-  true,                           // has_execute
+    true,                       // has_gate
+    true,                       // has_execute
 #endif // (GCC_VERSION < 5001)
 
-  TV_NONE,                        // tv_id
-  PROP_ssa,                       // properties_required
-  0,                              // properties_provided
-  0,                              // properties_destroyed
-  0,                              // todo_flags_start
-  0,                              // todo_flags_finish
+    TV_NONE,  // tv_id
+    PROP_ssa, // properties_required
+    0,        // properties_provided
+    0,        // properties_destroyed
+    0,        // todo_flags_start
+    0,        // todo_flags_finish
 };
-
 
 class FeatureExtractPass : public gimple_opt_pass {
 public:
   FeatureExtractPass(gcc::context *context)
-    : gimple_opt_pass(pass_data_mageec_feature_extract, context)
-  {}
+      : gimple_opt_pass(pass_data_mageec_feature_extract, context) {}
 
-  // opt_pass methods
+// opt_pass methods
 #if (GCC_VERSION < 5001)
-  bool gate() override {
-    return featureExtractGate();
-  }
-  unsigned execute() override {
-    return featureExtractExecute();
-  }
+  bool gate() override { return featureExtractGate(); }
+  unsigned execute() override { return featureExtractExecute(); }
 #else
-  bool gate(function *) override {
-    return featureExtractGate();
-  }
-  unsigned execute(function *) override {
-    return featureExtractExecute();
-  }
+  bool gate(function *) override { return featureExtractGate(); }
+  unsigned execute(function *) override { return featureExtractExecute(); }
 #endif
 }; // class MageecFeatureExtractPass
 
 } // end of anonymous namespace
 
-
 /// \brief Create a new feature extractor pass
-static gimple_opt_pass *makeMAGEECFeatureExtractPass(gcc::context *context)
-{
+static gimple_opt_pass *makeMAGEECFeatureExtractPass(gcc::context *context) {
   return new FeatureExtractPass(context);
 }
 #endif /* (GCC_VERSION < 4009) */
 
-
 /// \brief Registers the feature extractor pass in the pass list
 ///
 /// Currently runs after the CFG pass
-void mageecRegisterFeatureExtract(void)
-{
+void mageecRegisterFeatureExtract(void) {
   struct register_pass_info pass;
 
 #if (GCC_VERSION < 4009)
@@ -474,6 +437,6 @@ void mageecRegisterFeatureExtract(void)
   pass.ref_pass_instance_number = 1;
   pass.pos_op = PASS_POS_INSERT_AFTER;
 
-  register_callback (mageec_gcc_plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL,
-                     &pass);
+  register_callback(mageec_gcc_plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL,
+                    &pass);
 }

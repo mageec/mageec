@@ -1,5 +1,13 @@
 2016-01-12  Edward Jones  <ed.jones@embecosm.com>
 
+	* FeatureExtract.cpp: File formatted with clang-format.
+	* Features.h: Likewise.
+	* GCCCallbacks.cpp: Likewise.
+	* GCCPlugin.cpp: Likewise.
+	* MAGEECPlugin.h: Likewise.
+
+2016-01-12  Edward Jones  <ed.jones@embecosm.com>
+
 	* FeatureExtract.cpp: Make header include order consistent.
 	* GCCCallbacks.cpp: Likewise.
 	* GCCPlugin.cpp: Likewise.
