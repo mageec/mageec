@@ -1,5 +1,10 @@
 2016-01-12  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/Driver.cpp: Fix an error which meant the --add-results flag was
+	ignored.
+
+2016-01-12  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Database.h: File formatted with clang-format.
 	* include/mageec/DatabaseQuery.h: Likewise.
 	* include/mageec/Decision.h: Likewise.

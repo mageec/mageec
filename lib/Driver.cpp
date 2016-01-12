@@ -397,7 +397,6 @@ int main(int argc, const char *argv[]) {
   bool with_db      = false;
   bool with_metric  = false;
   bool with_ml      = false;
-  bool with_results = false;
 
   bool with_db_version          = false;
   bool with_debug               = false;
@@ -477,7 +476,7 @@ int main(int argc, const char *argv[]) {
         return -1;
       }
       results_path = std::string(argv[i]);
-      with_results = true;
+      mode = DriverMode::kAddResults;
     } else {
       MAGEEC_ERR("Unrecognized argument: '" << arg << "'");
       return -1;
