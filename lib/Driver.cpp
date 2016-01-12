@@ -52,7 +52,8 @@ using namespace mageec;
 /// \brief Print out the version of the MAGEEC framework
 static void printVersion(const Framework &framework)
 {
-  util::out() << static_cast<std::string>(framework.getVersion()) << '\n';
+  util::out() << MAGEEC_PREFIX "Framework version: " <<
+      static_cast<std::string>(framework.getVersion()) << '\n';
 }
 
 /// \brief Print out the version of the database
@@ -66,7 +67,8 @@ static int printDatabaseVersion(Framework &framework, const std::string &db_path
                "or you may not have sufficient permissions to read it");
     return -1;
   }
-  util::out() << static_cast<std::string>(db->getVersion()) << '\n';
+  util::out() << MAGEEC_PREFIX "Database version: " <<
+      static_cast<std::string>(db->getVersion()) << '\n';
   return 0;
 }
 
@@ -95,13 +97,17 @@ static void printHelp()
 "  --database-version      Print the version of the provided database\n"
 "  --ml <arg>              UUID or shared object identifying a machine\n"
 "                          learner interface to be used\n"
-"  --print-trained-mls     Print information about the machine learners\n"
-"                          which are trained in the provided database\n"
 "  --print-ml-interfaces   Print the interfaces registered with the MAGEEC\n"
 "                          framework, and therefore usable for training and\n"
 "                          decision making\n"
+"  --print-mls             Print information about the machine learners\n"
+"                          available to make compiler configuration\n"
+"                          decisions\n"
+// FIXME: ml-config
+"  --metric <arg>          Adds a new metric which the provided machine\n"
+"                          learners should be trained with\n"
 "\n"
-"Examples:\n"
+"examples:\n"
 "  mageec --help --version\n"
 "  mageec foo.db --create\n"
 "  mageec bar.db --train --ml path/to/ml_plugin.so\n"
@@ -298,7 +304,7 @@ int main(int argc, const char *argv[])
   bool with_debug               = false;
   bool with_help                = false;
   bool with_print_ml_interfaces = false;
-  bool with_print_trained_mls   = false;
+  bool with_print_mls   = false;
   bool with_version             = false;
 
   for (int i = 1; i < argc; ++i) {
@@ -349,8 +355,8 @@ int main(int argc, const char *argv[])
     else if (arg == "--print-ml-interfaces") {
       with_print_ml_interfaces = true;
     }
-    else if (arg == "--print-trained-mls") {
-      with_print_trained_mls = true;
+    else if (arg == "--print-mls") {
+      with_print_mls = true;
     }
     else if (arg == "--database-version") {
       with_db_version = true;
@@ -368,7 +374,7 @@ int main(int argc, const char *argv[])
     else if (arg == "--ml") {
       ++i;
       if (i >= argc) {
-        MAGEEC_ERR("No '--machine-learner' value provided");
+        MAGEEC_ERR("No '--ml' value provided");
         return -1;
       }
       ml_strs.insert(std::string(argv[i]));
@@ -449,7 +455,7 @@ int main(int argc, const char *argv[])
       return -1;
     }
   }
-  if (with_print_trained_mls) {
+  if (with_print_mls) {
     if (!printTrainedMLs(framework, db_str)) {
       return -1;
     }

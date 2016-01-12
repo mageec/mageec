@@ -1,3 +1,11 @@
+2016-01-12  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Util.h: Simplify MAGEEC_ERR and MAGEEC_WARN macros.
+	* lib/Driver.cpp (printVersion printDatabaseVersion): Prefix version
+	and database versions in print out so they can be differentiated.
+	(printHelp): Add print-mls option to help.
+	(main): Rename print_trained_mls to print_mls.
+
 2016-01-08  Edward Jones  <ed.jones@embecosm.com>
 
 	* include/mageec/TrainedML.h (TrainedML::TrainedML): Added constructor
