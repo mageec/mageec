@@ -22,11 +22,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <iostream>
-#include <memory>
-#include <vector>
-
-// MAGEEC Headers
 #include "Features.h"
 #include "mageec/Feature.h"
 #include "mageec/FeatureSet.h"
@@ -81,6 +76,10 @@
   #include "diagnostic.h"
   #include "context.h"
 #endif
+
+#include <iostream>
+#include <memory>
+#include <vector>
 
 
 using namespace mageec;

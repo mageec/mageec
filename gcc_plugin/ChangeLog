@@ -1,5 +1,12 @@
 2016-01-12  Edward Jones  <ed.jones@embecosm.com>
 
+	* FeatureExtract.cpp: Make header include order consistent.
+	* GCCCallbacks.cpp: Likewise.
+	* GCCPlugin.cpp: Likewise.
+	* MAGEECPlugin.h: Likewise.
+
+2016-01-12  Edward Jones  <ed.jones@embecosm.com>
+
 	* CMakeLists.txt: Remove PluginInfo.cpp from files to build.
 	* GCCPlugin.cpp (mageec_plugin_version): Added global to track the
 	version number. Move the check for the correct version number to

@@ -25,14 +25,14 @@
 #ifndef MAGEEC_PLUGIN_H
 #define MAGEEC_PLUGIN_H
 
-#include <map>
-#include <memory>
-#include <string>
-
 #include "mageec/Framework.h"
 #include "mageec/Database.h"
 #include "mageec/TrainedML.h"
 #include "mageec/Util.h"
+
+#include <map>
+#include <memory>
+#include <string>
 
 
 #if !defined(MAGEEC_GCC_PLUGIN_VERSION_MAJOR) || \

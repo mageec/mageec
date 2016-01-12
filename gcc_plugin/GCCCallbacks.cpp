@@ -29,9 +29,6 @@
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 
-#include <iostream>
-#include <string>
-
 #include "mageec/Decision.h"
 #include "mageec/TrainedML.h"
 #include "MAGEECPlugin.h"
@@ -39,6 +36,9 @@
 #include "gcc-plugin.h"
 #include "tree-pass.h"
 #include "function.h"
+
+#include <iostream>
+#include <string>
 
 
 /// \brief Get string representing type of pass

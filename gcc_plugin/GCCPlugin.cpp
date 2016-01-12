@@ -30,9 +30,6 @@
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 
-#include <map>
-#include <string>
-
 #include "mageec/FeatureSet.h"
 #include "mageec/Framework.h"
 #include "mageec/ML.h"
@@ -44,6 +41,9 @@
 
 #include "gcc-plugin.h"
 #include "tree-pass.h"
+
+#include <map>
+#include <string>
 
 
 /// Declared to allow GCC to load the plugin
