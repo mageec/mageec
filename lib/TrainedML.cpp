@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===------------------------ Trained Machine Learner ---------------------===//
 //
 // The contains the implementation of a trained machine learner, which
@@ -38,61 +37,46 @@
 #include <string>
 #include <vector>
 
-
 namespace mageec {
 
-
-TrainedML::TrainedML(IMachineLearner &ml)
-  : m_ml(ml), m_metric(), m_blob()
-{
-  assert(!ml.requiresTraining() && "Machine learner requires training, "
-         "so it must be initialized with a metric and blob");
+TrainedML::TrainedML(IMachineLearner &ml) : m_ml(ml), m_metric(), m_blob() {
+  assert(!ml.requiresTraining() &&
+         "Machine learner requires training, so it must be initialized with "
+         "a metric and blob");
 }
 
-TrainedML::TrainedML(IMachineLearner &ml,
-                     Metric metric,
+TrainedML::TrainedML(IMachineLearner &ml, Metric metric,
                      const std::vector<uint8_t> blob)
-  : m_ml(ml), m_metric(metric), m_blob(blob)
-{
+    : m_ml(ml), m_metric(metric), m_blob(blob) {
   assert(ml.requiresTraining() && "Machine learner does not require training, "
-         "where did the metric and blob come from?");
+                                  "where did the metric and blob come from?");
 }
 
-util::UUID TrainedML::getUUID(void) const
-{
-  return m_ml.getUUID();
-}
+util::UUID TrainedML::getUUID(void) const { return m_ml.getUUID(); }
 
-std::string TrainedML::getName(void) const
-{
-  return m_ml.getName();
-}
+std::string TrainedML::getName(void) const { return m_ml.getName(); }
 
-Metric TrainedML::getMetric(void) const
-{
+Metric TrainedML::getMetric(void) const {
   assert(m_ml.requiresTraining() && "Machine learner does not require "
-         "training. So it has no training metric");
+                                    "training. So it has no training metric");
   return m_metric.get();
 }
 
-bool TrainedML::requiresDecisionConfig() const
-{
+bool TrainedML::requiresDecisionConfig() const {
   return m_ml.requiresDecisionConfig();
 }
 
-bool TrainedML::setDecisionConfig(std::string config_path)
-{
-  assert(requiresDecisionConfig() && "Cannot provide decision config to "
+bool TrainedML::setDecisionConfig(std::string config_path) {
+  assert(requiresDecisionConfig() &&
+         "Cannot provide decision config to "
          "a machine learner which does not require one");
   return m_ml.setDecisionConfig(config_path);
 }
 
 std::unique_ptr<DecisionBase>
-TrainedML::makeDecision(const DecisionRequestBase& request,
-                        const FeatureSet& features)
-{
+TrainedML::makeDecision(const DecisionRequestBase &request,
+                        const FeatureSet &features) {
   return m_ml.makeDecision(request, features, m_blob);
 }
-
 
 } // end of namespace mageec

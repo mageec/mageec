@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===---------------------- Machine learner interface ---------------------===//
 //
 // This contains the interface for a machine learner which may be used by
@@ -35,12 +34,9 @@
 #include <string>
 #include <vector>
 
-
 namespace mageec {
 
-
 class DecisionRequestBase;
-
 
 /// \class IMachineLearner
 ///
@@ -54,7 +50,6 @@ public:
 
   /// \brief Get the name of this machine learner as a string
   virtual std::string getName(void) const = 0;
-
 
   /// \brief Return whether this machine learner must be trained before
   /// making a decision.
@@ -90,7 +85,6 @@ public:
   /// \return True if the config was set successfully.
   virtual bool setDecisionConfig(std::string config_path) = 0;
 
-
   /// \brief Get the type of decisions which can be requested of this machine
   /// learner.
   ///
@@ -98,7 +92,6 @@ public:
   /// requested.
   /// TODO: Support this
   // std::set<DecisionRequestType> getSupportedDecisions(void) const = 0;
-
 
   /// \brief Make a single decision based on a provided request, the features
   /// of a program unit, and a blob of training data for the machine learner.
@@ -113,9 +106,8 @@ public:
   /// corresponding decision for the input request, or the native decision if
   /// a decision could not be made.
   virtual std::unique_ptr<DecisionBase>
-  makeDecision(const DecisionRequestBase& request,
-               const FeatureSet& features,
-               const std::vector<uint8_t>& blob) const = 0;
+  makeDecision(const DecisionRequestBase &request, const FeatureSet &features,
+               const std::vector<uint8_t> &blob) const = 0;
 
   // TODO: machine learner training should be allowed to error
 
@@ -132,11 +124,10 @@ public:
   /// \param passes  All of the passes used in the results data
   /// \param results  Iterator to the results data
   ///
-  /// \return A blob of training data. 
+  /// \return A blob of training data.
   virtual const std::vector<uint8_t>
-  train(std::set<FeatureDesc>   feature_descs,
-        std::set<ParameterDesc> parameter_descs,
-        std::set<std::string>   passes,
+  train(std::set<FeatureDesc> feature_descs,
+        std::set<ParameterDesc> parameter_descs, std::set<std::string> passes,
         ResultIterator results) const = 0;
 
   /// \brief Incrementally train the machine learner, using a partial set of
@@ -155,19 +146,13 @@ public:
   ///
   /// \return A new blob of training data.
   virtual const std::vector<uint8_t>
-  train(std::set<FeatureDesc>   feature_descs,
-        std::set<ParameterDesc> parameter_descs,
-        std::set<std::string>   passes,
-        ResultIterator results,
-        std::vector<uint8_t> old_blob) const = 0;
+  train(std::set<FeatureDesc> feature_descs,
+        std::set<ParameterDesc> parameter_descs, std::set<std::string> passes,
+        ResultIterator results, std::vector<uint8_t> old_blob) const = 0;
 };
 
-
-inline IMachineLearner::~IMachineLearner()
-{}
-
+inline IMachineLearner::~IMachineLearner() {}
 
 } // end of namespace MAGEEC
-
 
 #endif // MAGEEC_ML_H

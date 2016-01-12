@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===------------------------ MAGEEC C5.0 Driver --------------------------===//
 //
 // This defines a machine learner interface which uses a driver to drive an
@@ -37,12 +36,10 @@
 #include <string>
 #include <vector>
 
-
 namespace mageec {
 
 class DecisionRequestBase;
 class FeatureSet;
-
 
 /// \class C5Driver
 ///
@@ -61,12 +58,10 @@ public:
   ~C5Driver() override;
 
   /// \brief Get the unique identifier for this machine learner
-  util::UUID getUUID(void) const override {
-    return uuid;
-  }
+  util::UUID getUUID(void) const override { return uuid; }
 
   /// \brief Get the name of the machine learner
-  /// 
+  ///
   /// Note that this is a driver in case a C5.0 classifier is later included
   /// with MAGEEC.
   std::string getName(void) const override { return "C5.0 Driver"; }
@@ -85,26 +80,20 @@ public:
   }
 
   std::unique_ptr<DecisionBase>
-  makeDecision(const DecisionRequestBase& request,
-               const FeatureSet& features,
+  makeDecision(const DecisionRequestBase &request, const FeatureSet &features,
                const std::vector<uint8_t> &blob) const override;
 
-  const std::vector<uint8_t>
-  train(std::set<FeatureDesc> feature_descs,
-        std::set<ParameterDesc> parameter_descs,
-        std::set<std::string> passes,
-        ResultIterator results) const override;
+  const std::vector<uint8_t> train(std::set<FeatureDesc> feature_descs,
+                                   std::set<ParameterDesc> parameter_descs,
+                                   std::set<std::string> passes,
+                                   ResultIterator results) const override;
 
   const std::vector<uint8_t>
   train(std::set<FeatureDesc> feature_descs,
-        std::set<ParameterDesc> parameter_descs,
-        std::set<std::string> passes,
-        ResultIterator results,
-        std::vector<uint8_t> old_blob) const override;
+        std::set<ParameterDesc> parameter_descs, std::set<std::string> passes,
+        ResultIterator results, std::vector<uint8_t> old_blob) const override;
 };
 
-
 } // end of namespace mageec
-
 
 #endif // MAGEEC_C5_DRIVER_H

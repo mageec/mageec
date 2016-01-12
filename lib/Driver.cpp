@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===---------------------------- MAGEEC driver ---------------------------===//
 //
 // This implements the standalone driver for the MAGEEC framework. This
@@ -34,22 +33,13 @@
 #include <set>
 #include <sstream>
 
-
 namespace mageec {
 
-enum class DriverMode {
-  kNone,
-  kCreate,
-  kTrain,
-  kAddResults
-};
+enum class DriverMode { kNone, kCreate, kTrain, kAddResults };
 
 } // end of namespace mageec
 
-
 using namespace mageec;
-
-
 
 /// \brief Print out the version of the MAGEEC framework
 static void printVersion(const Framework &framework)
@@ -61,8 +51,8 @@ static void printVersion(const Framework &framework)
 /// \brief Print out the version of the database
 ///
 /// \return 0 on success, 1 if the database could not be opened.
-static int printDatabaseVersion(Framework &framework, const std::string &db_path)
-{
+static int printDatabaseVersion(Framework &framework,
+                                const std::string &db_path) {
   std::unique_ptr<Database> db = framework.getDatabase(db_path, false);
   if (!db) {
     MAGEEC_ERR("Error retrieving database. The database may not exist, "
@@ -116,7 +106,6 @@ static void printHelp()
 "  mageec baz.db --train --ml deadbeef-ca75-4096-a935-15cabba9e5\n";
 }
 
-
 /// \brief Retrieve or load machine learners provided on the command line
 ///
 /// \param framework  The framework to register the machine learners with
@@ -126,8 +115,7 @@ static void printHelp()
 /// \return A list of UUIDs of loaded machine learners, which may be empty
 /// if none were successfully loaded.
 static std::set<util::UUID>
-getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs)
-{
+getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs) {
   // Load machine learners
   std::set<util::UUID> mls;
   for (const auto &str : ml_strs) {
@@ -145,7 +133,7 @@ getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs)
     ml_uuid = util::UUID::parse(str);
     if (ml_uuid && !framework.hasMachineLearner(ml_uuid.get())) {
       MAGEEC_WARN("UUID '" << str << "' is not a register machine learner "
-                  "and will be ignored");
+                                     "and will be ignored");
       continue;
     }
 
@@ -154,8 +142,9 @@ getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs)
       ml_uuid = framework.loadMachineLearner(str);
     }
     if (!ml_uuid) {
-      MAGEEC_WARN("Unable to load machine learner '" << str << "'. This "
-                  "machine learner will be ignored");
+      MAGEEC_WARN("Unable to load machine learner '"
+                  << str << "'. This "
+                            "machine learner will be ignored");
       continue;
     }
     assert(ml_uuid);
@@ -170,7 +159,6 @@ getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs)
   return mls;
 }
 
-
 /// \brief Print a description of all of the machine learners trained
 /// for this database.
 ///
@@ -179,8 +167,7 @@ getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs)
 ///
 /// \return true on success
 static bool printTrainedMLs(Framework &framework,
-                            const util::Option<std::string> db_path)
-{
+                            const util::Option<std::string> db_path) {
   // Add any machine learners which do not require training (and therefore
   // do not have any entry in the database)
   std::vector<TrainedML> trained_mls;
@@ -189,7 +176,7 @@ static bool printTrainedMLs(Framework &framework,
       trained_mls.push_back(TrainedML(*ml));
     }
   }
-  
+
   if (db_path) {
     std::unique_ptr<Database> db = framework.getDatabase(db_path.get(), false);
     if (!db) {
@@ -214,8 +201,7 @@ static bool printTrainedMLs(Framework &framework,
 
 /// \brief Print a description of all of the machine learner interfaces
 /// known by the framework.
-static void printMLInterfaces(Framework &framework)
-{
+static void printMLInterfaces(Framework &framework) {
   std::set<IMachineLearner *> mls = framework.getMachineLearners();
   for (const auto *ml : mls) {
     util::out() << ml->getName() << '\n'
@@ -226,8 +212,7 @@ static void printMLInterfaces(Framework &framework)
 /// \brief Create a new database
 ///
 /// \return true on success, false if the database could not be created.
-static bool createDatabase(Framework &framework, const std::string &db_path)
-{
+static bool createDatabase(Framework &framework, const std::string &db_path) {
   std::unique_ptr<Database> db = framework.getDatabase(db_path, true);
   if (!db) {
     MAGEEC_ERR("Error creating new database. The database may already exist, "
@@ -241,11 +226,9 @@ static bool createDatabase(Framework &framework, const std::string &db_path)
 /// \brief Train a database
 ///
 /// \return true on success, false if the database could not be trained.
-static bool trainDatabase(Framework &framework,
-                          const std::string &db_path,
+static bool trainDatabase(Framework &framework, const std::string &db_path,
                           const std::set<util::UUID> mls,
-                          const std::set<std::string> &metric_strs)
-{
+                          const std::set<std::string> &metric_strs) {
   assert(metric_strs.size() > 0);
 
   // Parse the metrics we are training against.
@@ -254,8 +237,7 @@ static bool trainDatabase(Framework &framework,
     util::Option<Metric> metric = util::stringToMetric(str);
     if (!metric) {
       MAGEEC_WARN("Unrecognized metric specified '" << str << "'");
-    }
-    else {
+    } else {
       metrics.insert(metric.get());
     }
   }
@@ -282,10 +264,8 @@ static bool trainDatabase(Framework &framework,
   return true;
 }
 
-
 static util::Option<std::set<Database::InputResult>>
-parseResults(const std::string &result_path)
-{
+parseResults(const std::string &result_path) {
   std::set<Database::InputResult> results;
 
   std::ifstream result_file(result_path);
@@ -303,7 +283,8 @@ parseResults(const std::string &result_path)
     std::string value_str;
 
     auto line_it = line.begin();
-    for (; std::isspace(*line_it) && line_it != line.end(); line_it++);
+    for (; std::isspace(*line_it) && line_it != line.end(); line_it++)
+      ;
     if (line_it == line.end() || *line_it == '#') {
       continue;
     }
@@ -312,7 +293,8 @@ parseResults(const std::string &result_path)
     for (; !std::isspace(*line_it) && line_it != line.end(); line_it++) {
       id_str.push_back(*line_it);
     }
-    for (; std::isspace(*line_it) && line_it != line.end(); line_it++);
+    for (; std::isspace(*line_it) && line_it != line.end(); line_it++)
+      ;
 
     // metric string
     if (line_it == line.end() || *line_it == '#') {
@@ -322,7 +304,8 @@ parseResults(const std::string &result_path)
     for (; !std::isspace(*line_it) && line_it != line.end(); line_it++) {
       metric_str.push_back(*line_it);
     }
-    for (; std::isspace(*line_it) && line_it != line.end(); line_it++);
+    for (; std::isspace(*line_it) && line_it != line.end(); line_it++)
+      ;
 
     // value string
     if (line_it == line.end() || *line_it == '#') {
@@ -333,7 +316,8 @@ parseResults(const std::string &result_path)
       value_str.push_back(*line_it);
     }
 
-    for (; std::isspace(*line_it) && line_it != line.end(); line_it++);
+    for (; std::isspace(*line_it) && line_it != line.end(); line_it++)
+      ;
     if (line_it != line.end() && *line_it != '#') {
       // junk on the end of the line
       MAGEEC_ERR("Malformed results file line:\n" << line);
@@ -354,7 +338,7 @@ parseResults(const std::string &result_path)
     util::Option<Metric> metric = util::stringToMetric(metric_str);
     if (!metric) {
       MAGEEC_ERR("Unknown metric '" << metric_str << "' in results file line:\n"
-          << line);
+                                    << line);
       return nullptr;
     }
 
@@ -373,11 +357,8 @@ parseResults(const std::string &result_path)
   return results;
 }
 
-
-static bool addResults(Framework &framework,
-                       const std::string &db_path,
-                       const std::string &results_path)
-{
+static bool addResults(Framework &framework, const std::string &db_path,
+                       const std::string &results_path) {
   std::unique_ptr<Database> db = framework.getDatabase(db_path, false);
   if (!db) {
     MAGEEC_ERR("Error retrieving database. The database may not exist, "
@@ -400,10 +381,8 @@ static bool addResults(Framework &framework,
   return true;
 }
 
-
 /// \brief Entry point for the MAGEEC driver
-int main(int argc, const char *argv[])
-{
+int main(int argc, const char *argv[]) {
   DriverMode mode = DriverMode::kNone;
 
   // The database to be created or trained
@@ -424,7 +403,7 @@ int main(int argc, const char *argv[])
   bool with_debug               = false;
   bool with_help                = false;
   bool with_print_ml_interfaces = false;
-  bool with_print_mls   = false;
+  bool with_print_mls           = false;
   bool with_version             = false;
 
   for (int i = 1; i < argc; ++i) {
@@ -446,12 +425,10 @@ int main(int argc, const char *argv[])
       if (arg == "--create") {
         mode = DriverMode::kCreate;
         continue;
-      }
-      else if (arg == "--train") {
+      } else if (arg == "--train") {
         mode = DriverMode::kTrain;
         continue;
-      }
-      else if (arg == "--add-result") {
+      } else if (arg == "--add-result") {
         ++i;
         if (i >= argc) {
           MAGEEC_ERR("No '--add-result' value provided");
@@ -465,20 +442,15 @@ int main(int argc, const char *argv[])
     // Common flags
     if (arg == "--help") {
       with_help = true;
-    }
-    else if (arg == "--version") {
+    } else if (arg == "--version") {
       with_version = true;
-    }
-    else if (arg == "--debug") {
+    } else if (arg == "--debug") {
       with_debug = true;
-    }
-    else if (arg == "--print-ml-interfaces") {
+    } else if (arg == "--print-ml-interfaces") {
       with_print_ml_interfaces = true;
-    }
-    else if (arg == "--print-mls") {
+    } else if (arg == "--print-mls") {
       with_print_mls = true;
-    }
-    else if (arg == "--database-version") {
+    } else if (arg == "--database-version") {
       with_db_version = true;
     }
 
@@ -490,8 +462,7 @@ int main(int argc, const char *argv[])
       }
       metric_strs.insert(std::string(argv[i]));
       with_metric = true;
-    }
-    else if (arg == "--ml") {
+    } else if (arg == "--ml") {
       ++i;
       if (i >= argc) {
         MAGEEC_ERR("No '--ml' value provided");
@@ -499,8 +470,7 @@ int main(int argc, const char *argv[])
       }
       ml_strs.insert(std::string(argv[i]));
       with_ml = true;
-    }
-    else if (arg == "--add-results") {
+    } else if (arg == "--add-results") {
       ++i;
       if (i >= argc) {
         MAGEEC_ERR("No '--add-results' value provided");
@@ -508,8 +478,7 @@ int main(int argc, const char *argv[])
       }
       results_path = std::string(argv[i]);
       with_results = true;
-    }
-    else {
+    } else {
       MAGEEC_ERR("Unrecognized argument: '" << arg << "'");
       return -1;
     }
@@ -534,8 +503,7 @@ int main(int argc, const char *argv[])
   }
 
   // Unused arguments
-  if ((mode == DriverMode::kNone) ||
-      (mode == DriverMode::kCreate) ||
+  if ((mode == DriverMode::kNone) || (mode == DriverMode::kCreate) ||
       (mode == DriverMode::kAddResults)) {
     if (with_metric) {
       MAGEEC_WARN("--metric arguments will be ignored for the specified mode");

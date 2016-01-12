@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===------------------------ MAGEEC C5.0 Driver --------------------------===//
 //
 // This implements the machine learner interface by using a driver to drive
@@ -38,7 +37,6 @@
 #include <set>
 #include <string>
 #include <vector>
-
 
 namespace mageec {
 namespace {
@@ -65,7 +63,6 @@ struct C5Context {
   /// \return  The parsed context
   static std::unique_ptr<C5Context> fromBlob(const std::vector<uint8_t> &blob);
 
-
   /// Holds a set of all of the features seen when training the classifier.
   /// These are stored ordered, and this defines the order which the features
   /// appear in the .names, .data and .cases file for the classifier.
@@ -85,17 +82,15 @@ struct C5Context {
   std::map<std::string, std::vector<uint8_t>> pass_classifier_trees;
 };
 
-
 /// \struct ResultComparator
 ///
 /// \brief Comparator to sort results into ascending order based on their
 /// metric value.
 struct ResultComparator {
-  bool operator() (const Result &lhs, const Result &rhs) const {
+  bool operator()(const Result &lhs, const Result &rhs) const {
     return lhs.getValue() < rhs.getValue();
   }
 };
-
 
 /// \brief Types of field found in the machine learner blob for the C5.0
 /// classifier.
@@ -109,10 +104,8 @@ enum class C5BlobField {
 
 } // end of anonymous namespace
 
-
 std::unique_ptr<C5Context>
-C5Context::fromBlob(const std::vector<uint8_t> &blob)
-{
+C5Context::fromBlob(const std::vector<uint8_t> &blob) {
   std::unique_ptr<C5Context> context(new C5Context());
 
   auto it = blob.cbegin();
@@ -122,16 +115,14 @@ C5Context::fromBlob(const std::vector<uint8_t> &blob)
     case C5BlobField::kFeatureDesc: {
       // | feat_id | feat_type |
       unsigned feat_id = util::read16LE(it);
-      FeatureType feat_type =
-          static_cast<FeatureType>(util::read16LE(it));
+      FeatureType feat_type = static_cast<FeatureType>(util::read16LE(it));
       context->feature_descs.insert({feat_id, feat_type});
       break;
     }
     case C5BlobField::kParameterDesc: {
       // | param_id | param_type |
       unsigned param_id = util::read16LE(it);
-      ParameterType param_type =
-          static_cast<ParameterType>(util::read16LE(it));
+      ParameterType param_type = static_cast<ParameterType>(util::read16LE(it));
       context->parameter_descs.insert({param_id, param_type});
       break;
     }
@@ -181,9 +172,7 @@ C5Context::fromBlob(const std::vector<uint8_t> &blob)
   return context;
 }
 
-
-std::vector<uint8_t> C5Context::toBlob()
-{
+std::vector<uint8_t> C5Context::toBlob() {
   // Buffer used to store the training blob
   std::vector<uint8_t> blob;
 
@@ -226,8 +215,8 @@ std::vector<uint8_t> C5Context::toBlob()
     std::vector<uint8_t> classifier_blob = param_tree.second;
     unsigned classifier_len = static_cast<unsigned>(classifier_blob.size());
 
-    util::write16LE(blob,
-        static_cast<unsigned>(C5BlobField::kParameterClassifierTree));
+    util::write16LE(
+        blob, static_cast<unsigned>(C5BlobField::kParameterClassifierTree));
     util::write16LE(blob, param_id);
     util::write16LE(blob, classifier_len);
     for (auto it : classifier_blob) {
@@ -244,7 +233,7 @@ std::vector<uint8_t> C5Context::toBlob()
     unsigned classifier_len = static_cast<unsigned>(classifier_blob.size());
 
     util::write16LE(blob,
-        static_cast<unsigned>(C5BlobField::kPassClassifierTree));
+                    static_cast<unsigned>(C5BlobField::kPassClassifierTree));
     util::write16LE(blob, pass_name_len);
     for (auto it : pass_name) {
       blob.push_back(static_cast<uint8_t>(it));
@@ -257,24 +246,18 @@ std::vector<uint8_t> C5Context::toBlob()
   return blob;
 }
 
-
 // UUID for the C5 Driver
 const util::UUID C5Driver::uuid =
     util::UUID::parse("ccf7593c-78d9-429a-b544-2a7339d4325e").get();
 
+C5Driver::C5Driver() : IMachineLearner() {}
 
-C5Driver::C5Driver()
-  : IMachineLearner()
-{}
-
-C5Driver::~C5Driver()
-{}
+C5Driver::~C5Driver() {}
 
 std::unique_ptr<DecisionBase>
-C5Driver::makeDecision(const DecisionRequestBase& request,
-                       const FeatureSet& features,
-                       const std::vector<uint8_t> &blob) const
-{
+C5Driver::makeDecision(const DecisionRequestBase &request,
+                       const FeatureSet &features,
+                       const std::vector<uint8_t> &blob) const {
   // Deserialize the machine learner data from the blob
   std::unique_ptr<C5Context> context = C5Context::fromBlob(blob);
 
@@ -294,16 +277,14 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
 
       assert(bool_request->getDecisionType() == DecisionType::kBool);
       param_type = ParameterType::kBool;
-    }
-    else if (request_type == DecisionRequestType::kRange) {
+    } else if (request_type == DecisionRequestType::kRange) {
       const auto *range_request =
           static_cast<const RangeDecisionRequest *>(&request);
       param_id = range_request->getID();
 
       assert(range_request->getDecisionType() == DecisionType::kRange);
       param_type = ParameterType::kRange;
-    }
-    else {
+    } else {
       assert(0 && "Unreachable");
     }
 
@@ -316,7 +297,8 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
     // Output the classifier tree to a file (.tree)
     const std::vector<uint8_t> &classifier_tree = res->second;
     std::ofstream tree_file("/tmp/parameter_" + std::to_string(param_id) +
-                            ".tree", std::ofstream::binary);
+                                ".tree",
+                            std::ofstream::binary);
     for (auto c : classifier_tree) {
       tree_file << c;
     }
@@ -326,7 +308,8 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
     // FIXME: This is copied from the 'train' code and should be factored out
     // TODO: Platform independent temporary file
     std::ofstream name_file("/tmp/parameter_" + std::to_string(param_id) +
-                            ".names", std::ofstream::binary);
+                                ".names",
+                            std::ofstream::binary);
 
     // Output the target parameter first
     // TODO: Comment containing parameter description
@@ -363,11 +346,10 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
     name_file << '\n';
     name_file.close();
 
-
     // Output cases files (.cases), containing the feature set
     std::ofstream cases_file("/tmp/parameter_" + std::to_string(param_id) +
                              ".cases");
-    
+
     for (auto feat : context->feature_descs) {
       // Feature values are output in the order they appear in the feature
       // description map (ascending order of feature id)
@@ -386,18 +368,17 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
 
         switch (feat.type) {
         case FeatureType::kBool: {
-          bool value = static_cast<BoolFeature*>(f)->getValue();
+          bool value = static_cast<BoolFeature *>(f)->getValue();
           cases_file << (value ? "t" : "f");
           break;
         }
         case FeatureType::kInt: {
-          int64_t value = static_cast<IntFeature*>(f)->getValue();
+          int64_t value = static_cast<IntFeature *>(f)->getValue();
           cases_file << value;
           break;
         }
         }
-      }
-      else {
+      } else {
         // No value for this feature in the feature set
         cases_file << "?,";
       }
@@ -410,13 +391,13 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
   default:
     assert(0 && "Unhandled DecisionRequest type!");
   }
-  
+
   // Get the value of the returned decision
   // FIXME: Call out to the C5.0 classifier
   switch (request_type) {
   case DecisionRequestType::kBool: {
     const auto *bool_request =
-        static_cast<const BoolDecisionRequest*>(&request);
+        static_cast<const BoolDecisionRequest *>(&request);
     assert(bool_request->getDecisionType() == DecisionType::kBool);
     return std::unique_ptr<BoolDecision>(new BoolDecision(true));
   }
@@ -432,13 +413,11 @@ C5Driver::makeDecision(const DecisionRequestBase& request,
   }
 }
 
-
 const std::vector<uint8_t>
-C5Driver::train(std::set<FeatureDesc>   feature_descs,
+C5Driver::train(std::set<FeatureDesc> feature_descs,
                 std::set<ParameterDesc> parameter_descs,
                 std::set<std::string> passes,
-                ResultIterator result_iter) const
-{
+                ResultIterator result_iter) const {
   std::unique_ptr<C5Context> context(new C5Context());
   context->feature_descs = feature_descs;
   context->parameter_descs = parameter_descs;
@@ -457,13 +436,14 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
     result_iter = std::move(result_iter.next());
     result = *result_iter;
   }
-  
+
   // Create a classifier trained for each tunable parameter in turn.
   for (auto param : parameter_descs) {
     // Output names file (columns for classifier) for this parameter
     // TODO: Platform independent temporary file
     std::ofstream name_file("/tmp/parameter_" + std::to_string(param.id) +
-                            ".names", std::ofstream::binary);
+                                ".names",
+                            std::ofstream::binary);
 
     // Output the target parameter first
     // TODO: Comment containing parameter description
@@ -503,12 +483,13 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
     // For the current parameter, output a data (.data) file containing the
     // training data.
     std::ofstream data_file("/tmp/parameter_" + std::to_string(param.id) +
-                            ".data", std::ofstream::binary);
-    
+                                ".data",
+                            std::ofstream::binary);
+
     for (auto res : results) {
       ParameterSet parameters = res.getParameters();
-      FeatureSet   features = res.getFeatures();
-      
+      FeatureSet features = res.getFeatures();
+
       // Check that this result has an entry for this parameter. If not then
       // skip as we can't use it for training.
       // FIXME: Don't use a dumb linear search here
@@ -536,19 +517,18 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
 
           switch (feat.type) {
           case FeatureType::kBool: {
-            bool value = static_cast<BoolFeature*>(f)->getValue();
+            bool value = static_cast<BoolFeature *>(f)->getValue();
             name_file << (value ? "t" : "f");
             break;
           }
           case FeatureType::kInt: {
-            int64_t value = static_cast<IntFeature*>(f)->getValue();
+            int64_t value = static_cast<IntFeature *>(f)->getValue();
             name_file << value;
             break;
           }
           }
           name_file << ",";
-        }
-        else {
+        } else {
           // No value for this feature for this result.
           name_file << "?,";
         }
@@ -558,12 +538,12 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
 
       switch (param.type) {
       case ParameterType::kBool: {
-        bool value = static_cast<BoolParameter*>(p)->getValue();
+        bool value = static_cast<BoolParameter *>(p)->getValue();
         name_file << (value ? "t" : "f");
         break;
       }
       case ParameterType::kRange: {
-        int64_t value = static_cast<RangeParameter*>(p)->getValue();
+        int64_t value = static_cast<RangeParameter *>(p)->getValue();
         name_file << value;
         break;
       }
@@ -574,8 +554,8 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
     // Now we have .names and .data files, run the classifier over them to
     // generate a tree
     // TODO: Running command on windows?
-    std::string command_str(
-        "c5.0 -f /tmp/parameter_" + std::to_string(param.id));
+    std::string command_str("c5.0 -f /tmp/parameter_" +
+                            std::to_string(param.id));
     FILE *fpipe = popen(command_str.c_str(), "r");
     if (!fpipe) {
       assert(0 && "Process spawn failed!");
@@ -589,7 +569,8 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
 
     // Read in the generated tree to be stored in the machine learner blob
     std::ifstream tree_file("/tmp/parameter_" + std::to_string(param.id) +
-                            ".tree", std::ifstream::binary);
+                                ".tree",
+                            std::ifstream::binary);
     if (tree_file) {
       tree_file.seekg(0, tree_file.end);
       std::streampos tree_size = tree_file.tellg();
@@ -610,16 +591,11 @@ C5Driver::train(std::set<FeatureDesc>   feature_descs,
   return context->toBlob();
 }
 
-
 const std::vector<uint8_t>
-C5Driver::train(std::set<FeatureDesc>,
-                std::set<ParameterDesc>,
-                std::set<std::string>,
-                ResultIterator,
-                std::vector<uint8_t> old_blob) const
-{
+C5Driver::train(std::set<FeatureDesc>, std::set<ParameterDesc>,
+                std::set<std::string>, ResultIterator,
+                std::vector<uint8_t> old_blob) const {
   return old_blob;
 }
 
-
-} // end of namespace mageec 
+} // end of namespace mageec

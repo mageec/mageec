@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===-------------------------- Parameter Set -----------------------------===//
 //
 // A set of parameters, there may be no duplicates of a given parameter id
@@ -35,16 +34,14 @@
 #include <set>
 #include <utility>
 
-
 namespace mageec {
-
 
 class ParameterSet {
 private:
   /// \brief Function object to sort parameters by comparing their ids
   struct ParameterIDComparator {
-    bool operator() (std::shared_ptr<ParameterBase> const &lhs,
-                     std::shared_ptr<ParameterBase> const &rhs) const {
+    bool operator()(std::shared_ptr<ParameterBase> const &lhs,
+                    std::shared_ptr<ParameterBase> const &rhs) const {
       return lhs->getParameterID() < rhs->getParameterID();
     }
   };
@@ -54,12 +51,10 @@ public:
   typedef std::set<std::shared_ptr<ParameterBase>,
                    ParameterIDComparator>::const_iterator const_iterator;
 
-
   /// \brief Construct a new empty parameter set
   ParameterSet() : m_parameters() {}
   ParameterSet(std::initializer_list<std::shared_ptr<ParameterBase>> l)
-    : m_parameters(l)
-  {}
+      : m_parameters(l) {}
 
   /// \brief Add a new parameter to a parameter set
   ///
@@ -67,10 +62,10 @@ public:
   ///
   /// \param param  The parameter to be added to the set
   void add(std::shared_ptr<ParameterBase> param) {
-    assert (param != nullptr && "Cannot add null parameter to parameter set");
+    assert(param != nullptr && "Cannot add null parameter to parameter set");
 
-    const auto& result = m_parameters.emplace(param);
-    assert (result.second && "Added parameter already present in the set!");
+    const auto &result = m_parameters.emplace(param);
+    assert(result.second && "Added parameter already present in the set!");
   }
 
   /// \brief Get a constant iterator to the beginning of the parameter set
@@ -92,8 +87,6 @@ private:
   std::set<std::shared_ptr<ParameterBase>, ParameterIDComparator> m_parameters;
 };
 
-
 } // end of namespace mageec
-
 
 #endif // MAGEEC_PARAMETER_SET_H

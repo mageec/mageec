@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===--------------------------- MAGEEC types -----------------------------===//
 //
 // This file defines various enumeration types which are used by MAGEEC, and
@@ -28,9 +27,7 @@
 
 #include <cstdint>
 
-
 namespace mageec {
-
 
 enum class CompilationID    : uint64_t {};
 enum class FeatureSetID     : uint64_t {};
@@ -40,34 +37,18 @@ enum class PassSequenceID   : uint64_t {};
 enum class ParameterSetID   : uint64_t {};
 enum class ParameterGroupID : uint64_t {};
 
-
 enum class MetadataField : unsigned {
   // The database version always has field number 0
   kDatabaseVersion = 0
 };
 
-enum class Metric : unsigned {
-  kCodeSize,
-  kTime,
-  kEnergy
-};
+enum class Metric : unsigned { kCodeSize, kTime, kEnergy };
 
-enum class FeatureType : unsigned {
-  kBool,
-  kInt
-};
+enum class FeatureType : unsigned { kBool, kInt };
 
-enum class ParameterType : unsigned {
-  kBool,
-  kRange
-};
+enum class ParameterType : unsigned { kBool, kRange };
 
-enum class DecisionType : unsigned {
-  kNative,
-  kBool,
-  kRange,
-  kPassList
-};
+enum class DecisionType : unsigned { kNative, kBool, kRange, kPassList };
 
 enum class DecisionRequestType : unsigned {
   kBool,
@@ -76,28 +57,20 @@ enum class DecisionRequestType : unsigned {
   kPassGate
 };
 
-
 struct FeatureDesc {
-  unsigned    id;
+  unsigned id;
   FeatureType type;
 
-  bool operator<(const FeatureDesc &other) const {
-    return id < other.id;
-  }
+  bool operator<(const FeatureDesc &other) const { return id < other.id; }
 };
-
 
 struct ParameterDesc {
-  unsigned      id;
+  unsigned id;
   ParameterType type;
 
-  bool operator<(const ParameterDesc &other) const {
-    return id < other.id;
-  }
+  bool operator<(const ParameterDesc &other) const { return id < other.id; }
 };
 
-
 } // end of namespace mageec
-
 
 #endif // MAGEEC_TYPES_H

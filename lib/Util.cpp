@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===-------------------------- MAGEEC utilities --------------------------===//
 //
 // This implements some utility methods used throughout the MAGEEC framework
@@ -28,46 +27,36 @@
 #include <iostream>
 #include <vector>
 
-
 namespace mageec {
 namespace util {
-
 
 /// Tracks whether debug is enabled.
 static bool with_debug = false;
 
 /// Returns whether debug is enabled at runtime
-bool withDebug() {
-  return with_debug & MAGEEC_WITH_DEBUG;
-}
+bool withDebug() { return with_debug & MAGEEC_WITH_DEBUG; }
 /// Sets whether debug is enabled.
-void setDebug(bool debug) {
-  with_debug = debug & MAGEEC_WITH_DEBUG;
-}
+void setDebug(bool debug) { with_debug = debug & MAGEEC_WITH_DEBUG; }
 
 std::ostream &dbg() { return std::cerr; }
 std::ostream &out() { return std::cout; }
 
-
-unsigned read16LE(std::vector<uint8_t>::const_iterator &it)
-{
+unsigned read16LE(std::vector<uint8_t>::const_iterator &it) {
   unsigned res = 0;
   res |= static_cast<unsigned>(*it);
   res |= static_cast<unsigned>(*(it + 1)) << 8;
   return res;
 }
 
-void write16LE(std::vector<uint8_t> &buf, unsigned value)
-{
+void write16LE(std::vector<uint8_t> &buf, unsigned value) {
   buf.push_back(static_cast<uint8_t>(value));
   buf.push_back(static_cast<uint8_t>(value >> 8));
 }
 
-uint64_t read64LE(std::vector<uint8_t>::const_iterator &it)
-{
+uint64_t read64LE(std::vector<uint8_t>::const_iterator &it) {
   unsigned res = 0;
   res |= static_cast<uint64_t>(*it);
-  res |= static_cast<uint64_t>(*(it + 1)) <<  8;
+  res |= static_cast<uint64_t>(*(it + 1)) << 8;
   res |= static_cast<uint64_t>(*(it + 2)) << 16;
   res |= static_cast<uint64_t>(*(it + 3)) << 24;
   res |= static_cast<uint64_t>(*(it + 4)) << 32;
@@ -77,10 +66,9 @@ uint64_t read64LE(std::vector<uint8_t>::const_iterator &it)
   return res;
 }
 
-void write64LE(std::vector<uint8_t> &buf, uint64_t value)
-{
+void write64LE(std::vector<uint8_t> &buf, uint64_t value) {
   buf.push_back(static_cast<uint8_t>(value));
-  buf.push_back(static_cast<uint8_t>(value >>  8));
+  buf.push_back(static_cast<uint8_t>(value >> 8));
   buf.push_back(static_cast<uint8_t>(value >> 16));
   buf.push_back(static_cast<uint8_t>(value >> 24));
   buf.push_back(static_cast<uint8_t>(value >> 32));
@@ -89,62 +77,56 @@ void write64LE(std::vector<uint8_t> &buf, uint64_t value)
   buf.push_back(static_cast<uint8_t>(value >> 56));
 }
 
-
 /// \brief Simple CRC implementation
 ///
 /// Based on crc32b from Hacker's Delight
 /// (http://www.hackersdelight.org/hdcodetxt/crc.c.txt)
 /// Expanded to support crc64 and nulls by Simon Cook
-uint64_t crc64(uint8_t *message, unsigned len)
-{
-   unsigned i;
-   int j;
-   uint64_t byte, crc, mask;
+uint64_t crc64(uint8_t *message, unsigned len) {
+  unsigned i;
+  int j;
+  uint64_t byte, crc, mask;
 
-   i = 0;
-   crc = 0xFFFFFFFFFFFFFFFFULL;
-   while (i < len) {
-      byte = message[i];            // Get next byte.
-      crc = crc ^ byte;
-      for (j = 7; j >= 0; j--) {    // Do eight times.
-         mask = -(crc & 1);
-         crc = (crc >> 1) ^ (0xC96C5795D7870F42ULL & mask);
-      }
-      i = i + 1;
-   }
-   return ~crc;
+  i = 0;
+  crc = 0xFFFFFFFFFFFFFFFFULL;
+  while (i < len) {
+    byte = message[i]; // Get next byte.
+    crc = crc ^ byte;
+    for (j = 7; j >= 0; j--) { // Do eight times.
+      mask = -(crc & 1);
+      crc = (crc >> 1) ^ (0xC96C5795D7870F42ULL & mask);
+    }
+    i = i + 1;
+  }
+  return ~crc;
 }
-
 
 /// \brief Convert from a metric to a string
 std::string metricToString(Metric metric) {
   switch (metric) {
-  case Metric::kCodeSize:   return "size";
-  case Metric::kTime:       return "time";
-  case Metric::kEnergy:     return "energy";
+  case Metric::kCodeSize:
+    return "size";
+  case Metric::kTime:
+    return "time";
+  case Metric::kEnergy:
+    return "energy";
   }
 }
 
-
 /// \brief Convert from a string to a metric if possible.
-/// 
+///
 /// \return The metric if possible, or an empty Option type if not.
 Option<Metric> stringToMetric(std::string metric) {
   if (metric == "size") {
     return Metric::kCodeSize;
-  }
-  else if (metric == "time") {
+  } else if (metric == "time") {
     return Metric::kTime;
-  }
-  else if (metric == "energy") {
+  } else if (metric == "energy") {
     return Metric::kEnergy;
-  }
-  else{
+  } else {
     return util::Option<Metric>();
   }
 }
 
-
 } // end of namespace util
 } // end of namespace mageec
-

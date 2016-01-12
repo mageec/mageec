@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===----------------------------- Parameter ------------------------------===//
 //
 // This file defines the available parameter types. A parameter is one of the
@@ -36,9 +35,7 @@
 #include <string>
 #include <vector>
 
-
 namespace mageec {
-
 
 /// \class ParameterBase
 ///
@@ -68,10 +65,7 @@ public:
 protected:
   /// \brief Create a parameter with the provided type and identifier
   ParameterBase(ParameterType param_type, unsigned param_id, std::string name)
-    : m_param_type(param_type),
-      m_param_id(param_id),
-      m_name(name)
-  {}
+      : m_param_type(param_type), m_param_id(param_id), m_name(name) {}
 
 private:
   /// The MAGEEC name of the type of the parameter
@@ -84,14 +78,13 @@ private:
   std::string m_name;
 };
 
-
 /// \class Parameter
 ///
 /// \brief Specific parameter type
 ///
 /// Associates a given enumeration value for the parameter type with the
 /// appropriate type of value.
-template<ParameterType param_type, typename T>
+template <ParameterType param_type, typename T>
 class Parameter : public ParameterBase {
 public:
   typedef T value_type;
@@ -99,13 +92,11 @@ public:
   Parameter() = delete;
   ~Parameter() {}
 
-  Parameter(unsigned param_id, const T& value, std::string name)
-    : ParameterBase(param_type, param_id, name),
-      m_value(value)
-  {}
+  Parameter(unsigned param_id, const T &value, std::string name)
+      : ParameterBase(param_type, param_id, name), m_value(value) {}
 
   /// \brief Get the value associated with this parameter.
-  const T& getValue() const { return m_value; }
+  const T &getValue() const { return m_value; }
 
   /// \brief Convert the held parameter type to a binary blob
   std::vector<uint8_t> toBlob(void) const override {
@@ -125,8 +116,7 @@ public:
   /// \brief Create a parameter of this type given the provided id, blob and
   /// name
   static std::unique_ptr<Parameter>
-  fromBlob(unsigned parameter_id, std::vector<uint8_t> blob, std::string name)
-  {
+  fromBlob(unsigned parameter_id, std::vector<uint8_t> blob, std::string name) {
     static_assert(std::is_integral<T>::value,
                   "Only integral types handled for now");
     assert(blob.size() == sizeof(T));
@@ -137,8 +127,7 @@ public:
   }
 
   /// \brief Print out a parameter type to the provided stream
-  void print(std::ostream &os) const override
-  {
+  void print(std::ostream &os) const override {
     static_assert(std::is_integral<T>::value,
                   "Only integral types handled for now");
     os << getName() << ": " << m_value;
@@ -148,14 +137,10 @@ private:
   const T m_value;
 };
 
-
 /// Types of parameters which are supported
-typedef Parameter<ParameterType::kBool, bool>      BoolParameter;
-typedef Parameter<ParameterType::kRange, int64_t>  RangeParameter;
-
+typedef Parameter<ParameterType::kBool, bool> BoolParameter;
+typedef Parameter<ParameterType::kRange, int64_t> RangeParameter;
 
 } // end of namespace mageec
 
-
 #endif // MAGEEC_PARAMETER_H
-

@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===--------------------------- MAGEEC database --------------------------===//
 //
 // This file defines the main interface to the MAGEEC database. This includes
@@ -42,26 +41,21 @@
 #include <string>
 #include <vector>
 
-
 #define MAGEEC_DATABASE_VERSION_MAJOR 1
 #define MAGEEC_DATABASE_VERSION_MINOR 0
 #define MAGEEC_DATABASE_VERSION_PATCH 0
 
-
 namespace mageec {
-
 
 class IMachineLearner;
 class FeatureBase;
 class ParameterBase;
-
 
 class Database {
 private:
   /// \brief Version of the database interface. A newly created database will
   /// have this version number.
   static const util::Version version;
-
 
 public:
   /// \brief Load a database from the provided path
@@ -74,7 +68,7 @@ public:
   /// \return The database if it could be loaded, nullptr otherwise.
   static std::unique_ptr<Database>
   loadDatabase(std::string db_path,
-               std::map<util::UUID, IMachineLearner*> mls);
+               std::map<util::UUID, IMachineLearner *> mls);
 
   /// \brief Create a database from the provided path
   ///
@@ -86,7 +80,7 @@ public:
   /// \return The database if it could be created, nullptr otherwise.
   static std::unique_ptr<Database>
   createDatabase(std::string db_path,
-                 std::map<util::UUID, IMachineLearner*> mls);
+                 std::map<util::UUID, IMachineLearner *> mls);
 
   /// \brief Load or create a database from the provided path
   ///
@@ -100,9 +94,7 @@ public:
   /// \return The database if it could be created or loaded, nullptr
   /// otherwise.
   static std::unique_ptr<Database>
-  getDatabase(std::string db_path,
-              std::map<util::UUID, IMachineLearner*> mls);
-
+  getDatabase(std::string db_path, std::map<util::UUID, IMachineLearner *> mls);
 
 private:
   /// \brief Construct a database from the provided database path.
@@ -114,10 +106,8 @@ private:
   /// \param mls  Map of the machine learner interfaces available to the
   /// database.
   /// \param create  True if the database should be constructed.
-  Database(sqlite3 &db,
-           std::map<util::UUID, IMachineLearner*> mls,
+  Database(sqlite3 &db, std::map<util::UUID, IMachineLearner *> mls,
            bool create);
-
 
 public:
   Database(void) = delete;
@@ -128,7 +118,6 @@ public:
 
   Database &operator=(const Database &other) = delete;
   Database &operator=(Database &&other) = default;
-
 
 public:
   /// \brief Get the version of the database
@@ -143,7 +132,6 @@ public:
   /// \brief Get all of the trained machine learners in the database
   /// \return All machine learners in the database which are trained.
   std::vector<TrainedML> getTrainedMachineLearners(void);
-
 
 private:
   /// \brief Get a metadata field of the database
@@ -183,15 +171,14 @@ public:
 
   /// \brief Associate features with a specific pass in the compilation of a
   /// program unit.
-  /// 
+  ///
   /// \param features  The feature group to associate with this compilation and
   /// pass
   /// \param compilation  The identifier of a compilation of a program unit
   /// \param after_pass  Identifier of the pass which the features are
   /// associated with. This must be a pass which is in the pass sequence of the
   /// compilation.
-  void addFeaturesAfterPass(FeatureGroupID features,
-                            CompilationID compilation,
+  void addFeaturesAfterPass(FeatureGroupID features, CompilationID compilation,
                             PassID after_pass);
 
 
@@ -240,11 +227,9 @@ public:
   /// \struct Structure for results to be added to the database
   struct InputResult {
     InputResult(CompilationID id, Metric m, uint64_t val)
-      : compilation_id(id), metric(m), value(val)
-    {}
+        : compilation_id(id), metric(m), value(val) {}
 
-    bool operator<(const InputResult &other) const
-    {
+    bool operator<(const InputResult &other) const {
       if (compilation_id < other.compilation_id) {
         return true;
       }
@@ -258,10 +243,9 @@ public:
     }
 
     const CompilationID compilation_id;
-    const Metric        metric;
-    const uint64_t      value;
+    const Metric metric;
+    const uint64_t value;
   };
-
 
   /// \brief Add results entries to the database for previously
   // established compilations.
@@ -289,7 +273,7 @@ private:
   sqlite3 *m_db;
 
   /// Mapping of machine learner uuids to machine learners
-  std::map<util::UUID, IMachineLearner*> m_mls;
+  std::map<util::UUID, IMachineLearner *> m_mls;
 
   /// \brief Initialize a new empty database
   ///
@@ -304,7 +288,6 @@ private:
   /// check constraints which cannot be handled by sqlite
   void validate(void);
 };
-
 
 /// \class ResultIterator
 ///
@@ -322,18 +305,17 @@ public:
   ResultIterator(const ResultIterator &other) = delete;
   ResultIterator(ResultIterator &&other);
 
-  ResultIterator& operator=(ResultIterator &&other);
+  ResultIterator &operator=(ResultIterator &&other);
 
   util::Option<Result> operator*();
   ResultIterator next();
 
 private:
   sqlite3 *m_db;
-  Metric   m_metric;
+  Metric m_metric;
   std::unique_ptr<DatabaseQuery> m_query;
   std::unique_ptr<DatabaseQueryIterator> m_result_iter;
 };
-
 
 /// \class DatabaseTransaction
 ///
@@ -348,8 +330,8 @@ public:
   DatabaseTransaction(const DatabaseTransaction &other) = delete;
   DatabaseTransaction(DatabaseTransaction &&other);
 
-  DatabaseTransaction& operator=(const DatabaseTransaction &other) = delete;
-  DatabaseTransaction& operator=(DatabaseTransaction &&other);
+  DatabaseTransaction &operator=(const DatabaseTransaction &other) = delete;
+  DatabaseTransaction &operator=(DatabaseTransaction &&other);
 
   /// \brief Commit the transaction
   ///
@@ -364,8 +346,6 @@ private:
   sqlite3 *m_db;
 };
 
-
 } // end of namespace mageec
-
 
 #endif // MAGEEC_DATABASE_H

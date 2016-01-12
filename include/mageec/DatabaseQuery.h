@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===----------------------------- Database query -------------------------===//
 //
 // This file defines a wrapper around the sqlite3 interface, to simply the
@@ -32,20 +31,12 @@
 #include <string>
 #include <vector>
 
-
 namespace mageec {
-
 
 class DatabaseQuery;
 
-
 /// Defines the types of entries which may be stored in the database
-enum class QueryParamType {
-  kInteger,
-  kText,
-  kBlob
-};
-
+enum class QueryParamType { kInteger, kText, kBlob };
 
 /// \class DatabaseQueryBuilder
 ///
@@ -66,12 +57,12 @@ public:
   operator DatabaseQuery(void);
 
   /// \brief Append a string to the query
-  DatabaseQueryBuilder& operator<<(std::string str);
+  DatabaseQueryBuilder &operator<<(std::string str);
 
   /// \brief Append a slot for a parameter to the query
   ///
   /// The slot will be subsequently populated when a parameter is bound to it
-  DatabaseQueryBuilder& operator<<(QueryParamType param);
+  DatabaseQueryBuilder &operator<<(QueryParamType param);
 
 private:
   /// Handle to the database which this query is for
@@ -92,10 +83,9 @@ private:
   std::vector<QueryParamType> m_params;
 };
 
-
 /// \class DatabaseQueryIterator
 ///
-/// Provides the interface to iterate through each row of the results for a 
+/// Provides the interface to iterate through each row of the results for a
 /// query.
 ///
 /// This is tightly coupled to the DatabaseQuery, as only a single iterator
@@ -107,14 +97,14 @@ public:
   DatabaseQueryIterator(const DatabaseQueryIterator &other) = delete;
   DatabaseQueryIterator(DatabaseQueryIterator &&other);
 
-  DatabaseQueryIterator& operator=(const DatabaseQueryIterator &other) = delete;
-  DatabaseQueryIterator& operator=(DatabaseQueryIterator &&other);
+  DatabaseQueryIterator &operator=(const DatabaseQueryIterator &other) = delete;
+  DatabaseQueryIterator &operator=(DatabaseQueryIterator &&other);
 
   /// \brief Iterator destructor
   ~DatabaseQueryIterator(void);
 
   /// \brief Construct an iterator to iterate through result for a query
-  DatabaseQueryIterator(sqlite3& db, DatabaseQuery& query);
+  DatabaseQueryIterator(sqlite3 &db, DatabaseQuery &query);
 
   /// \brief Start the execution of the query from the beginning
   void restart(void);
@@ -130,7 +120,6 @@ public:
 
   /// \brief Return the number of columns in the results table
   int numColumns(void);
-
 
   /// \brief Check whether the given value in the results table is null
   /// \param index  Index of the column containing the potential null value
@@ -158,21 +147,19 @@ public:
 private:
   /// \brief Validate the state of the iterator
   void validate(void);
-  
 
   /// Dictates whether this iterator has completed execution
   bool m_done;
 
   /// Handle to the database for the query
-  sqlite3& m_db;
+  sqlite3 &m_db;
 
   /// The query being executed
-  DatabaseQuery* m_query;
-  
-  /// Pointer to the underlying sqlite statement
-  sqlite3_stmt* m_stmt;
-};
+  DatabaseQuery *m_query;
 
+  /// Pointer to the underlying sqlite statement
+  sqlite3_stmt *m_stmt;
+};
 
 /// \class DatabaseQuery
 ///
@@ -186,7 +173,6 @@ class DatabaseQuery {
 public:
   typedef DatabaseQueryIterator iterator;
 
-
   DatabaseQuery(void) = delete;
 
   /// \brief Destructor releases sqlite resources
@@ -195,8 +181,8 @@ public:
   DatabaseQuery(const DatabaseQuery &other) = delete;
   DatabaseQuery(DatabaseQuery &&other) = default;
 
-  DatabaseQuery& operator=(const DatabaseQuery &other) = delete;
-  DatabaseQuery& operator=(DatabaseQuery &&other) = delete;
+  DatabaseQuery &operator=(const DatabaseQuery &other) = delete;
+  DatabaseQuery &operator=(DatabaseQuery &&other) = delete;
 
   /// \brief Construct a simple query with no parameters
   ///
@@ -214,21 +200,20 @@ public:
   /// \param substrs  Substrings which make up the query. Every parameter is
   /// preceded by a substring.
   /// \param params  Parameter slots which make up the query.
-  DatabaseQuery(sqlite3 &db,
-                std::vector<std::string> substrs,
+  DatabaseQuery(sqlite3 &db, std::vector<std::string> substrs,
                 std::vector<QueryParamType> params);
 
   /// \brief Bind an integer value to the next available parameter
-  DatabaseQuery& operator<<(int64_t i);
+  DatabaseQuery &operator<<(int64_t i);
 
   /// \brief Bind text to the next available parameter
-  DatabaseQuery& operator<<(std::string str);
+  DatabaseQuery &operator<<(std::string str);
 
   /// \brief Bind a blob to the next available parameter
-  DatabaseQuery& operator<<(const std::vector<uint8_t> blob);
+  DatabaseQuery &operator<<(const std::vector<uint8_t> blob);
 
   /// \brief Bind a null to the next available parameter
-  DatabaseQuery& operator<<(std::nullptr_t nullp);
+  DatabaseQuery &operator<<(std::nullptr_t nullp);
 
   /// \brief Execute the query, retrieving an iterator which provides access
   /// to the results.
@@ -251,14 +236,13 @@ private:
   ///
   /// \return The underlying sqlite statement, for which the user needs
   /// exclusive access.
-  sqlite3_stmt& lockQuery(void);
+  sqlite3_stmt &lockQuery(void);
 
   /// \brief Check that the query is in a usable state
   void validate(void) const;
-  
 
   /// Handle to the underlying database connection
-  sqlite3& m_db;
+  sqlite3 &m_db;
 
   /// Records whether the query is locked (and therefore should not be used)
   bool m_is_locked;
@@ -268,7 +252,7 @@ private:
 
   /// The current parameter for a value to be binded to
   std::vector<QueryParamType>::size_type m_curr_param;
-  
+
   /// Number of parameters in the query
   const std::vector<QueryParamType>::size_type m_param_count;
 
@@ -276,8 +260,6 @@ private:
   const std::vector<QueryParamType> m_param_types;
 };
 
-
 } // end of namespace mageec
-
 
 #endif // MAGEEC_DATABASE_QUERY_H

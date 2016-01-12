@@ -1,5 +1,31 @@
 2016-01-12  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/Database.h: File formatted with clang-format.
+	* include/mageec/DatabaseQuery.h: Likewise.
+	* include/mageec/Decision.h: Likewise.
+	* include/mageec/Feature.h: Likewise.
+	* include/mageec/FeatureSet.h: Likewise.
+	* include/mageec/Framework.h: Likewise.
+	* include/mageec/ML.h: Likewise.
+	* include/mageec/ML/C5.h: Likewise.
+	* include/mageec/ML/FileML.h: Likewise.
+	* include/mageec/Parameter.h: Likewise.
+	* include/mageec/ParameterSet.h: Likewise.
+	* include/mageec/Result.h: Likewise.
+	* include/mageec/TrainedML.h: Likewise.
+	* include/mageec/Types.h: Likewise.
+	* include/mageec/Util.h: Likewise.
+	* lib/Database.cpp: Likewise.
+	* lib/DatabaseQuery.cpp: Likewise.
+	* lib/Driver.cpp: Likewise.
+	* lib/Framework.cpp: Likewise.
+	* lib/ML/C5.cpp: Likewise.
+	* lib/ML/FileML.cpp: Likewise.
+	* lib/TrainedML.cpp: Likewise.
+	* lib/Util.cpp: Likewise.
+
+2016-01-12  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Database.h: Make file include order consistent.
 	* include/mageec/DatabaseQuery.h: Likewise.
 	* include/mageec/Decision.h: Likewise.

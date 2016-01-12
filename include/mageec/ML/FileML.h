@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===------------------------ File Machine Learner ------------------------===//
 //
 // This defines the file based machine learner for MAGEEC. FileML does
@@ -41,12 +40,10 @@
 #include <string>
 #include <vector>
 
-
 namespace mageec {
 
 class DecisionRequestBase;
 class FeatureSet;
-
 
 /// \class FileML
 ///
@@ -61,9 +58,7 @@ public:
   ~FileML() override;
 
   /// \brief Get the unique identifier for this machine learner
-  util::UUID getUUID(void) const override {
-    return uuid;
-  }
+  util::UUID getUUID(void) const override { return uuid; }
 
   /// \brief Get the name of the machine learner
   std::string getName(void) const override { return "File Machine Learner"; }
@@ -80,23 +75,18 @@ public:
   bool setDecisionConfig(std::string) override;
 
   std::unique_ptr<DecisionBase>
-  makeDecision(const DecisionRequestBase& request,
-               const FeatureSet& features,
+  makeDecision(const DecisionRequestBase &request, const FeatureSet &features,
                const std::vector<uint8_t> &blob) const override;
 
-  const std::vector<uint8_t>
-  train(std::set<FeatureDesc> feature_descs,
-        std::set<ParameterDesc> parameter_descs,
-        std::set<std::string> passes,
-        ResultIterator results) const override;
+  const std::vector<uint8_t> train(std::set<FeatureDesc> feature_descs,
+                                   std::set<ParameterDesc> parameter_descs,
+                                   std::set<std::string> passes,
+                                   ResultIterator results) const override;
 
   const std::vector<uint8_t>
   train(std::set<FeatureDesc> feature_descs,
-        std::set<ParameterDesc> parameter_descs,
-        std::set<std::string> passes,
-        ResultIterator results,
-        std::vector<uint8_t> old_blob) const override;
-
+        std::set<ParameterDesc> parameter_descs, std::set<std::string> passes,
+        ResultIterator results, std::vector<uint8_t> old_blob) const override;
 
 private:
   /// Set when the a decision config has been provided to the machine
@@ -108,8 +98,6 @@ private:
   std::map<std::string, std::string> m_decision_map;
 };
 
-
 } // end of namespace mageec
-
 
 #endif // MAGEEC_FILE_ML_H

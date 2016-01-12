@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===----------------------- Trained Machine Learner-----------------------===//
 //
 // This contains the implementation of a trained machine learner, which
@@ -36,14 +35,11 @@
 #include <memory>
 #include <string>
 
-
 namespace mageec {
-
 
 class FeatureBase;
 class FeatureSet;
 class IMachineLearner;
-
 
 /// \class TrainedML
 ///
@@ -61,7 +57,7 @@ public:
   /// or blob.
   ///
   /// \param ml  Handle to the interface of the machine learner.
-  TrainedML(IMachineLearner& ml);
+  TrainedML(IMachineLearner &ml);
 
   /// \brief Construct a trained machine learner based on an underlying
   /// machine learner implementation.
@@ -72,8 +68,7 @@ public:
   /// \param metric  The metric this machine learner has been trained against
   /// \param blob  A blob of training data to be passed to the machine
   /// learner when making a decision
-  TrainedML(IMachineLearner& ml,
-            Metric metric,
+  TrainedML(IMachineLearner &ml, Metric metric,
             const std::vector<uint8_t> blob);
 
   /// \brief Get the unique identifier for the underlying machine learner
@@ -109,12 +104,12 @@ public:
   ///
   /// \return The decision made. If for any reason the machine learner cannot
   /// make a decision, this will be the native decision.
-  std::unique_ptr<DecisionBase>
-  makeDecision(const DecisionRequestBase& request, const FeatureSet& features);
+  std::unique_ptr<DecisionBase> makeDecision(const DecisionRequestBase &request,
+                                             const FeatureSet &features);
 
 private:
   /// Interface to the underlying machine learner.
-  IMachineLearner& m_ml;
+  IMachineLearner &m_ml;
 
   /// Metric which this machine learner is trained for.
   const util::Option<Metric> m_metric;
@@ -123,8 +118,6 @@ private:
   const std::vector<uint8_t> m_blob;
 };
 
-
 } // end of namespace mageec
-
 
 #endif // MAGEEC_TRAINED_ML_H

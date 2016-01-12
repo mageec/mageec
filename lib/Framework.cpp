@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===-------------------------- MAGEEC framework --------------------------===//
 //
 // Contains the implementation of the MAGEEC framework. This provides the
@@ -33,54 +32,35 @@
 #include <set>
 #include <string>
 
-
 namespace mageec {
 
+const util::Version Framework::version(MAGEEC_VERSION_MAJOR,
+                                       MAGEEC_VERSION_MINOR,
+                                       MAGEEC_VERSION_PATCH);
 
-const util::Version
-Framework::version(MAGEEC_VERSION_MAJOR,
-                   MAGEEC_VERSION_MINOR,
-                   MAGEEC_VERSION_PATCH);
-
-
-Framework::Framework(bool with_debug)
-  : m_mls()
-{
+Framework::Framework(bool with_debug) : m_mls() {
   if (with_debug) {
     util::setDebug(true);
   }
 }
 
-Framework::~Framework(void)
-{
+Framework::~Framework(void) {
   // Delete ml interfaces
   for (auto ml : m_mls) {
     delete ml.second;
   }
 }
 
-void Framework::setDebug(bool with_debug) const
-{
-  util::setDebug(with_debug);
-}
+void Framework::setDebug(bool with_debug) const { util::setDebug(with_debug); }
 
+util::Version Framework::getVersion(void) const { return Framework::version; }
 
-util::Version Framework::getVersion(void) const
-{
-  return Framework::version;
-}
-
-
-util::Option<util::UUID> Framework::loadMachineLearner(std::string path)
-{
+util::Option<util::UUID> Framework::loadMachineLearner(std::string path) {
   (void)path;
   return nullptr;
 }
 
-
-bool
-Framework::registerMachineLearner(std::unique_ptr<IMachineLearner> ml)
-{
+bool Framework::registerMachineLearner(std::unique_ptr<IMachineLearner> ml) {
   util::UUID ml_id = ml->getUUID();
   auto res = m_mls.emplace(std::make_pair(ml_id, ml.release()));
   assert(res.second);
@@ -88,36 +68,28 @@ Framework::registerMachineLearner(std::unique_ptr<IMachineLearner> ml)
   return true;
 }
 
-
-std::unique_ptr<Database>
-Framework::getDatabase(std::string db_path, bool create) const
-{
+std::unique_ptr<Database> Framework::getDatabase(std::string db_path,
+                                                 bool create) const {
   std::unique_ptr<Database> db;
   if (create) {
     db = Database::createDatabase(db_path, m_mls);
-  }
-  else {
+  } else {
     db = Database::loadDatabase(db_path, m_mls);
   }
   return db;
 }
 
-
-bool Framework::hasMachineLearner(util::UUID uuid) const 
-{
+bool Framework::hasMachineLearner(util::UUID uuid) const {
   const auto it = m_mls.find(uuid);
   return (it != m_mls.cend());
 }
 
-
-std::set<IMachineLearner *> Framework::getMachineLearners() const
-{
+std::set<IMachineLearner *> Framework::getMachineLearners() const {
   std::set<IMachineLearner *> mls;
   for (auto &it : m_mls) {
     mls.emplace(it.second);
   }
   return mls;
 }
-
 
 } // end of namespace mageec

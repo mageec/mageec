@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===------------------------ File Machine Learner ------------------------===//
 //
 // This implements the file based machine learner for MAGEEC. FileML does
@@ -43,25 +42,18 @@
 #include <string>
 #include <vector>
 
-
 namespace mageec {
-
 
 // UUID for FileML
 const util::UUID FileML::uuid =
     util::UUID::parse("8998d958-5d9c-4b6b-a90b-679d8722d63a").get();
 
-
 FileML::FileML()
-  : IMachineLearner(),
-    m_have_decision_config(false), m_decision_map()
-{}
+    : IMachineLearner(), m_have_decision_config(false), m_decision_map() {}
 
-FileML::~FileML()
-{}
+FileML::~FileML() {}
 
-bool FileML::setDecisionConfig(std::string config_path)
-{
+bool FileML::setDecisionConfig(std::string config_path) {
   // Load the input config file for parsing
   std::ifstream config_file(config_path);
   if (!config_file) {
@@ -74,7 +66,8 @@ bool FileML::setDecisionConfig(std::string config_path)
     std::string result_value;
 
     auto line_it = line.begin();
-    for (; std::isspace(*line_it) && line_it != line.end(); line_it++);
+    for (; std::isspace(*line_it) && line_it != line.end(); line_it++)
+      ;
     if (line_it == line.end() || *line_it == '#') {
       continue;
     }
@@ -83,7 +76,8 @@ bool FileML::setDecisionConfig(std::string config_path)
     for (; !std::isspace(*line_it) && line_it != line.end(); line_it++) {
       request_id.push_back(*line_it);
     }
-    for (; std::isspace(*line_it) && line_it != line.end(); line_it++);
+    for (; std::isspace(*line_it) && line_it != line.end(); line_it++)
+      ;
 
     // read the result value
     if (line_it == line.end() || *line_it == '#') {
@@ -95,7 +89,8 @@ bool FileML::setDecisionConfig(std::string config_path)
       result_value.push_back(*line_it);
     }
 
-    for (; std::isspace(*line_it) && line_it != line.end(); line_it++);
+    for (; std::isspace(*line_it) && line_it != line.end(); line_it++)
+      ;
     if (line_it != line.end() && *line_it != '#') {
       // junk on the end of the line
       MAGEEC_DEBUG("Malformed FileML config file field:\n" << line);
@@ -104,7 +99,7 @@ bool FileML::setDecisionConfig(std::string config_path)
 
     if (m_decision_map.count(request_id) != 0) {
       MAGEEC_DEBUG("Multiple entries for decision: " << request_id
-          << " in the config file");
+                                                     << " in the config file");
       return false;
     }
 
@@ -121,12 +116,9 @@ bool FileML::setDecisionConfig(std::string config_path)
   return true;
 }
 
-
 std::unique_ptr<DecisionBase>
-FileML::makeDecision(const DecisionRequestBase& request,
-                     const FeatureSet&,
-                     const std::vector<uint8_t>&) const
-{
+FileML::makeDecision(const DecisionRequestBase &request, const FeatureSet &,
+                     const std::vector<uint8_t> &) const {
   // String identifier used to find the decision to be made in the
   // decision map. Most requests have integer ids, so these are converted
   // to integers first.
@@ -145,28 +137,27 @@ FileML::makeDecision(const DecisionRequestBase& request,
     // Get the identifier for the decision request as a string.
     // Also retrieve the expected type of the resultant decision.
     if (request.getType() == DecisionRequestType::kBool) {
-      auto &bool_request = *static_cast<const BoolDecisionRequest*>(&request);
+      auto &bool_request = *static_cast<const BoolDecisionRequest *>(&request);
       request_id = std::to_string(bool_request.getID());
       decision_type = bool_request.getDecisionType();
-    }
-    else if (request.getType() == DecisionRequestType::kRange) {
-      auto &range_request = *static_cast<const RangeDecisionRequest*>(&request);
+    } else if (request.getType() == DecisionRequestType::kRange) {
+      auto &range_request =
+          *static_cast<const RangeDecisionRequest *>(&request);
       request_id = std::to_string(range_request.getID());
       decision_type = range_request.getDecisionType();
-    }
-    else if (request.getType() == DecisionRequestType::kPassList) {
+    } else if (request.getType() == DecisionRequestType::kPassList) {
       auto &pass_request =
-          *static_cast<const PassListDecisionRequest*>(&request);
+          *static_cast<const PassListDecisionRequest *>(&request);
       request_id = std::to_string(pass_request.getID());
       decision_type = pass_request.getDecisionType();
-    }
-    else {
+    } else {
       assert(0 && "Unreachable");
     }
     break;
   }
   case DecisionRequestType::kPassGate: {
-    auto &pass_request = *static_cast<const PassGateDecisionRequest*>(&request);
+    auto &pass_request =
+        *static_cast<const PassGateDecisionRequest *>(&request);
     request_id = pass_request.getID();
     decision_type = pass_request.getDecisionType();
     break;
@@ -187,8 +178,7 @@ FileML::makeDecision(const DecisionRequestBase& request,
   case DecisionType::kBool:
     if (result_str == "true") {
       return std::unique_ptr<DecisionBase>(new BoolDecision(true));
-    }
-    else if (result_str == "false") {
+    } else if (result_str == "false") {
       return std::unique_ptr<DecisionBase>(new BoolDecision(false));
     }
     MAGEEC_DEBUG("Unknown value for boolean decision:\n" << result_str);
@@ -213,26 +203,20 @@ FileML::makeDecision(const DecisionRequestBase& request,
   }
 }
 
-
-const std::vector<uint8_t>
-FileML::train(std::set<FeatureDesc>, std::set<ParameterDesc>,
-              std::set<std::string>,
-              ResultIterator) const
-{
+const std::vector<uint8_t> FileML::train(std::set<FeatureDesc>,
+                                         std::set<ParameterDesc>,
+                                         std::set<std::string>,
+                                         ResultIterator) const {
   assert(0 && "FileML should not be trained");
   return std::vector<uint8_t>();
 }
 
-
-const std::vector<uint8_t>
-FileML::train(std::set<FeatureDesc>, std::set<ParameterDesc>,
-              std::set<std::string>,
-              ResultIterator,
-              std::vector<uint8_t>) const
-{
+const std::vector<uint8_t> FileML::train(std::set<FeatureDesc>,
+                                         std::set<ParameterDesc>,
+                                         std::set<std::string>, ResultIterator,
+                                         std::vector<uint8_t>) const {
   assert(0 && "FileML should not be trained");
   return std::vector<uint8_t>();
 }
 
-
-} // end of namespace mageec 
+} // end of namespace mageec

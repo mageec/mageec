@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===-------------------------- MAGEEC framework --------------------------===//
 //
 // This file contains the definition of the MAGEEC framework. This provides
@@ -34,31 +33,24 @@
 #include <set>
 #include <string>
 
-
-#if !defined(MAGEEC_VERSION_MAJOR) || \
-    !defined(MAGEEC_VERSION_MINOR) || \
+#if !defined(MAGEEC_VERSION_MAJOR) || !defined(MAGEEC_VERSION_MINOR) ||        \
     !defined(MAGEEC_VERSION_PATCH)
 #error "MAGEEC version not defined by the build system"
 #endif
 
-static_assert(MAGEEC_VERSION_MAJOR == 2 &&
-              MAGEEC_VERSION_MINOR == 0 &&
-              MAGEEC_VERSION_PATCH == 0,
+static_assert(MAGEEC_VERSION_MAJOR == 2 && MAGEEC_VERSION_MINOR == 0 &&
+                  MAGEEC_VERSION_PATCH == 0,
               "MAGEEC version does not match");
-
 
 namespace mageec {
 
-
 class Database;
 class IMachineLearner;
-
 
 class Framework {
 private:
   /// \brief Version of the mageec framework
   static const util::Version version;
-
 
 public:
   /// \brief Create the framework
@@ -110,11 +102,9 @@ public:
 private:
   /// A map of machine learner interfaces registers with the framework, keyed
   /// based on their uuids.
-  std::map<util::UUID, IMachineLearner*> m_mls;
+  std::map<util::UUID, IMachineLearner *> m_mls;
 };
 
-
 } // end of namespace MAGEEC
-
 
 #endif // MAGEEC_FRAMEWORK_H

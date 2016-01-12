@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===-------------------------- Program Features --------------------------===//
 //
 // This contains the definition of the various types of MAGEEC feature which
@@ -36,9 +35,7 @@
 #include <string>
 #include <vector>
 
-
 namespace mageec {
-
 
 /// \class FeatureBase
 ///
@@ -68,10 +65,7 @@ public:
 protected:
   /// \brief Create a feature with the provided type and identifier
   FeatureBase(FeatureType feature_type, unsigned feature_id, std::string name)
-    : m_feature_type(feature_type),
-      m_feature_id(feature_id),
-      m_name(name)
-  {}
+      : m_feature_type(feature_type), m_feature_id(feature_id), m_name(name) {}
 
 private:
   /// The MAGEEC name of the type of the feature
@@ -84,14 +78,13 @@ private:
   std::string m_name;
 };
 
-
 /// \class Feature
 ///
 /// \brief Represents a specific type of feature
 ///
 /// Associates a given enumeration value for the feature type with the
 /// appropriate type of value.
-template<FeatureType feature_type, typename T>
+template <FeatureType feature_type, typename T>
 class Feature : public FeatureBase {
 public:
   typedef T value_type;
@@ -99,13 +92,11 @@ public:
   Feature() = delete;
   ~Feature() {}
 
-  Feature(unsigned feature_id, const T& value, std::string name)
-    : FeatureBase(feature_type, feature_id, name),
-      m_value(value)
-  {}
+  Feature(unsigned feature_id, const T &value, std::string name)
+      : FeatureBase(feature_type, feature_id, name), m_value(value) {}
 
   /// \brief Get the value associated with this feature.
-  const T& getValue() const { return m_value; }
+  const T &getValue() const { return m_value; }
 
   /// \brief Convert the held feature type to a binary blob
   std::vector<uint8_t> toBlob(void) const override {
@@ -124,8 +115,7 @@ public:
 
   /// \brief Create a feature of this type given the provided id, blob and name
   static std::unique_ptr<Feature>
-  fromBlob(unsigned feature_id, std::vector<uint8_t> blob, std::string name)
-  {
+  fromBlob(unsigned feature_id, std::vector<uint8_t> blob, std::string name) {
     static_assert(std::is_integral<T>::value,
                   "Only integral types handled for now");
     assert(blob.size() == sizeof(T));
@@ -135,8 +125,7 @@ public:
   }
 
   /// \brief Print out a parameter type to the provided stream
-  void print(std::ostream &os) const override
-  {
+  void print(std::ostream &os) const override {
     static_assert(std::is_integral<T>::value,
                   "Only integral types handled for now");
     os << getName() << ": " << m_value;
@@ -146,13 +135,10 @@ private:
   const T m_value;
 };
 
-
 /// Types of features which are supported by MAGEEC
-typedef Feature<FeatureType::kBool, bool>    BoolFeature;
-typedef Feature<FeatureType::kInt,  int64_t> IntFeature;
-
+typedef Feature<FeatureType::kBool, bool>   BoolFeature;
+typedef Feature<FeatureType::kInt, int64_t> IntFeature;
 
 } // end of namespace mageec
-
 
 #endif // MAGEEC_FEATURES_H

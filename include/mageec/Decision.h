@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-
 //===-------------------------- MAGEEC decision ---------------------------===//
 //
 // This defines the types of decisions which can be requested of a machine
@@ -33,9 +32,7 @@
 #include <string>
 #include <vector>
 
-
 namespace mageec {
-
 
 /// \class DecisionBase
 ///
@@ -49,9 +46,7 @@ public:
 
 protected:
   /// \brief Create a decision with the provided type
-  DecisionBase(DecisionType decision_type)
-    : m_decision_type(decision_type)
-  {}
+  DecisionBase(DecisionType decision_type) : m_decision_type(decision_type) {}
 
 private:
   DecisionType m_decision_type;
@@ -63,25 +58,22 @@ private:
 ///
 /// Associates a given enumeration value for the decision type with the
 /// appropriate type of value.
-template<DecisionType decision_type, typename T>
+template <DecisionType decision_type, typename T>
 class Decision : public DecisionBase {
 public:
   typedef T value_type;
 
   Decision() = delete;
 
-  explicit Decision(const T& value)
-    : DecisionBase(decision_type),
-      m_value(value)
-  {}
+  explicit Decision(const T &value)
+      : DecisionBase(decision_type), m_value(value) {}
 
   /// \brief Get the value associated with this feature.
-  const T& getValue() const { return m_value; }
+  const T &getValue() const { return m_value; }
 
 private:
   const T m_value;
 };
-
 
 /// \class DecisionRequestBase
 ///
@@ -96,13 +88,11 @@ public:
 protected:
   /// \brief Create a decision with the provided type
   DecisionRequestBase(DecisionRequestType request_type)
-    : m_request_type(request_type)
-  {}
+      : m_request_type(request_type) {}
 
 private:
   DecisionRequestType m_request_type;
 };
-
 
 /// \class DecisionRequest
 ///
@@ -110,20 +100,17 @@ private:
 ///
 /// Associates a given enumeration value for the decision request type with
 /// the appropriate type of identifier and decision.
-template<DecisionRequestType request_type,
-         DecisionType decision_type,
-         typename IdentifierT>
+template <DecisionRequestType request_type, DecisionType decision_type,
+          typename IdentifierT>
 class DecisionRequest : public DecisionRequestBase {
 public:
   DecisionRequest() = delete;
 
   explicit DecisionRequest(const IdentifierT &id)
-    : DecisionRequestBase(request_type),
-      m_id(id)
-  {}
+      : DecisionRequestBase(request_type), m_id(id) {}
 
   /// \brief Get the identifier associated with this feature
-  const IdentifierT& getID() const { return m_id; }
+  const IdentifierT &getID() const { return m_id; }
 
   /// \brief Get the decision type associated with this feature
   DecisionType getDecisionType() const { return decision_type; }
@@ -132,27 +119,20 @@ private:
   const IdentifierT m_id;
 };
 
-
 /// A PassList is a list of pass name strings
 typedef std::vector<std::string> PassList;
 
-
-
 // Types of decision requests which can be made, and decisions which can result
-typedef DecisionRequest<DecisionRequestType::kBool,
-                        DecisionType::kBool,
+typedef DecisionRequest<DecisionRequestType::kBool, DecisionType::kBool,
                         unsigned> BoolDecisionRequest;
 
-typedef DecisionRequest<DecisionRequestType::kRange,
-                        DecisionType::kRange,
+typedef DecisionRequest<DecisionRequestType::kRange, DecisionType::kRange,
                         unsigned> RangeDecisionRequest;
 
-typedef DecisionRequest<DecisionRequestType::kPassGate,
-                        DecisionType::kBool,
+typedef DecisionRequest<DecisionRequestType::kPassGate, DecisionType::kBool,
                         std::string> PassGateDecisionRequest;
 
-typedef DecisionRequest<DecisionRequestType::kPassList,
-                        DecisionType::kPassList,
+typedef DecisionRequest<DecisionRequestType::kPassList, DecisionType::kPassList,
                         unsigned> PassListDecisionRequest;
 
 /// \class NativeDecision
@@ -162,12 +142,10 @@ class NativeDecision : public DecisionBase {
 public:
   NativeDecision() : DecisionBase(DecisionType::kNative) {}
 };
-typedef Decision<DecisionType::kBool,  bool>        BoolDecision;
-typedef Decision<DecisionType::kRange, int64_t>     RangeDecision;
+typedef Decision<DecisionType::kBool, bool> BoolDecision;
+typedef Decision<DecisionType::kRange, int64_t> RangeDecision;
 typedef Decision<DecisionType::kPassList, PassList> PassListDecision;
 
-
 } // end of namespace mageec
-
 
 #endif // MAGEEC_DECISION_H
