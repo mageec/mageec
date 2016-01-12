@@ -42,6 +42,7 @@
 #include "gcc-plugin.h"
 #include "tree-pass.h"
 
+#include <fstream>
 #include <map>
 #include <string>
 
@@ -111,6 +112,9 @@ static void printHelp()
 "  -ml-config=<arg>       Configuration to be provided to the machine learner\n"
 "                         for decision making\n"
 "  -metric=<arg>          Metric for the machine learner\n"
+"  -out-file=<arg>        The output file records identifiers for each\n"
+"                         element of the input program. These identifiers are\n"
+"                         then provided to the framework when adding results\n"
 "\n"
 "examples:\n"
 "  gcc -fplugin=libmageec_gcc.so -fplugin-libmageec_gcc-help foo.c\n"
@@ -202,6 +206,7 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
   mageec::util::Option<std::string> ml_str;
   mageec::util::Option<std::string> ml_config_str;
   mageec::util::Option<mageec::Metric> metric;
+  mageec::util::Option<std::string> out_file_str;
 
   // Simple flags
   bool with_help                = false;
@@ -220,6 +225,7 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
   bool with_ml        = false;
   bool with_ml_config = false;
   bool with_metric    = false;
+  bool with_out_file  = false;
 
   for (int i = 0; i < argc; ++i) {
     std::string arg_str = argv[i].key;
@@ -338,6 +344,17 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
         return false;
       }
       with_metric = true;
+    } else if (arg_str == "out-file") {
+      if (with_out_file) {
+        MAGEEC_ERR("Plugin argument 'out-file' already seen");
+        return false;
+      }
+      if (!argv[i].value) {
+        MAGEEC_ERR("No value provided to 'out-file' argument");
+        return false;
+      }
+      out_file_str = std::string(argv[i].value);
+      with_out_file = true;
     } else {
       MAGEEC_WARN("Unrecognized argument '" << arg_str << "' ignored");
     }
@@ -351,7 +368,8 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
   assert(with_db == (db_str == true));
   assert(with_ml_config == (ml_config_str == true));
 
-  bool may_require_db = with_feature_extract || with_print_mls || with_optimize;
+  bool may_require_db = with_feature_extract || with_print_mls ||
+                        with_optimize || with_db_version;
   bool may_use_ml = with_print_mls || with_print_ml_interfaces || with_optimize;
 
   // Warnings
@@ -363,6 +381,12 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
     MAGEEC_WARN("Configuration for machine learner provided but no machine "
                 "learner was specified");
   }
+  if (with_out_file && !with_feature_extract) {
+    MAGEEC_WARN("Output file for compilation ids specified, but no features "
+                "will be saved to the database");
+  }
+
+  // FIXME: ignored arguments?
 
   // Errors
   if (with_db_version && !with_db) {
@@ -376,6 +400,11 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
   }
   if (with_optimize && !with_ml) {
     MAGEEC_ERR("Cannot optimize without specifying a machine learner");
+    return false;
+  }
+  if (with_feature_extract && !with_out_file) {
+    MAGEEC_ERR("Cannot feature extract without somewhere to output compilation"
+               "ids");
     return false;
   }
 
@@ -465,7 +494,9 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
     assert(mageec_context.db);
 
     // Print the database version now that it is loaded
-    printDatabaseVersion(*mageec_context.db.get());
+    if (with_db_version) {
+      printDatabaseVersion(*mageec_context.db.get());
+    }
   }
 
   // If we are optimizing, or querying for trained machine learners, then
@@ -532,6 +563,12 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
     assert(mageec_context.ml);
   }
 
+  // If feature extraction is enabled, open the output file
+  if (with_feature_extract) {
+    mageec_context.out_file.reset(new std::ofstream(out_file_str.get()));
+  } else {
+    mageec_context.out_file = nullptr;
+  }
   mageec_context.with_feature_extract = with_feature_extract;
   mageec_context.with_optimize = with_optimize;
   mageec_context.is_init = true;

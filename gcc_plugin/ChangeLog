@@ -1,5 +1,15 @@
 2016-01-12  Edward Jones  <ed.jones@embecosm.com>
 
+	* GCCCallbacks.cpp (mageecFinishFile): Emit compilation ids for
+	functions into the output file.
+	* GCCPlugin.cpp (parseArguments): Add out-file argument to the
+	plugin to specify where compilation ids should be stored.
+	Only print the db_version if asked to.
+	* MAGEECPlugin.h (MAGEECContext::out_file): Add member to hold
+	handle to the file to output compilation ids to.
+
+2016-01-12  Edward Jones  <ed.jones@embecosm.com>
+
 	* FeatureExtract.cpp: File formatted with clang-format.
 	* Features.h: Likewise.
 	* GCCCallbacks.cpp: Likewise.

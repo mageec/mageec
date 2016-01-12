@@ -30,6 +30,7 @@
 #include "mageec/TrainedML.h"
 #include "mageec/Util.h"
 
+#include <fstream>
 #include <map>
 #include <memory>
 #include <string>
@@ -63,7 +64,7 @@ enum class MAGEECMode : unsigned {
 struct MAGEECContext {
   MAGEECContext()
       : is_init(), with_feature_extract(), with_optimize(), framework(), db(),
-        ml(), func_features(), func_passes() {}
+        ml(), out_file(), func_features(), func_passes() {}
 
   bool is_init;
 
@@ -73,6 +74,9 @@ struct MAGEECContext {
   std::unique_ptr<mageec::Framework> framework;
   std::unique_ptr<mageec::Database> db;
   std::unique_ptr<mageec::TrainedML> ml;
+
+  /// Output file which compilation ids will be emitted into
+  std::unique_ptr<std::ofstream> out_file;
 
   /// Feature sets for each function in the module
   std::map<std::string, std::unique_ptr<mageec::FeatureSet>> func_features;

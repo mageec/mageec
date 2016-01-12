@@ -103,9 +103,13 @@ void mageecFinishFile(void *, void *) {
           mageec_context.db->newPassSequence(pass_seq);
 
       // Create the  compilation for this execution run
-      mageec_context.db->newCompilation(features.first, "function",
-                                        feature_group_id, parameter_set_id,
-                                        pass_sequence_id, nullptr /* parent */);
+      mageec::CompilationID compilation_id = mageec_context.db->newCompilation(
+          features.first, "function", feature_group_id, parameter_set_id,
+          pass_sequence_id, nullptr /* parent */);
+
+      // Emit the compilation id for the function into the output file
+      *mageec_context.out_file << "(function) " << features.first << " "
+                               << static_cast<uint64_t>(compilation_id) << "\n";
     }
   }
 
