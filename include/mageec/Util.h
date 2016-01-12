@@ -25,11 +25,11 @@
 #ifndef MAGEEC_UTIL_H
 #define MAGEEC_UTIL_H
 
+#include "mageec/Types.h"
+
 #include <array>
 #include <cassert>
 #include <vector>
-
-#include "mageec/Types.h"
 
 
 namespace mageec {

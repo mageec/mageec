@@ -27,12 +27,12 @@
 #ifndef MAGEEC_FRAMEWORK_H
 #define MAGEEC_FRAMEWORK_H
 
+#include "mageec/Util.h"
+
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
-
-#include "mageec/Util.h"
 
 
 #if !defined(MAGEEC_VERSION_MAJOR) || \

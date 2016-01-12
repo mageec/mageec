@@ -26,6 +26,8 @@
 #ifndef MAGEEC_TYPES_H
 #define MAGEEC_TYPES_H
 
+#include <cstdint>
+
 
 namespace mageec {
 

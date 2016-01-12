@@ -27,11 +27,11 @@
 #ifndef MAGEEC_DECISION_H
 #define MAGEEC_DECISION_H
 
+#include "mageec/Types.h"
+
 #include <cassert>
 #include <string>
 #include <vector>
-
-#include "mageec/Types.h"
 
 
 namespace mageec {

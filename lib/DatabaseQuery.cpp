@@ -24,15 +24,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "mageec/DatabaseQuery.h"
+#include "mageec/Util.h"
+
+#include "sqlite3.h"
 
 #include <cassert>
 #include <cstddef>
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "mageec/Util.h"
-#include "sqlite3.h"
 
 
 namespace mageec {

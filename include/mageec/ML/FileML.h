@@ -30,16 +30,16 @@
 #ifndef MAGEEC_FILE_ML_H
 #define MAGEEC_FILE_ML_H
 
+#include "mageec/ML.h"
+#include "mageec/Result.h"
+#include "mageec/Types.h"
+#include "mageec/Util.h"
+
 #include <cstdint>
 #include <map>
 #include <set>
 #include <string>
 #include <vector>
-
-#include "mageec/ML.h"
-#include "mageec/Result.h"
-#include "mageec/Types.h"
-#include "mageec/Util.h"
 
 
 namespace mageec {

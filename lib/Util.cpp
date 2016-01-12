@@ -22,11 +22,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mageec/Util.h"
+
 #include <cstdint>
 #include <iostream>
 #include <vector>
-
-#include "mageec/Util.h"
 
 
 namespace mageec {

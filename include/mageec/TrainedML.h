@@ -27,14 +27,14 @@
 #ifndef MAGEEC_TRAINED_ML_H
 #define MAGEEC_TRAINED_ML_H
 
-#include <memory>
-#include <string>
-
 #include "mageec/Decision.h"
 #include "mageec/Types.h"
 #include "mageec/Util.h"
 
 #include "sqlite3.h"
+
+#include <memory>
+#include <string>
 
 
 namespace mageec {

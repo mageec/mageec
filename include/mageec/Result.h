@@ -26,14 +26,14 @@
 #ifndef MAGEEC_RESULT_H
 #define MAGEEC_RESULT_H
 
-#include <cassert>
-#include <string>
-#include <vector>
-
 #include "mageec/FeatureSet.h"
 #include "mageec/ParameterSet.h"
 #include "mageec/Types.h"
 #include "mageec/Util.h"
+
+#include <cassert>
+#include <string>
+#include <vector>
 
 
 namespace mageec {

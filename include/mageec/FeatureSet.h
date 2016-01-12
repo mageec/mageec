@@ -26,14 +26,14 @@
 #ifndef MAGEEC_FEATURE_SET_H
 #define MAGEEC_FEATURE_SET_H
 
+#include "mageec/Feature.h"
+#include "mageec/Types.h"
+
 #include <cassert>
 #include <memory>
 #include <ostream>
 #include <set>
 #include <utility>
-
-#include "mageec/Feature.h"
-#include "mageec/Types.h"
 
 
 namespace mageec {

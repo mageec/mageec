@@ -26,6 +26,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "mageec/Database.h"
+#include "mageec/DatabaseQuery.h"
+#include "mageec/ML.h"
+#include "mageec/TrainedML.h"
+#include "mageec/Types.h"
+#include "mageec/Util.h"
+
+#include "sqlite3.h"
 
 #include <cassert>
 #include <cstdio>
@@ -34,14 +41,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "mageec/DatabaseQuery.h"
-#include "mageec/ML.h"
-#include "mageec/TrainedML.h"
-#include "mageec/Types.h"
-#include "mageec/Util.h"
-
-#include "sqlite3.h"
 
 
 namespace mageec {

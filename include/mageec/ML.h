@@ -27,13 +27,13 @@
 #ifndef MAGEEC_ML_H
 #define MAGEEC_ML_H
 
-#include <string>
-#include <vector>
-
 #include "mageec/Decision.h"
 #include "mageec/Feature.h"
 #include "mageec/Result.h"
 #include "mageec/Util.h"
+
+#include <string>
+#include <vector>
 
 
 namespace mageec {

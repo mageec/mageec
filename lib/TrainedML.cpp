@@ -24,20 +24,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "mageec/TrainedML.h"
-
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "mageec/Feature.h"
 #include "mageec/FeatureSet.h"
 #include "mageec/Decision.h"
 #include "mageec/ML.h"
+#include "mageec/TrainedML.h"
 #include "mageec/Types.h"
 #include "mageec/Util.h"
 
 #include "sqlite3.h"
+
+#include <memory>
+#include <string>
+#include <vector>
 
 
 namespace mageec {

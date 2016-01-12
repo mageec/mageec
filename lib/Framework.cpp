@@ -24,15 +24,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mageec/Database.h"
 #include "mageec/Framework.h"
+#include "mageec/ML.h"
+#include "mageec/Util.h"
 
 #include <cassert>
 #include <set>
 #include <string>
-
-#include "mageec/Database.h"
-#include "mageec/ML.h"
-#include "mageec/Util.h"
 
 
 namespace mageec {

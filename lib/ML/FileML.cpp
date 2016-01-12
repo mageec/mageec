@@ -27,6 +27,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mageec/Database.h"
+#include "mageec/Decision.h"
+#include "mageec/FeatureSet.h"
+#include "mageec/ML.h"
+#include "mageec/ML/FileML.h"
+#include "mageec/Util.h"
+
 #include <cassert>
 #include <cctype>
 #include <fstream>
@@ -35,13 +42,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "mageec/Database.h"
-#include "mageec/Decision.h"
-#include "mageec/FeatureSet.h"
-#include "mageec/ML.h"
-#include "mageec/ML/FileML.h"
-#include "mageec/Util.h"
 
 
 namespace mageec {

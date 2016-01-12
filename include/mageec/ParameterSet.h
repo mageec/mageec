@@ -26,14 +26,14 @@
 #ifndef MAGEEC_PARAMETER_SET_H
 #define MAGEEC_PARAMETER_SET_H
 
+#include "mageec/Parameter.h"
+#include "mageec/Types.h"
+
 #include <cassert>
 #include <memory>
 #include <ostream>
 #include <set>
 #include <utility>
-
-#include "mageec/Parameter.h"
-#include "mageec/Types.h"
 
 
 namespace mageec {

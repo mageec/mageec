@@ -28,10 +28,6 @@
 #ifndef MAGEEC_DATABASE_H
 #define MAGEEC_DATABASE_H
 
-#include <map>
-#include <string>
-#include <vector>
-
 #include "mageec/DatabaseQuery.h"
 #include "mageec/FeatureSet.h"
 #include "mageec/ParameterSet.h"
@@ -41,6 +37,10 @@
 #include "mageec/Util.h"
 
 #include "sqlite3.h"
+
+#include <map>
+#include <string>
+#include <vector>
 
 
 #define MAGEEC_DATABASE_VERSION_MAJOR 1

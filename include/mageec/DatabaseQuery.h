@@ -26,11 +26,11 @@
 #ifndef MAGEEC_DATABASE_QUERY_H
 #define MAGEEC_DATABASE_QUERY_H
 
+#include "sqlite3.h"
+
 #include <cstddef>
 #include <string>
 #include <vector>
-
-#include "sqlite3.h"
 
 
 namespace mageec {
