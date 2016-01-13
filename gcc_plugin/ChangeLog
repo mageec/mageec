@@ -1,5 +1,9 @@
 2016-01-13  Edward Jones  <ed.jones@embecosm.com>
 
+	* GCCCallbacks.cpp: Fix gcc warnings and errors.
+
+2016-01-13  Edward Jones  <ed.jones@embecosm.com>
+
 	* CMakeLists.txt: Inherit MAGEEC_WITH_DEBUG from the main project
 	build. Add more diagnostics when searching for the gcc plugin
 	headers.

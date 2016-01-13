@@ -37,6 +37,7 @@
 #include "tree-pass.h"
 #include "function.h"
 
+#include <cassert>
 #include <iostream>
 #include <string>
 
@@ -58,6 +59,8 @@ static std::string passTypeString(opt_pass *pass) {
   case IPA_PASS:
     return "IPA";
   }
+  assert(0 && "Unreachable");
+  return std::string();
 }
 
 void mageecStartFile(void *, void *) {
