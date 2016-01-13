@@ -1,5 +1,9 @@
 2016-01-13  Edward Jones  <ed.jones@embecosm.com>
 
+	* doc/CMakeLists: Make and install pdf documentation.
+
+2016-01-13  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/Driver.cpp (getMachineLearners): Remove wildcard match for
 	--ml flag.
 	(trainDatabase): Add debug when training for each metric.

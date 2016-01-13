@@ -26,6 +26,7 @@ set (doc_src ${CMAKE_CURRENT_SOURCE_DIR})
 # make directories for the different types of documentation
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/info)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/pdf)
 
 if (MAKEINFO_EXECUTABLE)
   if (MAGEEC_WITH_USER_DOCS)
@@ -39,8 +40,14 @@ if (MAKEINFO_EXECUTABLE)
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html
       COMMENT "Generating MAGEEC user guide html." VERBATIM)
 
+    add_custom_target (user-guide-pdf
+      COMMAND ${MAKEINFO_EXECUTABLE} ${doc_src}/mageec.texi "--pdf"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/pdf
+      COMMENT "Generating MAGEEC user guide pdf." VERBATIM)
+
     add_dependencies (info user-guide-info)
     add_dependencies (html user-guide-html)
+    add_dependencies (pdf  user-guide-pdf)
   endif ()
 
   if (MAGEEC_WITH_DESIGN_DOCS)
@@ -54,8 +61,14 @@ if (MAKEINFO_EXECUTABLE)
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html
       COMMENT "Generated MAGEEC design document html." VERBATIM)
 
+    add_custom_target (design-pdf
+      COMMAND ${MAKEINFO_EXECUTABLE} ${doc_src}/mageec-design.texi "--pdf"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/pdf
+      COMMENT "Generating MAGEEC design document pdf." VERBATIM)
+
     add_dependencies (info design-info)
     add_dependencies (html design-html)
+    add_dependencies (pdf  design-pdf)
   endif()
 endif()
 
@@ -78,4 +91,5 @@ endif ()
 # Install documentation by copying the various directories to the install
 install (DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/info    DESTINATION doc)
 install (DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html    DESTINATION doc)
+install (DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/pdf     DESTINATION doc)
 install (DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doxygen DESTINATION doc)
