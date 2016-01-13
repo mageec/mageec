@@ -29,4 +29,11 @@ add_executable(c5_machine_learner
 )
 find_library(M_LIB m)
 target_link_libraries(c5_machine_learner ${M_LIB})
-set_target_properties(c5_machine_learner PROPERTIES OUTPUT_NAME c5)
+set_target_properties(c5_machine_learner PROPERTIES OUTPUT_NAME c5.0)
+
+# Install libraries and executables
+install(TARGETS c5_machine_learner
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
+

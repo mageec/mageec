@@ -956,6 +956,13 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric) {
     parameter_descs.insert(desc);
   }
 
+  for (auto pass_iter = select_pass_names.execute(); !pass_iter.done();
+       pass_iter = pass_iter.next()) {
+    assert(pass_iter.numColumns() == 1);
+    std::string name = pass_iter.getText(0);
+    pass_names.insert(name);
+  }
+
   // TODO: Read pass names
 
   db_transaction.commit();
@@ -1019,13 +1026,15 @@ util::Option<Result> ResultIterator::operator*() {
   DatabaseQuery select_features =
       DatabaseQueryBuilder(*m_db)
       << "SELECT "
-      << "FeatureInstance.feature_id, FeatureInstance.feature_type_id, "
+      << "FeatureInstance.feature_type_id, FeatureType.feature_type, "
       << "FeatureInstance.value "
-      << "FROM FeatureInstance, FeatureSetFeature, FeatureGroupSet "
+      << "FROM FeatureInstance, FeatureType, FeatureSetFeature, "
+      << "FeatureGroupSet "
       << "WHERE "
       << "FeatureInstance.feature_id = FeatureSetFeature.feature_id AND "
+      << "FeatureType.feature_type_id = FeatureInstance.feature_type_id AND "
       << "FeatureSetFeature.feature_set_id = FeatureGroupSet.feature_set_id "
-         "AND "
+      << "AND "
       << "FeatureGroupSet.feature_group_id = " << QueryParamType::kInteger;
 
   // Get all of the parameters in a parameter set

@@ -69,6 +69,9 @@ public:
     assert(result.second && "Added feature already present in the set!");
   }
 
+  /// \brief Get the number of feats in the feature set
+  unsigned size() const { return static_cast<unsigned>(m_features.size()); }
+
   /// \brief Get a constant iterator to the beginning of the feature set
   const_iterator begin() const { return m_features.cbegin(); }
 

@@ -51,10 +51,13 @@ public:
   /// \brief Get the global parameters of the compilation
   ParameterSet getParameters(void) const { return m_parameters; }
 
-  /// \brief Get the name of the pass at a position in the pass sequence
-  std::string getPassName(unsigned i) const {
-    assert(i < m_pass_sequence.size() && "Index out of bounds!");
-    return m_pass_sequence[i].name;
+  /// \brief Get the sequence of passes run
+  std::vector<std::string> getPassSequence(void) const {
+    std::vector<std::string> seq;
+    for (auto pass_conf : m_pass_sequence) {
+      seq.push_back(pass_conf.name);
+    }
+    return seq;
   }
 
   /// \brief Get the parameters for the pass at a position in the pass sequence

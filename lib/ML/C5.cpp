@@ -82,16 +82,6 @@ struct C5Context {
   std::map<std::string, std::vector<uint8_t>> pass_classifier_trees;
 };
 
-/// \struct ResultComparator
-///
-/// \brief Comparator to sort results into ascending order based on their
-/// metric value.
-struct ResultComparator {
-  bool operator()(const Result &lhs, const Result &rhs) const {
-    return lhs.getValue() < rhs.getValue();
-  }
-};
-
 /// \brief Types of field found in the machine learner blob for the C5.0
 /// classifier.
 enum class C5BlobField {
@@ -100,6 +90,56 @@ enum class C5BlobField {
   kPassDesc,
   kParameterClassifierTree,
   kPassClassifierTree
+};
+
+/// \brief Comparator to sort results based on their constituent features
+///
+/// As the C5 learner only uses the best result for a given feature set, we
+/// need to be able to find common feature sets in the database. For now,
+/// we just do a brute force comparison of features.
+///
+/// FIXME: In the database, the FeatureGroupID and FeatureSetID *almost*
+/// uniquely identify a set of features. If we had that ID at this point,
+/// we would not have to do this expensive comparison.
+struct ResultFeatureComparator {
+  bool operator()(const Result &lhs, const Result &rhs) {
+    FeatureSet lhs_feats = lhs.getFeatures();
+    FeatureSet rhs_feats = rhs.getFeatures();
+
+    if (lhs_feats.size() < rhs_feats.size()) {
+      return true;
+    } else if (lhs_feats.size() > rhs_feats.size()) {
+      return false;
+    }
+
+    auto lhs_iter = lhs_feats.begin();
+    auto rhs_iter = rhs_feats.begin();
+    while (lhs_iter != lhs_feats.end()) {
+      unsigned lhs_id = (*lhs_iter)->getFeatureID();
+      unsigned rhs_id = (*rhs_iter)->getFeatureID();
+      if (lhs_id < rhs_id) {
+        return true;
+      } else if (lhs_id > rhs_id) {
+        return false;
+      }
+
+      std::vector<uint8_t> lhs_blob = (*lhs_iter)->toBlob();
+      std::vector<uint8_t> rhs_blob = (*rhs_iter)->toBlob();
+      if (lhs_blob.size() < rhs_blob.size()) {
+        return true;
+      } else if (lhs_blob.size() > rhs_blob.size()) {
+        return false;
+      }
+
+      if (lhs_blob < rhs_blob) {
+        return true;
+      }
+
+      lhs_iter++;
+      rhs_iter++;
+    }
+    return true;
+  }
 };
 
 } // end of anonymous namespace
@@ -423,31 +463,46 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
   context->parameter_descs = parameter_descs;
   context->passes = passes;
 
-  // Read all of the result data in one go.
-  // C5 can only train on known 'good' results, so the results are stored
-  // sorted by value so that it is possible to filter out bad results before
-  // providing them to the machine learner.
-  std::set<Result, ResultComparator> results;
+  MAGEEC_DEBUG("Training database using C5 Machine Learner");
 
-  // Iterate and accumulate results
-  util::Option<Result> result = *result_iter;
-  while (result) {
-    results.emplace(result.get());
-    result_iter = std::move(result_iter.next());
-    result = *result_iter;
+  // Read all of the results data in one go. We only store the best (lowest)
+  // result for each input set of features.
+  std::map<Result, uint64_t, ResultFeatureComparator> results;
+
+  MAGEEC_DEBUG("Collecting results");
+  for (util::Option<Result> result; (result = *result_iter);
+       result_iter = result_iter.next()) {
+    Result res = result.get();
+    uint64_t value = res.getValue();
+
+    auto curr_elem = results.insert(std::make_pair(res, value));
+    if (curr_elem.second == false) {
+      if (value < curr_elem.first->second) {
+        curr_elem.first->second = value;
+      }
+    }
   }
 
   // Create a classifier trained for each tunable parameter in turn.
+  MAGEEC_DEBUG("Training for tunable parameters");
+
+  unsigned curr_param = 0;
+  unsigned param_count = static_cast<unsigned>(parameter_descs.size());
+
   for (auto param : parameter_descs) {
+    MAGEEC_DEBUG("Training parameter " << curr_param << " of " << param_count);
+    curr_param++;
+
     // Output names file (columns for classifier) for this parameter
     // TODO: Platform independent temporary file
+    MAGEEC_DEBUG("Building .names file");
     std::ofstream name_file("/tmp/parameter_" + std::to_string(param.id) +
                                 ".names",
                             std::ofstream::binary);
 
     // Output the target parameter first
     // TODO: Comment containing parameter description
-    name_file << "parameter_" << param.id << ".\n";
+    name_file << "parameter_" << param.id << ".names\n";
 
     // Output columns for all of the features which we have seen in the
     // training set.
@@ -482,13 +537,14 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
 
     // For the current parameter, output a data (.data) file containing the
     // training data.
+    MAGEEC_DEBUG("Building .data file");
     std::ofstream data_file("/tmp/parameter_" + std::to_string(param.id) +
                                 ".data",
                             std::ofstream::binary);
 
     for (auto res : results) {
-      ParameterSet parameters = res.getParameters();
-      FeatureSet features = res.getFeatures();
+      ParameterSet parameters = res.first.getParameters();
+      FeatureSet features = res.first.getFeatures();
 
       // Check that this result has an entry for this parameter. If not then
       // skip as we can't use it for training.
@@ -518,19 +574,19 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
           switch (feat.type) {
           case FeatureType::kBool: {
             bool value = static_cast<BoolFeature *>(f)->getValue();
-            name_file << (value ? "t" : "f");
+            data_file << (value ? "t" : "f");
             break;
           }
           case FeatureType::kInt: {
             int64_t value = static_cast<IntFeature *>(f)->getValue();
-            name_file << value;
+            data_file << value;
             break;
           }
           }
-          name_file << ",";
+          data_file << ",";
         } else {
           // No value for this feature for this result.
-          name_file << "?,";
+          data_file << "?,";
         }
       }
       // Output the parameter value last.
@@ -539,21 +595,22 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
       switch (param.type) {
       case ParameterType::kBool: {
         bool value = static_cast<BoolParameter *>(p)->getValue();
-        name_file << (value ? "t" : "f");
+        data_file << (value ? "t" : "f");
         break;
       }
       case ParameterType::kRange: {
         int64_t value = static_cast<RangeParameter *>(p)->getValue();
-        name_file << value;
+        data_file << value;
         break;
       }
       }
-      name_file << ",";
+      data_file << "\n";
     }
 
     // Now we have .names and .data files, run the classifier over them to
     // generate a tree
     // TODO: Running command on windows?
+    MAGEEC_DEBUG("Running the C5.0 classifier");
     std::string command_str("c5.0 -f /tmp/parameter_" +
                             std::to_string(param.id));
     FILE *fpipe = popen(command_str.c_str(), "r");
@@ -568,6 +625,7 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
     }
 
     // Read in the generated tree to be stored in the machine learner blob
+    MAGEEC_DEBUG("Reading the generate .tree file");
     std::ifstream tree_file("/tmp/parameter_" + std::to_string(param.id) +
                                 ".tree",
                             std::ifstream::binary);
@@ -587,6 +645,136 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
     }
     tree_file.close();
   }
+
+  MAGEEC_DEBUG("Training passes");
+
+  // Create a classifier trained for each of the input passes in turn
+  for (auto pass : passes) {
+    MAGEEC_DEBUG("Training for pass '" << pass << "'");
+
+    // Output names file (columns for classifier) for this pass
+    // TODO: Platform independent temporary file
+    MAGEEC_DEBUG("Building .names file");
+    std::ofstream name_file("/tmp/pass_" + pass + ".names",
+                            std::ofstream::binary);
+
+    // Output the target pass first
+    // TODO: Comment containing pass description
+    name_file << "pass_" << pass << ".\n";
+
+    // Output columns for all of the features which we have seen in the
+    // training set.
+    // TODO: Add comment containing feature description
+    for (auto feat : feature_descs) {
+      name_file << "feature_" << feat.id << ": ";
+
+      switch (feat.type) {
+      case FeatureType::kBool:
+        name_file << "t, f.";
+        break;
+      case FeatureType::kInt:
+        name_file << "continuous.";
+        break;
+      }
+      name_file << '\n';
+    }
+    name_file << '\n';
+
+    // Output a column for the target pass
+    name_file << "pass_" << pass << ": t, f.\n";
+    name_file.close();
+
+    // For the current pass, output a data (.data) file containing the
+    // training data.
+    MAGEEC_DEBUG("Building .data file");
+    std::ofstream data_file("/tmp/pass_" + pass + ".data",
+                            std::ofstream::binary);
+    for (auto res : results) {
+      FeatureSet features = res.first.getFeatures();
+      std::vector<std::string> pass_seq = res.first.getPassSequence();
+
+      for (auto feat : feature_descs) {
+        // Feature values are output in the order they appear in the feature
+        // description map (ascending order of feature id)
+        // FIXME: Don't use a dumb linear search here
+        FeatureBase *f = nullptr;
+        for (auto it : features) {
+          if (it->getFeatureID() == feat.id) {
+            f = it.get();
+          }
+        }
+
+        if (f) {
+          // The result has a value for this feature, output it
+          assert(f->getType() == feat.type);
+
+          switch (feat.type) {
+          case FeatureType::kBool: {
+            bool value = static_cast<BoolFeature *>(f)->getValue();
+            data_file << (value ? "t" : "f");
+            break;
+          }
+          case FeatureType::kInt: {
+            int64_t value = static_cast<IntFeature *>(f)->getValue();
+            data_file << value;
+            break;
+          }
+          }
+          data_file << ",";
+        } else {
+          // No value for this feature for this result.
+          data_file << "?,";
+        }
+      }
+      // Output whether the pass was run or not last.
+      bool run_pass = false;
+      for (auto p : pass_seq) {
+        if (p == pass) {
+          run_pass = true;
+          break;
+        }
+      }
+      data_file << (run_pass ? "t" : "f");
+      data_file << "\n";
+    }
+
+    // Now we have .names and .data files, run the classifier over them to
+    // generate a tree
+    // TODO: Running command on windows?
+    MAGEEC_DEBUG("Running the C5.0 classifier");
+    std::string command_str("c5.0 -f /tmp/pass_" + pass);
+    FILE *fpipe = popen(command_str.c_str(), "r");
+    if (!fpipe) {
+      assert(0 && "Process spawn failed!");
+    }
+
+    // Read until we get EOF
+    std::array<uint8_t, 1024> tree_str;
+    while (!feof(fpipe)) {
+      fgets(reinterpret_cast<char *>(tree_str.data()), 1024, fpipe);
+    }
+
+    // Read in the generated tree to be stored in the machine learner blob
+    MAGEEC_DEBUG("Reading the generated .tree file");
+    std::ifstream tree_file("/tmp/pass_" + pass + ".tree",
+                            std::ifstream::binary);
+    if (tree_file) {
+      tree_file.seekg(0, tree_file.end);
+      std::streampos tree_size = tree_file.tellg();
+
+      std::vector<uint8_t> tree_blob;
+      tree_blob.reserve(static_cast<size_t>(tree_size));
+
+      tree_file.seekg(0, tree_file.beg);
+      tree_file.read(reinterpret_cast<char *>(tree_blob.data()), tree_size);
+
+      // save the tree for the current parameter
+      context->pass_classifier_trees.insert(std::make_pair(pass, tree_blob));
+    }
+    tree_file.close();
+  }
+  MAGEEC_DEBUG("Training finished");
+
   // Serialize the context to a blob
   return context->toBlob();
 }

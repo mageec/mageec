@@ -1,5 +1,22 @@
 2016-01-12  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/FeatureSet.h (FeatureSet::size): Added method.
+	* include/mageec/Result.h (Result::getPassName): Removed method.
+	(Result::getPassSequence): Added method.
+	* lib/Database.cpp (Database::trainMachineLearner): Extract
+	the pass sequence from the database as well as the parameters and
+	features.
+	(ResultIterator::operator*): Correct select_features query to
+	extract the correct identifiers.
+	* lib/ML/C5.cpp (ResultComparator): Removed comparator object.
+	(ResultFeatureComparator): Added comparator object to compare
+	feature sets.
+	(C5Driver::train): Use only the best results for each distinct
+	feature set. Add training for passes too.
+	* lib/ML/C5/CMakeLists.txt: Install the c5.0 machine learner binary.
+
+2016-01-12  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/Driver.cpp: Fix an error which meant the --add-results flag was
 	ignored.
 
