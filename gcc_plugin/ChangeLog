@@ -1,5 +1,11 @@
 2016-01-13  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Inherit MAGEEC_WITH_DEBUG from the main project
+	build. Add more diagnostics when searching for the gcc plugin
+	headers.
+
+2016-01-13  Edward Jones  <ed.jones@embecosm.com>
+
 	* FeatureExtract.cpp: Use Attribute/AttributeSet headers instead of
 	the (now removed) Feature/Parameter, FeatureSet/ParameterSet headers.
 	* GCCPlugin.cpp: Likewise.

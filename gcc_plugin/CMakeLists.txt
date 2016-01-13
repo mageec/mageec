@@ -18,26 +18,24 @@ set (MAGEEC_GCC_PLUGIN_VERSION_MAJOR 2)
 set (MAGEEC_GCC_PLUGIN_VERSION_MINOR 0)
 set (MAGEEC_GCC_PLUGIN_VERSION_PATCH 0)
 
-# Debugging enabled by default
-set (MAGEEC_GCC_PLUGIN_DEBUG True)
-
 # Library and include search paths
 set (GCC_PLUGIN_INCLUDE_DIR False)
-set (MAGEEC_INCLUDE_DIR False)
-set (MAGEEC_LIBRARY_DIR False)
+set (MAGEEC_INCLUDE_DIR     False)
+set (MAGEEC_LIBRARY_DIR     False)
 
 
 if (STANDALONE_BUILD)
-  # Options which may be provided to a standalone build
-  option (MAGEEC_GCC_PLUGIN_DEBUG
-          "Enable debug for the MAGEEC GCC plugin")
+  # Options common to the main project build
+  option (MAGEEC_WITH_DEBUG
+          "Enable debug for the MAGEEC GCC plugin" True)
   option (GCC_PLUGIN_INCLUDE_DIR
           "Directory in which GCC plugin headers can be found")
+
+  # Options unique to the GCC plugin build
   option (MAGEEC_INCLUDE_DIR
           "Directory in which the MAGEEC library can be found")
   option (MAGEEC_LIBRARY_DIR
           "Directory in which the MAGEEC headers can be found")
-
 
   if (NOT PACKAGE_VERSION)
     set(PACKAGE_VERSION "\
@@ -54,8 +52,10 @@ ${MAGEEC_GCC_PLUGIN_VERSION_PATCH}")
 
 
 else ()
-  # Inherit debug from MAGEEC
-  set (MAGEEC_GCC_PLUGIN_DEBUG ${MAGEEC_DEBUG})
+  # MAGEEC_WITH_DEBUG and GCC_PLUGIN_INCLUDE_DIR are inherited from the
+  # main project build. The MAGEEC includes and libraries should be in the
+  # build tree anyway.
+  # A search will be done to find the gcc plugin headers.
 endif ()
 
 
@@ -93,8 +93,8 @@ add_definitions (
   -DMAGEEC_GCC_PLUGIN_VERSION_PATCH=${MAGEEC_GCC_PLUGIN_VERSION_PATCH}
 )
 # Define debug
-if (MAGEEC_GCC_PLUGIN_DEBUG)
-  add_definitions ( -DMAGEEC_GCC_PLUGIN_DEBUG )
+if (MAGEEC_WITH_DEBUG)
+  add_definitions ( -DMAGEEC_WITH_DEBUG )
 endif ()
 
 
@@ -105,9 +105,16 @@ if (GCC_PLUGIN_INCLUDE_DIR)
 endif ()
 
 if (NOT PLUGIN_INC_FOUND)
-  message(STATUS "Searching for GCC plugin headers")
+  message (STATUS "Check for gcc")
+  find_program(GCC_EXEC gcc)
+  if (NOT GCC_EXEC)
+    message (FATAL_ERROR "Cannot find gcc plugin headers without gcc")
+  endif ()
+  message (STATUS "Found GCC: ${GCC_EXEC}")
+
+  message(STATUS "Check for gcc plugin headers")
   execute_process(
-    COMMAND gcc "-print-file-name=plugin"
+    COMMAND ${GCC_EXEC} "-print-file-name=plugin"
     RESULT_VARIABLE PLUGIN_INC_SEARCH_RES
     ERROR_VARIABLE  PLUGIN_INC_SEARCH_ERR
     OUTPUT_VARIABLE PLUGIN_INC_BASE
@@ -117,11 +124,12 @@ if (NOT PLUGIN_INC_FOUND)
     string (STRIP ${PLUGIN_INC_BASE} PLUGIN_INC_BASE)
     set (GCC_PLUGIN_INCLUDE_DIR ${PLUGIN_INC_BASE}/include)
   else ()
-    message (FATAL_ERROR "Failed to find GCC plugin headers in ${PLUGIN_INC_SEARCH_ERR}")
+    message (FATAL_ERROR "No gcc plugin headers in ${PLUGIN_INC_SEARCH_ERR}")
   endif ()
 endif()
 
-message (STATUS "GCC plugin headers in ${GCC_PLUGIN_INCLUDE_DIR}")
+# Check the plugin headers exist at the provided path
+message (STATUS "gcc plugin headers in ${GCC_PLUGIN_INCLUDE_DIR}")
 message (STATUS "Checking for gcc-plugin.h")
 if (NOT EXISTS "${GCC_PLUGIN_INCLUDE_DIR}/gcc-plugin.h")
   message (FATAL_ERROR
@@ -131,8 +139,8 @@ message (STATUS "gcc-plugin.h found")
 
 include_directories(${GCC_PLUGIN_INCLUDE_DIR})
 
-# Add other search directories for MAGEEC headers and libraries if they are
-# defined
+# If MAGEEC header and library paths were defined (because we are building
+# out of tree). Then include those directories.
 if (MAGEEC_INCLUDE_DIR)
   include_directories(${MAGEEC_INCLUDE_DIR})
 endif ()
