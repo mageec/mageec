@@ -1,5 +1,13 @@
 2016-01-13  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/Driver.cpp (getMachineLearners): Remove wildcard match for
+	--ml flag.
+	(trainDatabase): Add debug when training for each metric.
+	* lib/FileML.cpp: Fix gcc warnings and errors.
+	* lib/Util.cpp: Likewise.
+
+2016-01-13  Edward Jones  <ed.jones@embecosm.com>
+
 	* CMakeLists.txt: Use sane defaults for options, add option for
 	the GCC plugin include directory.
 	* doc/CMakeLists.txt: Rename all-doc, all-info, all-html, all-pdf to

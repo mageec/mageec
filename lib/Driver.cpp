@@ -121,14 +121,6 @@ getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs) {
   for (const auto &str : ml_strs) {
     util::Option<util::UUID> ml_uuid;
 
-    // A wildcard means all known machine learners should be trained
-    if (str == "*") {
-      for (const auto *ml : framework.getMachineLearners()) {
-        mls.emplace(ml->getUUID());
-      }
-      continue;
-    }
-
     // Try and parse the argument as a UUID
     ml_uuid = util::UUID::parse(str);
     if (ml_uuid && !framework.hasMachineLearner(ml_uuid.get())) {
@@ -143,8 +135,7 @@ getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs) {
     }
     if (!ml_uuid) {
       MAGEEC_WARN("Unable to load machine learner '"
-                  << str << "'. This "
-                            "machine learner will be ignored");
+                  << str << "'. This machine learner will be ignored");
       continue;
     }
     assert(ml_uuid);
@@ -257,6 +248,7 @@ static bool trainDatabase(Framework &framework, const std::string &db_path,
   // Train. This will put the training blobs from the machine learners into
   // the database.
   for (auto metric : metrics) {
+    MAGEEC_DEBUG("Training for metric: " << util::metricToString(metric));
     for (auto ml : mls) {
       db->trainMachineLearner(ml, metric);
     }

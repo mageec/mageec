@@ -23,6 +23,7 @@
 
 #include "mageec/Util.h"
 
+#include <cassert>
 #include <cstdint>
 #include <iostream>
 #include <vector>
@@ -111,6 +112,8 @@ std::string metricToString(Metric metric) {
   case Metric::kEnergy:
     return "energy";
   }
+  assert(0 && "Unreachable");
+  return std::string();
 }
 
 /// \brief Convert from a string to a metric if possible.

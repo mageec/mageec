@@ -201,6 +201,8 @@ FileML::makeDecision(const DecisionRequestBase &request, const FeatureSet &,
     assert(0 && "Unreachable");
     return std::unique_ptr<DecisionBase>(new NativeDecision());
   }
+  assert(0 && "Unreachable");
+  return nullptr;
 }
 
 const std::vector<uint8_t> FileML::train(std::set<FeatureDesc>,
