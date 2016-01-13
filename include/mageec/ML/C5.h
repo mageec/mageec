@@ -87,11 +87,6 @@ public:
                                    std::set<ParameterDesc> parameter_descs,
                                    std::set<std::string> passes,
                                    ResultIterator results) const override;
-
-  const std::vector<uint8_t>
-  train(std::set<FeatureDesc> feature_descs,
-        std::set<ParameterDesc> parameter_descs, std::set<std::string> passes,
-        ResultIterator results, std::vector<uint8_t> old_blob) const override;
 };
 
 } // end of namespace mageec

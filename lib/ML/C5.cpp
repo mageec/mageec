@@ -779,11 +779,4 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
   return context->toBlob();
 }
 
-const std::vector<uint8_t>
-C5Driver::train(std::set<FeatureDesc>, std::set<ParameterDesc>,
-                std::set<std::string>, ResultIterator,
-                std::vector<uint8_t> old_blob) const {
-  return old_blob;
-}
-
 } // end of namespace mageec

@@ -129,26 +129,6 @@ public:
   train(std::set<FeatureDesc> feature_descs,
         std::set<ParameterDesc> parameter_descs, std::set<std::string> passes,
         ResultIterator results) const = 0;
-
-  /// \brief Incrementally train the machine learner, using a partial set of
-  /// results, and the previously constructed blob.
-  ///
-  /// This produces a new training blob which replaces the old and is used
-  /// to make decisions.
-  ///
-  /// \param feature_descs  All of the feature ids and their types used in the
-  /// results data
-  /// \param parameter_descs  All of the parameter ids and their types used in
-  /// the results data
-  /// \param passes  All of the passes used in the results data
-  /// \param results  Iterator to the new results data
-  /// \param old_blob  The old blob of training data to be replaced
-  ///
-  /// \return A new blob of training data.
-  virtual const std::vector<uint8_t>
-  train(std::set<FeatureDesc> feature_descs,
-        std::set<ParameterDesc> parameter_descs, std::set<std::string> passes,
-        ResultIterator results, std::vector<uint8_t> old_blob) const = 0;
 };
 
 inline IMachineLearner::~IMachineLearner() {}

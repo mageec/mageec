@@ -83,11 +83,6 @@ public:
                                    std::set<std::string> passes,
                                    ResultIterator results) const override;
 
-  const std::vector<uint8_t>
-  train(std::set<FeatureDesc> feature_descs,
-        std::set<ParameterDesc> parameter_descs, std::set<std::string> passes,
-        ResultIterator results, std::vector<uint8_t> old_blob) const override;
-
 private:
   /// Set when the a decision config has been provided to the machine
   /// learner. This is required before any decisions can be made.

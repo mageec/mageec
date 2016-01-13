@@ -211,12 +211,4 @@ const std::vector<uint8_t> FileML::train(std::set<FeatureDesc>,
   return std::vector<uint8_t>();
 }
 
-const std::vector<uint8_t> FileML::train(std::set<FeatureDesc>,
-                                         std::set<ParameterDesc>,
-                                         std::set<std::string>, ResultIterator,
-                                         std::vector<uint8_t>) const {
-  assert(0 && "FileML should not be trained");
-  return std::vector<uint8_t>();
-}
-
 } // end of namespace mageec
