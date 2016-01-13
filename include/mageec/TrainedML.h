@@ -26,6 +26,7 @@
 #ifndef MAGEEC_TRAINED_ML_H
 #define MAGEEC_TRAINED_ML_H
 
+#include "mageec/AttributeSet.h"
 #include "mageec/Decision.h"
 #include "mageec/Types.h"
 #include "mageec/Util.h"
@@ -37,8 +38,6 @@
 
 namespace mageec {
 
-class FeatureBase;
-class FeatureSet;
 class IMachineLearner;
 
 /// \class TrainedML

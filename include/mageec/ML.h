@@ -26,8 +26,8 @@
 #ifndef MAGEEC_ML_H
 #define MAGEEC_ML_H
 
+#include "mageec/Attribute.h"
 #include "mageec/Decision.h"
-#include "mageec/Feature.h"
 #include "mageec/Result.h"
 #include "mageec/Util.h"
 

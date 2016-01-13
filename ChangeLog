@@ -1,3 +1,23 @@
+2016-01-13  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Attribute.h: Added file.
+	* include/mageec/AttributeSet.h: Likewise.
+	* include/mageec/Feature.h: Removed file.
+	* include/mageec/FeatureSet.h: Likewise.
+	* include/mageec/Parameter.h: Likewise.
+	* include/mageec/ParameterSet.h: Likewise.
+	* include/mageec/Database.h: Use Attribute.h and AttributeSet.h for
+	Feature and Parameter definitions.
+	* include/mageec/ML.h: Likewise.
+	* include/mageec/ML/C5.h: Likewise.
+	* include/mageec/ML/FileML.h: Likewise.
+	* include/mageec/Result.h: Likewise.
+	* include/mageec/TrainedML.h: Likewise.
+	* lib/Database.cpp: Likewise.
+	* lib/ML/C5.cpp: Likewise.
+	* lib/ML/FileML.cpp: Likewise.
+	* lib/TrainedML.cpp: Likewise.
+
 2016-01-12  Edward Jones  <ed.jones@embecosm.com>
 
 	* include/mageec/FeatureSet.h (FeatureSet::size): Added method.

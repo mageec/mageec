@@ -115,8 +115,8 @@ struct ResultFeatureComparator {
     auto lhs_iter = lhs_feats.begin();
     auto rhs_iter = rhs_feats.begin();
     while (lhs_iter != lhs_feats.end()) {
-      unsigned lhs_id = (*lhs_iter)->getFeatureID();
-      unsigned rhs_id = (*rhs_iter)->getFeatureID();
+      unsigned lhs_id = (*lhs_iter)->getID();
+      unsigned rhs_id = (*rhs_iter)->getID();
       if (lhs_id < rhs_id) {
         return true;
       } else if (lhs_id > rhs_id) {
@@ -397,7 +397,7 @@ C5Driver::makeDecision(const DecisionRequestBase &request,
       // FIXME: Avoid the dumb linear search here
       FeatureBase *f = nullptr;
       for (std::shared_ptr<FeatureBase> it : features) {
-        if (it->getFeatureID() == feat.id) {
+        if (it->getID() == feat.id) {
           f = it.get();
         }
       }
@@ -551,7 +551,7 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
       // FIXME: Don't use a dumb linear search here
       ParameterBase *p = nullptr;
       for (auto it : parameters) {
-        if (it->getParameterID() == param.id) {
+        if (it->getID() == param.id) {
           p = it.get();
         }
       }
@@ -562,7 +562,7 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
         // FIXME: Don't use a dumb linear search here
         FeatureBase *f = nullptr;
         for (auto it : features) {
-          if (it->getFeatureID() == feat.id) {
+          if (it->getID() == feat.id) {
             f = it.get();
           }
         }
@@ -699,7 +699,7 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
         // FIXME: Don't use a dumb linear search here
         FeatureBase *f = nullptr;
         for (auto it : features) {
-          if (it->getFeatureID() == feat.id) {
+          if (it->getID() == feat.id) {
             f = it.get();
           }
         }

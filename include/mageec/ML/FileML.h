@@ -29,6 +29,7 @@
 #ifndef MAGEEC_FILE_ML_H
 #define MAGEEC_FILE_ML_H
 
+#include "mageec/AttributeSet.h"
 #include "mageec/ML.h"
 #include "mageec/Result.h"
 #include "mageec/Types.h"
@@ -43,7 +44,6 @@
 namespace mageec {
 
 class DecisionRequestBase;
-class FeatureSet;
 
 /// \class FileML
 ///

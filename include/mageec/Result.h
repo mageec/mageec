@@ -25,8 +25,7 @@
 #ifndef MAGEEC_RESULT_H
 #define MAGEEC_RESULT_H
 
-#include "mageec/FeatureSet.h"
-#include "mageec/ParameterSet.h"
+#include "mageec/AttributeSet.h"
 #include "mageec/Types.h"
 #include "mageec/Util.h"
 

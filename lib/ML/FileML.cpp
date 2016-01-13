@@ -26,9 +26,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mageec/AttributeSet.h"
 #include "mageec/Database.h"
 #include "mageec/Decision.h"
-#include "mageec/FeatureSet.h"
 #include "mageec/ML.h"
 #include "mageec/ML/FileML.h"
 #include "mageec/Util.h"

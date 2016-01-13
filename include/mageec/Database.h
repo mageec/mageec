@@ -28,8 +28,7 @@
 #define MAGEEC_DATABASE_H
 
 #include "mageec/DatabaseQuery.h"
-#include "mageec/FeatureSet.h"
-#include "mageec/ParameterSet.h"
+#include "mageec/AttributeSet.h"
 #include "mageec/Result.h"
 #include "mageec/TrainedML.h"
 #include "mageec/Types.h"
@@ -48,8 +47,6 @@
 namespace mageec {
 
 class IMachineLearner;
-class FeatureBase;
-class ParameterBase;
 
 class Database {
 private:

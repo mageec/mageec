@@ -23,8 +23,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "mageec/Feature.h"
-#include "mageec/FeatureSet.h"
+#include "mageec/AttributeSet.h"
 #include "mageec/Decision.h"
 #include "mageec/ML.h"
 #include "mageec/TrainedML.h"

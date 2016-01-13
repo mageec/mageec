@@ -449,7 +449,7 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
   // in the database.
   std::map<unsigned, std::vector<uint8_t>> feature_map;
   for (auto I : features) {
-    feature_map[I->getFeatureID()] = I->toBlob();
+    feature_map[I->getID()] = I->toBlob();
   }
   std::vector<uint8_t> blob;
   for (auto I : feature_map) {
@@ -505,12 +505,12 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
         insert_feature_debug.clearAllBindings();
 
         // add feature type first if not present
-        insert_feature_type << static_cast<int64_t>(I->getFeatureID())
+        insert_feature_type << static_cast<int64_t>(I->getID())
                             << static_cast<int64_t>(I->getType());
         insert_feature_type.execute().assertDone();
 
         // feature insertion
-        insert_feature << static_cast<int64_t>(I->getFeatureID())
+        insert_feature << static_cast<int64_t>(I->getID())
                        << I->toBlob();
         insert_feature.execute().assertDone();
 
@@ -524,7 +524,7 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
         insert_into_feature_set.execute().assertDone();
 
         // debug table
-        insert_feature_debug << static_cast<int64_t>(I->getFeatureID())
+        insert_feature_debug << static_cast<int64_t>(I->getID())
                              << I->getName();
         insert_feature_debug.execute().assertDone();
       }
@@ -713,7 +713,7 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
   // in the database.
   std::map<unsigned, std::vector<uint8_t>> param_map;
   for (auto I : parameters) {
-    param_map[I->getParameterID()] = I->toBlob();
+    param_map[I->getID()] = I->toBlob();
   }
   std::vector<uint8_t> blob;
   for (auto I : param_map) {
@@ -766,12 +766,12 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
         insert_parameter_debug.clearAllBindings();
 
         // add parameter type first if not present
-        insert_parameter_type << static_cast<int64_t>(I->getParameterID())
+        insert_parameter_type << static_cast<int64_t>(I->getID())
                               << static_cast<int64_t>(I->getType());
         insert_parameter_type.execute().assertDone();
 
         // parameter insertion
-        insert_parameter << static_cast<int64_t>(I->getParameterID())
+        insert_parameter << static_cast<int64_t>(I->getID())
                          << I->toBlob();
         insert_parameter.execute().assertDone();
 
@@ -785,7 +785,7 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
         insert_into_parameter_set.execute().assertDone();
 
         // debug table
-        insert_parameter_debug << I->getParameterID() << I->getName();
+        insert_parameter_debug << I->getID() << I->getName();
         insert_parameter_debug.execute().assertDone();
       }
       param_set_id_found = true;

@@ -26,6 +26,7 @@
 #ifndef MAGEEC_C5_DRIVER_H
 #define MAGEEC_C5_DRIVER_H
 
+#include "mageec/AttributeSet.h"
 #include "mageec/ML.h"
 #include "mageec/Result.h"
 #include "mageec/Types.h"
@@ -39,7 +40,6 @@
 namespace mageec {
 
 class DecisionRequestBase;
-class FeatureSet;
 
 /// \class C5Driver
 ///
