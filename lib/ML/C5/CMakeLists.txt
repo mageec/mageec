@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.0.2)
+
 add_executable(c5_machine_learner
  attwinnow.c
  c50.c

@@ -2,30 +2,26 @@ cmake_minimum_required(VERSION 3.0.2)
 
 project(MAGEEC)
 
-# Debug enabled by default, all features disabled.
-set (MAGEEC_DEBUG            True)
-set (MAGEEC_WITH_ALL_DOCS    False)
-set (MAGEEC_WITH_DESIGN_DOCS False)
-set (MAGEEC_WITH_DOXYGEN     False)
-set (MAGEEC_WITH_GCC_PLUGIN  False)
-set (MAGEEC_WITH_C5          False)
-
 
 # MAGEEC options
+# Flags are all enabled by default. The user is expected to selectively
+# disable them as required.
 option (MAGEEC_DEBUG
-        "Enable debug for MAGEEC")
-option (MAGEEC_WITH_ALL_DOCS
-        "Generate all documentation")
+        "Enable debug for MAGEEC" True)
 option (MAGEEC_WITH_USER_DOCS
-        "Build MAGEEC user documentation")
+        "Build MAGEEC user documentation" True)
 option (MAGEEC_WITH_DESIGN_DOCS
-        "Build MAGEEC with design documentation")
+        "Build MAGEEC with design documentation" True)
 option (MAGEEC_WITH_DOXYGEN
-        "Generate MAGEEC API documentation with Doxygen")
+        "Generate MAGEEC API documentation with Doxygen" True)
 option (MAGEEC_WITH_GCC_PLUGIN
-        "Build the GCC plugin as well as MAGEEC")
+        "Build the GCC plugin as well as MAGEEC" True)
 option (MAGEEC_WITH_C5
-        "Built the C5 classifier as well as MAGEEC")
+        "Built the C5 classifier as well as MAGEEC" True)
+
+# Search path to find gcc plugin headers.
+option (GCC_PLUGIN_INCLUDE_DIR
+        "Directory in which GCC plugin headers can be found")
 
 
 # This should match the version number found in the mageec framework source
@@ -120,12 +116,6 @@ install(TARGETS mageec_driver mageec_ml mageec_core
         ARCHIVE DESTINATION lib)
 
 # Documentation
-if (MAGEEC_WITH_ALL_DOCS)
-  set (MAGEEC_WITH_USER_DOCS True)
-  set (MAGEEC_WITH_DESIGN_DOCS True)
-  set (MAGEEC_WITH_DOXYGEN True)
-endif()
-
 if (MAGEEC_WITH_USER_DOCS OR MAGEEC_WITH_DESIGN_DOCS OR MAGEEC_WITH_DOXYGEN)
   add_subdirectory (doc)
 endif ()

@@ -1,5 +1,13 @@
 2016-01-13  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Use sane defaults for options, add option for
+	the GCC plugin include directory.
+	* doc/CMakeLists.txt: Rename all-doc, all-info, all-html, all-pdf to
+	just doc, info, html and pdf respectively.
+	* lib/ML/C5/CMakeLists.txt: Added a minimum required version.
+
+2016-01-13  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Database.h (Database::addFeaturesAfterPass):
 	Removed method, continuous feature extraction interface removed.
 	* lib/Database.cpp (create_compilation_feature_table):
