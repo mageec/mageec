@@ -29,33 +29,34 @@
 
 namespace mageec {
 
-enum class CompilationID    : uint64_t {};
-enum class FeatureSetID     : uint64_t {};
-enum class FeatureGroupID   : uint64_t {};
-enum class PassID           : uint64_t {};
-enum class PassSequenceID   : uint64_t {};
-enum class ParameterSetID   : uint64_t {};
-enum class ParameterGroupID : uint64_t {};
+/// Integer type of mageec type enumerations.
+typedef uint16_t TypeID;
+
+/// Integer type of mageec identifiers.
+typedef uint64_t ID;
+
+enum class CompilationID    : ID {};
+enum class FeatureSetID     : ID {};
+enum class FeatureGroupID   : ID {};
+enum class PassID           : ID {};
+enum class PassSequenceID   : ID {};
+enum class ParameterSetID   : ID {};
+enum class ParameterGroupID : ID {};
 
 enum class MetadataField : unsigned {
   // The database version always has field number 0
   kDatabaseVersion = 0
 };
 
-enum class Metric : unsigned { kCodeSize, kTime, kEnergy };
+enum class Metric : TypeID { kCodeSize, kTime, kEnergy };
 
-enum class FeatureType : unsigned { kBool, kInt };
+enum class FeatureType : TypeID { kBool, kInt };
 
-enum class ParameterType : unsigned { kBool, kRange };
+enum class ParameterType : TypeID { kBool, kRange };
 
-enum class DecisionType : unsigned { kNative, kBool, kRange, kPassList };
+enum class DecisionType : TypeID { kNative, kBool, kRange, kPassList };
 
-enum class DecisionRequestType : unsigned {
-  kBool,
-  kRange,
-  kPassList,
-  kPassGate
-};
+enum class DecisionRequestType : TypeID { kBool, kRange, kPassList, kPassGate };
 
 struct FeatureDesc {
   unsigned id;

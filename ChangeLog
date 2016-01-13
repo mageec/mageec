@@ -1,5 +1,12 @@
 2016-01-13  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/Types.h (TypeID ID): Define integer types that
+	mageec enumerations and IDs are based on.
+	* lib/Database.cpp: Use mageec::ID where appropriate to improve
+	type safety.
+
+2016-01-13  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Attribute.h: Added file.
 	* include/mageec/AttributeSet.h: Likewise.
 	* include/mageec/Feature.h: Removed file.

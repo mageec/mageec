@@ -489,7 +489,7 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
                       db_feature_map.begin())) {
         // We have a hash collision, compare against the next consecutive
         // feature set
-        uint64_t tmp = static_cast<uint64_t>(feature_set_id);
+        mageec::ID tmp = static_cast<mageec::ID>(feature_set_id);
         feature_set_id = static_cast<FeatureSetID>(tmp + 1);
       } else {
         feature_id_found = true;
@@ -550,10 +550,11 @@ FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
   // Hash the feature ids in the group to produce the group id.
   std::vector<uint8_t> blob;
   for (auto I : group) {
-    util::write64LE(blob, static_cast<uint64_t>(I));
+    util::write64LE(blob, static_cast<mageec::ID>(I));
   }
-  FeatureGroupID group_id = static_cast<FeatureGroupID>(
-      util::crc64(blob.data(), static_cast<unsigned>(blob.size())));
+  mageec::ID tmp_id =
+      util::crc64(blob.data(), static_cast<unsigned>(blob.size()));
+  FeatureGroupID group_id = static_cast<FeatureGroupID>(tmp_id);
 
   // Whole operation in a single transaction
   DatabaseTransaction db_transaction(m_db);
@@ -580,7 +581,7 @@ FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
       if ((db_group.size() != group.size()) ||
           !std::equal(group.begin(), group.end(), db_group.begin())) {
         // Hash collision, compare against the next consecutive group
-        uint64_t tmp = static_cast<uint64_t>(group_id);
+        mageec::ID tmp = static_cast<mageec::ID>(group_id);
         group_id = static_cast<FeatureGroupID>(tmp + 1);
       } else {
         group_id_found = true;
@@ -720,8 +721,9 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
     util::write16LE(blob, I.first);
     blob.insert(blob.end(), I.second.begin(), I.second.end());
   }
-  ParameterSetID param_set_id = static_cast<ParameterSetID>(
-      util::crc64(blob.data(), static_cast<unsigned>(blob.size())));
+  mageec::ID tmp_id =
+      util::crc64(blob.data(), static_cast<unsigned>(blob.size()));
+  ParameterSetID param_set_id = static_cast<ParameterSetID>(tmp_id);
 
   // Whole operation in a single transaction
   DatabaseTransaction db_transaction(m_db);
@@ -752,7 +754,7 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
                       db_param_map.begin())) {
         // We have a hash collision, compare against the next consecutive
         // parameter set
-        uint64_t tmp = static_cast<uint64_t>(param_set_id);
+        mageec::ID tmp = static_cast<mageec::ID>(param_set_id);
         param_set_id = static_cast<ParameterSetID>(tmp + 1);
       } else {
         param_set_id_found = true;
@@ -822,8 +824,9 @@ PassSequenceID Database::newPassSequence(std::vector<std::string> pass_names) {
     blob.insert(blob.begin(), pass.begin(), pass.end());
     blob.push_back(0);
   }
-  PassSequenceID pass_sequence_id = static_cast<PassSequenceID>(
-      util::crc64(blob.data(), static_cast<unsigned>(blob.size())));
+  mageec::ID tmp_id =
+      util::crc64(blob.data(), static_cast<unsigned>(blob.size()));
+  PassSequenceID pass_sequence_id = static_cast<PassSequenceID>(tmp_id);
 
   // Do all operations in a single transaction
   DatabaseTransaction db_transaction(m_db);
