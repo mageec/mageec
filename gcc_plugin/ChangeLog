@@ -1,3 +1,10 @@
+2016-01-13  Edward Jones  <ed.jones@embecosm.com>
+
+	* FeatureExtract.cpp: Use Attribute/AttributeSet headers instead of
+	the (now removed) Feature/Parameter, FeatureSet/ParameterSet headers.
+	* GCCPlugin.cpp: Likewise.
+	* MAGEECPlugin.h: Likewise.
+
 2016-01-12  Edward Jones  <ed.jones@embecosm.com>
 
 	* GCCCallbacks.cpp (mageecFinishFile): Emit compilation ids for

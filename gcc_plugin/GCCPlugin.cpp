@@ -30,7 +30,7 @@
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 
-#include "mageec/FeatureSet.h"
+#include "mageec/AttributeSet.h"
 #include "mageec/Framework.h"
 #include "mageec/ML.h"
 #include "mageec/ML/C5.h"

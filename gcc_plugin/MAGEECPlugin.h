@@ -25,6 +25,7 @@
 #ifndef MAGEEC_PLUGIN_H
 #define MAGEEC_PLUGIN_H
 
+#include "mageec/AttributeSet.h"
 #include "mageec/Framework.h"
 #include "mageec/Database.h"
 #include "mageec/TrainedML.h"
@@ -45,10 +46,6 @@ static_assert(MAGEEC_GCC_PLUGIN_VERSION_MAJOR == 2 &&
                   MAGEEC_GCC_PLUGIN_VERSION_MINOR == 0 &&
                   MAGEEC_GCC_PLUGIN_VERSION_PATCH == 0,
               "MAGEEC GCC plugin version does not match");
-
-namespace mageec {
-class FeatureSet;
-} // end of namespace mageec
 
 /// \brief The different modes which the plugin may run in
 enum class MAGEECMode : unsigned {

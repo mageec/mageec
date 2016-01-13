@@ -23,8 +23,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "Features.h"
-#include "mageec/Feature.h"
-#include "mageec/FeatureSet.h"
+#include "mageec/Attribute.h"
+#include "mageec/AttributeSet.h"
 #include "MAGEECPlugin.h"
 
 // GCC Plugin headers
