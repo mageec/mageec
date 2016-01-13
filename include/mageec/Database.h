@@ -166,18 +166,7 @@ public:
   /// \return The identifier of the feature group in the database
   FeatureGroupID newFeatureGroup(std::set<FeatureSetID> group);
 
-  /// \brief Associate features with a specific pass in the compilation of a
-  /// program unit.
-  ///
-  /// \param features  The feature group to associate with this compilation and
-  /// pass
-  /// \param compilation  The identifier of a compilation of a program unit
-  /// \param after_pass  Identifier of the pass which the features are
-  /// associated with. This must be a pass which is in the pass sequence of the
-  /// compilation.
-  void addFeaturesAfterPass(FeatureGroupID features, CompilationID compilation,
-                            PassID after_pass);
-
+  /// TODO: Continuous feature extraction
 
 //===----------------------- Compiler interface ---------------------------===//
 

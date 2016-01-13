@@ -130,15 +130,6 @@ static const char *const create_compilation_table =
     "pass_sequence_id INTEGER"
     ")";
 
-static const char *const create_compilation_feature_table =
-    "CREATE TABLE CompilationFeature("
-    "compilation_id   INTEGER NOT NULL, "
-    "pass_id          INTEGER NOT NULL, "
-    "feature_group_id INTEGER NOT NULL, "
-    "UNIQUE(compilation_id, pass_id), "
-    "FOREIGN KEY(compilation_id) REFERENCES Compilation(compilation_id)"
-    ")";
-
 // result table creation strings
 static const char *const create_result_table =
     "CREATE TABLE Result("
@@ -295,7 +286,6 @@ void Database::init_db(sqlite3 &db) {
 
   // Compilation
   DatabaseQuery(db, create_compilation_table).execute().assertDone();
-  DatabaseQuery(db, create_compilation_feature_table).execute().assertDone();
 
   // Results
   DatabaseQuery(db, create_result_table).execute().assertDone();
@@ -599,22 +589,6 @@ FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
   }
   db_transaction.commit();
   return group_id;
-}
-
-void Database::addFeaturesAfterPass(FeatureGroupID features,
-                                    CompilationID compilation,
-                                    PassID after_pass) {
-  DatabaseQuery add_feature_group_after_pass =
-      DatabaseQueryBuilder(*m_db)
-      << "INSERT INTO CompilationFeature("
-      << "compilation_id, pass_id, feature_group_id) "
-      << "VALUES (" << QueryParamType::kInteger << ", "
-      << QueryParamType::kInteger << ", " << QueryParamType::kInteger << ")";
-
-  add_feature_group_after_pass << static_cast<int64_t>(compilation)
-                               << static_cast<int64_t>(after_pass)
-                               << static_cast<int64_t>(features);
-  add_feature_group_after_pass.execute().assertDone();
 }
 
 //===----------------------- Compiler interface ---------------------------===//

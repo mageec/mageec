@@ -1,5 +1,12 @@
 2016-01-13  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/Database.h (Database::addFeaturesAfterPass):
+	Removed method, continuous feature extraction interface removed.
+	* lib/Database.cpp (create_compilation_feature_table):
+	Removed SQL query.
+
+2016-01-13  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/ML.h: Remove iterative training interfaces.
 	* include/mageec/ML/C5.h: Likewise.
 	* include/mageec/ML/FileML.h: Likewise.
