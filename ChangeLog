@@ -1,5 +1,13 @@
 2016-01-13  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/Attribute.h: Fix doxygen comments.
+	* include/mageec/AttributeSet.h: Likewise.
+	* include/mageec/Database.h: Likewise.
+	* include/mageec/DatabaseQuery.h: Likewise.
+	* include/mageec/ML.h: Likewise.
+
+2016-01-13  Edward Jones  <ed.jones@embecosm.com>
+
 	* doc/CMakeLists: Make and install pdf documentation.
 
 2016-01-13  Edward Jones  <ed.jones@embecosm.com>

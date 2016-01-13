@@ -33,27 +33,27 @@
 
 namespace mageec {
 
-template<typename TypeIDType>
-class AttributeSet {
+template <typename TypeIDType> class AttributeSet {
 private:
   /// \brief Comparator object to sort attributes by comparing their ids
   struct AttributeIDComparator {
-    bool operator()(std::shared_ptr<AttributeBase<TypeIDType>> const &lhs,
-                    std::shared_ptr<AttributeBase<TypeIDType>> const &rhs) const {
+    bool
+    operator()(std::shared_ptr<AttributeBase<TypeIDType>> const &lhs,
+               std::shared_ptr<AttributeBase<TypeIDType>> const &rhs) const {
       return lhs->getID() < rhs->getID();
     }
   };
 
 public:
   /// \brief constant iterator to attributes in the set
-  typedef typename
-      std::set<std::shared_ptr<AttributeBase<TypeIDType>>,
-               AttributeIDComparator>::const_iterator const_iterator;
+  typedef
+      typename std::set<std::shared_ptr<AttributeBase<TypeIDType>>,
+                        AttributeIDComparator>::const_iterator const_iterator;
 
   /// \brief Construct a new empty attribute set
-  AttributeSet() : m_attributes() {} 
-  AttributeSet(std::initializer_list<
-                   std::shared_ptr<AttributeBase<TypeIDType>>> l)
+  AttributeSet() : m_attributes() {}
+  AttributeSet(
+      std::initializer_list<std::shared_ptr<AttributeBase<TypeIDType>>> l)
       : m_attributes(l) {}
 
   /// \brief Add a new attribute to an attribute set
@@ -85,12 +85,12 @@ public:
   }
 
 private:
-  std::set<std::shared_ptr<AttributeBase<TypeIDType>>,
-           AttributeIDComparator> m_attributes;
+  std::set<std::shared_ptr<AttributeBase<TypeIDType>>, AttributeIDComparator>
+      m_attributes;
 };
 
 // Declare the different types of set that we may have.
-typedef AttributeSet<FeatureType>   FeatureSet;
+typedef AttributeSet<FeatureType> FeatureSet;
 typedef AttributeSet<ParameterType> ParameterSet;
 
 } // end of namespace mageec

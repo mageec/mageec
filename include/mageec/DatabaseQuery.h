@@ -45,7 +45,7 @@ class DatabaseQueryBuilder {
 public:
   DatabaseQueryBuilder(void) = delete;
 
-  /// \brief Being building a query for a database
+  /// \brief Begin building a query for a database
   ///
   /// \param db  The database this query is targetting
   DatabaseQueryBuilder(sqlite3 &db);

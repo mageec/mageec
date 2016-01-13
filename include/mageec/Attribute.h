@@ -40,14 +40,12 @@
 #include <string>
 #include <vector>
 
-
 namespace mageec {
 
 /// \class AttributeBase
 ///
 /// \brief Base class for arbitrary attribute types
-template<typename TypeIDType>
-class AttributeBase {
+template <typename TypeIDType> class AttributeBase {
 public:
   AttributeBase() = delete;
 
@@ -145,7 +143,7 @@ private:
 };
 
 // Types of features supported by MAGEEC
-template<FeatureType type, typename ValueT>
+template <FeatureType type, typename ValueT>
 using Feature = Attribute<FeatureType, type, ValueT>;
 
 typedef AttributeBase<FeatureType> FeatureBase;
@@ -154,12 +152,12 @@ typedef Feature<FeatureType::kBool, bool>    BoolFeature;
 typedef Feature<FeatureType::kInt,  int64_t> IntFeature;
 
 // Types of parameters supported by MAGEEC
-template<ParameterType type, typename ValueT>
+template <ParameterType type, typename ValueT>
 using Parameter = Attribute<ParameterType, type, ValueT>;
 
 typedef AttributeBase<ParameterType> ParameterBase;
 
-typedef Parameter<ParameterType::kBool,  bool>    BoolParameter;
+typedef Parameter<ParameterType::kBool, bool> BoolParameter;
 typedef Parameter<ParameterType::kRange, int64_t> RangeParameter;
 
 } // end of namespace mageec

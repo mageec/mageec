@@ -153,8 +153,7 @@ public:
 
   /// \brief Add a new set of features to the database
   ///
-  /// \param features  The features to be added, there should be no features
-  /// with the same identifier in this set.
+  /// \param features  The features to be added
   ///
   /// \return The identifier of the new feature set in the database
   FeatureSetID newFeatureSet(FeatureSet features);
@@ -192,8 +191,7 @@ public:
 
   /// \brief Create a new set of parameters
   ///
-  /// \param parameters  The parameters composing this set, there should be
-  /// no parameters with the same identifier
+  /// \param parameters  The parameters composing this set
   ///
   /// \return The identifier of the new parameter set in the database
   ParameterSetID newParameterSet(ParameterSet parameters);
@@ -210,7 +208,7 @@ public:
 
 //===------------------------ Results interface ---------------------------===//
 
-  /// \struct Structure for results to be added to the database
+  /// \struct InputResult Structure for results to be added to the database
   struct InputResult {
     InputResult(CompilationID id, Metric m, uint64_t val)
         : compilation_id(id), metric(m), value(val) {}

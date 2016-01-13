@@ -85,12 +85,12 @@ public:
   /// \return True if the config was set successfully.
   virtual bool setDecisionConfig(std::string config_path) = 0;
 
-  /// \brief Get the type of decisions which can be requested of this machine
-  /// learner.
-  ///
-  /// \return A set containing the supported types of decisions that may be
-  /// requested.
-  /// TODO: Support this
+  // \brief Get the type of decisions which can be requested of this machine
+  // learner.
+  //
+  // \return A set containing the supported types of decisions that may be
+  // requested.
+  // TODO: Support this
   // std::set<DecisionRequestType> getSupportedDecisions(void) const = 0;
 
   /// \brief Make a single decision based on a provided request, the features
