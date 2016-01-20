@@ -63,6 +63,19 @@ static std::string passTypeString(opt_pass *pass) {
   return std::string();
 }
 
+
+static std::unique_ptr<mageec::FeatureSet>
+extractModuleFeatures(
+    std::map<std::string, std::unique_ptr<mageec::FeatureSet>> &func_features) {
+
+  std::unique_ptr<mageec::FeatureSet> module_features(new mageec::FeatureSet());
+  for (const auto &feature_set : func_features) {
+    (void)feature_set;
+    // TODO extract some features
+  }
+  return std::move(module_features);
+}
+
 void mageecStartFile(void *, void *) {
   // FIXME: Output filename
   MAGEEC_DEBUG("Start file");
@@ -75,43 +88,146 @@ void mageecStartFile(void *, void *) {
 void mageecFinishFile(void *, void *) {
   // If necessary, store the features and pass sequences in the database
   if (mageec_context.with_feature_extract) {
+    // If the same compiler configuration was used for every function in the
+    // module, then module level features can be extracted.
+    bool has_common_config = true;
+
+    // FIXME: Check that the parameter sets are equal too
+    std::vector<std::string> module_passes;
+    for (const auto &features : mageec_context.func_features) {
+      std::string func_name = features.first;
+
+      if (module_passes.size() == 0) {
+        module_passes = mageec_context.func_passes[func_name];
+      } else {
+        auto &func_passes = mageec_context.func_passes[func_name];
+        if (module_passes.size() != func_passes.size()) {
+          has_common_config = false;
+          break;
+        }
+        if (!std::equal(module_passes.begin(), module_passes.end(),
+                        func_passes.begin())) {
+          has_common_config = false;
+          break;
+        }
+      }
+    }
+
+    // Common config for all compiler configurations, so extract module
+    // level features. Module features will be inherited by each of the
+    // functions in the module.
+    mageec::util::Option<std::string> module_name;
+    mageec::util::Option<mageec::FeatureSetID>   module_feature_set_id;
+    mageec::util::Option<mageec::PassSequenceID> module_pass_sequence_id;
+    mageec::util::Option<mageec::ParameterSetID> module_parameter_set_id;
+    mageec::util::Option<mageec::CompilationID>  module_compilation_id;
+    if (has_common_config) {
+      // FIXME: Get the actual module name
+      module_name = std::string("placeholder");
+
+      // Add module level features and group to the database
+      std::unique_ptr<mageec::FeatureSet> module_features =
+          std::move(extractModuleFeatures(mageec_context.func_features));
+      module_feature_set_id =
+          mageec_context.db->newFeatureSet(*module_features);
+
+      mageec::FeatureGroupID module_feature_group_id =
+          mageec_context.db->newFeatureGroup({module_feature_set_id.get()});
+
+      // Pass sequence for the module
+      module_pass_sequence_id =
+          mageec_context.db->newPassSequence(module_passes);
+
+      // Parameter set for the module
+      // FIXME: Using an empty parameter set for now
+      std::unique_ptr<mageec::ParameterSet> module_params(
+          new mageec::ParameterSet());
+      module_parameter_set_id =
+          mageec_context.db->newParameterSet(*module_params);
+
+      // Compilation id for the module
+      module_compilation_id = mageec_context.db->newCompilation(
+          module_name.get(), "module", module_feature_group_id,
+          module_parameter_set_id.get(), module_pass_sequence_id.get(),
+          nullptr /* parent */);
+
+      // Emit the compilation id for the module
+      *mageec_context.out_file << "module," << module_name << ","
+                               << static_cast<uint64_t>(module_compilation_id)
+                               << "\n";
+    }
+
+    // For each function, save the functions features, compilation parameters,
+    // and the passes executed.
+
     // For each function, save the functions features, compilation parameters,
     // and the passes executed.
     for (const auto &features : mageec_context.func_features) {
+      std::string func_name = features.first;
+
       // Features
-      MAGEEC_DEBUG("Saving features for function '" << features.first
+      MAGEEC_DEBUG("Saving features for function '" << func_name
                                                     << "' in the database");
       mageec::FeatureSetID feature_set_id =
           mageec_context.db->newFeatureSet(*features.second);
-      mageec::FeatureGroupID feature_group_id =
-          mageec_context.db->newFeatureGroup({feature_set_id});
+
+      // If available, inherit the module level features too
+      mageec::FeatureGroupID feature_group_id;
+      if (has_common_config) {
+        feature_group_id = mageec_context.db->newFeatureGroup(
+            {feature_set_id, module_feature_set_id.get()});
+      } else {
+        feature_group_id = mageec_context.db->newFeatureGroup({feature_set_id});
+      }
 
       // Parameters
-      // FIXME: Using an empty parameter set for now
-      MAGEEC_DEBUG("Saving parameters for function '" << features.first
+      // If available, use the module level parameters
+      MAGEEC_DEBUG("Saving parameters for function '" << func_name
                                                       << "' in the database");
-      std::unique_ptr<mageec::ParameterSet> params(new mageec::ParameterSet());
-      mageec::ParameterSetID parameter_set_id =
-          mageec_context.db->newParameterSet(*params);
+      mageec::ParameterSetID parameter_set_id;
+      if (has_common_config) {
+        MAGEEC_DEBUG("Parameters for function '" << func_name
+                  << "' inherited from parent module '" << module_name.get()
+                  << "'");
+        parameter_set_id = module_parameter_set_id.get();
+      } else {
+        // FIXME: Using an empty parameter set for now
+        std::unique_ptr<mageec::ParameterSet> params(
+            new mageec::ParameterSet());
+        parameter_set_id = mageec_context.db->newParameterSet(*params);
+      }
 
       // Pass sequence
+      // If available, use the module level pass sequence
       MAGEEC_DEBUG("Saving pass sequence for function '"
-                   << features.first << "' in the database");
-      assert(mageec_context.func_passes.count(features.first) &&
+                   << func_name << "' in the database");
+      assert(mageec_context.func_passes.count(func_name) &&
              "Function with no pass sequence");
-      std::vector<std::string> pass_seq =
-          mageec_context.func_passes[features.first];
 
-      mageec::PassSequenceID pass_sequence_id =
-          mageec_context.db->newPassSequence(pass_seq);
+      mageec::PassSequenceID pass_sequence_id;
+      if (has_common_config) {
+        pass_sequence_id = module_pass_sequence_id.get();
+      } else {
+        std::vector<std::string> pass_seq =
+            mageec_context.func_passes[func_name];
+        pass_sequence_id = mageec_context.db->newPassSequence(pass_seq);
+      }
 
-      // Create the  compilation for this execution run
-      mageec::CompilationID compilation_id = mageec_context.db->newCompilation(
-          features.first, "function", feature_group_id, parameter_set_id,
+      // Create the compilation for this function
+      // Add the module as a parent if it has a compilation
+      mageec::CompilationID compilation_id;
+      if (has_common_config) {
+        compilation_id = mageec_context.db->newCompilation(
+            func_name, "function", feature_group_id, parameter_set_id,
+            pass_sequence_id, module_compilation_id.get());
+      } else {
+        compilation_id = mageec_context.db->newCompilation(
+          func_name, "function", feature_group_id, parameter_set_id,
           pass_sequence_id, nullptr /* parent */);
+      }
 
       // Emit the compilation id for the function into the output file
-      *mageec_context.out_file << "(function) " << features.first << " "
+      *mageec_context.out_file << "function," << func_name << ","
                                << static_cast<uint64_t>(compilation_id) << "\n";
     }
   }

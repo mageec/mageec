@@ -1,3 +1,10 @@
+2016-01-20  Edward Jones  <ed.jones@embecosm.com>
+
+	* GCCCallbacks.cpp (extractModuleFeatures): Stub implementation to
+	derive module level features from the function.
+	(mageecFinishFile): Extract features for the module if all of the
+	constituent functions have the same compiler configuration.
+
 2016-01-13  Edward Jones  <ed.jones@embecosm.com>
 
 	* GCCCallbacks.cpp: Fix gcc warnings and errors.
