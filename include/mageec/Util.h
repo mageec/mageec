@@ -186,7 +186,7 @@ public:
   bool operator!=(const UUID &other) const { return m_data != other.m_data; }
   bool operator<(const UUID &other) const { return m_data < other.m_data; }
 
-  std::array<uint8_t, 16> data(void) const { return m_data; }
+  const std::array<uint8_t, 16>& data(void) const { return m_data; }
   unsigned size(void) const { return static_cast<unsigned>(m_data.size()); }
 
   /// \brief Output a UUID to a string

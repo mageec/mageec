@@ -1,3 +1,14 @@
+2016-01-20  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/DatabaseQuery.h (DatabaseQuery): Make move
+	constructor non-default, as we now have an implementation.
+	(DatabaseQuery::m_is_init): Add member keeping track of whether
+	the query is currently initialized and useable.
+	* include/mageec/Util.h (UUID::data): Return a reference to the
+	data instead of a copy.
+	* lib/DatabaseQuery.cpp (DatabaseQuery::DatabaseQuery): Implement
+	move constructor.
+
 2016-01-13  Edward Jones  <ed.jones@embecosm.com>
 
 	* include/mageec/Attribute.h: Fix doxygen comments.

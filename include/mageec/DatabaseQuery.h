@@ -179,7 +179,7 @@ public:
   ~DatabaseQuery(void);
 
   DatabaseQuery(const DatabaseQuery &other) = delete;
-  DatabaseQuery(DatabaseQuery &&other) = default;
+  DatabaseQuery(DatabaseQuery &&other);
 
   DatabaseQuery &operator=(const DatabaseQuery &other) = delete;
   DatabaseQuery &operator=(DatabaseQuery &&other) = delete;
@@ -237,6 +237,10 @@ private:
   /// \return The underlying sqlite statement, for which the user needs
   /// exclusive access.
   sqlite3_stmt &lockQuery(void);
+
+  /// Record whether the query is initialized. It may not be initialized
+  /// if the query has been moved.
+  bool m_is_init;
 
   /// \brief Check that the query is in a usable state
   void validate(void) const;

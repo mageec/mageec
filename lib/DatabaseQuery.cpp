@@ -38,29 +38,43 @@ namespace mageec {
 //===----------------------------- Database query -------------------------===//
 
 DatabaseQuery::~DatabaseQuery(void) {
-  validate();
-  int res = sqlite3_finalize(m_stmt);
+  if (m_is_init) {
+    validate();
+    int res = sqlite3_finalize(m_stmt);
 
-  if (res != SQLITE_OK) {
-    MAGEEC_DEBUG("Error destroying database query:\n" << sqlite3_errmsg(&m_db));
+    if (res != SQLITE_OK) {
+      MAGEEC_DEBUG("Error destroying database query:\n"
+                << sqlite3_errmsg(&m_db));
+    }
+    assert(res == SQLITE_OK && "Error destroying query statement!");
   }
-  assert(res == SQLITE_OK && "Error destroying query statement!");
+}
+
+DatabaseQuery::DatabaseQuery(DatabaseQuery &&other)
+    : m_is_init(false), m_db(other.m_db), m_is_locked(false),
+      m_stmt(other.m_stmt), m_curr_param(other.m_curr_param),
+      m_param_count(other.m_param_count), m_param_types(other.m_param_types) {
+  assert(!other.m_is_locked && "Cannot moved a query which is currently "
+         "being executed");
+  other.m_is_init = false;
+  m_is_init = true;
 }
 
 DatabaseQuery::DatabaseQuery(sqlite3 &db, std::string str)
-    : m_db(db), m_is_locked(false), m_stmt(), m_curr_param(0), m_param_count(0),
-      m_param_types() {
+    : m_is_init(false), m_db(db), m_is_locked(false), m_stmt(),
+      m_curr_param(0), m_param_count(0), m_param_types() {
   int res = sqlite3_prepare_v2(&m_db, str.c_str(), -1, &m_stmt, NULL);
 
   if (res != SQLITE_OK) {
     MAGEEC_DEBUG("Error creating database query:\n" << sqlite3_errmsg(&m_db));
   }
   assert(res == SQLITE_OK && m_stmt && "Error creating database query!");
+  m_is_init = true;
 }
 
 DatabaseQuery::DatabaseQuery(sqlite3 &db, std::vector<std::string> substrs,
                              std::vector<QueryParamType> params)
-    : m_db(db), m_is_locked(false), m_stmt(), m_curr_param(0),
+    : m_is_init(false), m_db(db), m_is_locked(false), m_stmt(), m_curr_param(0),
       m_param_count(params.size()), m_param_types(params) {
   assert(substrs.size() == (m_param_count + 0) ||
          substrs.size() == (m_param_count + 1));
@@ -79,6 +93,7 @@ DatabaseQuery::DatabaseQuery(sqlite3 &db, std::vector<std::string> substrs,
     MAGEEC_DEBUG("Error creating database query:\n" << sqlite3_errmsg(&m_db));
   }
   assert(res == SQLITE_OK && m_stmt && "Error creating database query!");
+  m_is_init = true;
 }
 
 DatabaseQuery &DatabaseQuery::operator<<(int64_t i) {
@@ -182,6 +197,8 @@ sqlite3_stmt &DatabaseQuery::lockQuery(void) {
 }
 
 void DatabaseQuery::validate(void) const {
+  assert(m_is_init && "Query is uninitialized");
+
   if (m_param_types.size() != 0) {
     assert(m_curr_param <= m_param_types.size());
   } else {
