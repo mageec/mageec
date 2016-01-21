@@ -225,11 +225,15 @@ Database::getDatabase(std::string db_path,
                       std::map<util::UUID, IMachineLearner *> mls) {
   // First try and load the database, if that fails try and create it
   std::unique_ptr<Database> db;
+  MAGEEC_DEBUG("Loading database '" << db_path << "'");
   db = loadDatabase(db_path, mls);
   if (db) {
+    MAGEEC_DEBUG("Database '" << db_path << "' loaded");
     return db;
   }
+  MAGEEC_DEBUG("Cannot load database, creating new database...");
   db = createDatabase(db_path, mls);
+  MAGEEC_DEBUG("Database '" << db_path << "'created");
   return db;
 }
 
@@ -264,6 +268,7 @@ Database::~Database(void) {
 void Database::init_db(sqlite3 &db) {
   // Create the entire database in a single transaction
   DatabaseTransaction db_transaction(&db);
+  MAGEEC_DEBUG("Creating database tables");
 
   // Create table to hold database metadata
   DatabaseQuery(db, create_metadata_table).execute().assertDone();
@@ -313,6 +318,8 @@ void Database::init_db(sqlite3 &db) {
 
   // Add other metadata now that the database is in a valid state
   // setMetadata();
+
+  MAGEEC_DEBUG("Empty database created");
 }
 
 void Database::validate(void) {

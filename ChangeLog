@@ -1,3 +1,10 @@
+2016-01-21  Edward Jones  <ed.jones@embecosm.com>
+
+	* lib/Database.cpp: Add more debug.
+	* lib/Driver.cpp: Likewise.
+	* lib/Framework.cpp: Likewise.
+	* lib/ML/FileML.cpp: Likewise.
+
 2016-01-20  Edward Jones  <ed.jones@embecosm.com>
 
 	* include/mageec/DatabaseQuery.h (DatabaseQuery): Make move

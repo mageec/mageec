@@ -55,6 +55,7 @@ FileML::~FileML() {}
 
 bool FileML::setDecisionConfig(std::string config_path) {
   // Load the input config file for parsing
+  MAGEEC_DEBUG("Loading and parsing config file '" << config_path << "'");
   std::ifstream config_file(config_path);
   if (!config_file) {
     return false;

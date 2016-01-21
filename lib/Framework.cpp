@@ -70,6 +70,11 @@ bool Framework::registerMachineLearner(std::unique_ptr<IMachineLearner> ml) {
 
 std::unique_ptr<Database> Framework::getDatabase(std::string db_path,
                                                  bool create) const {
+  if (create) {
+    MAGEEC_DEBUG("Creating new database '" << db_path << "'");
+  } else {
+    MAGEEC_DEBUG("Loading database '" << db_path << "'");
+  }
   std::unique_ptr<Database> db;
   if (create) {
     db = Database::createDatabase(db_path, m_mls);

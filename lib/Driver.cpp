@@ -119,6 +119,7 @@ getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs) {
   // Load machine learners
   std::set<util::UUID> mls;
   for (const auto &str : ml_strs) {
+    MAGEEC_DEBUG("Retrieving machine learner '" << str << "'");
     util::Option<util::UUID> ml_uuid;
 
     // Try and parse the argument as a UUID
@@ -128,10 +129,16 @@ getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs) {
                                      "and will be ignored");
       continue;
     }
+    if (ml_uuid) {
+      MAGEEC_DEBUG("Found machine learner with UUID '" << str << "'");
+    }
 
     // Not a UUID, try and load as a shared object
     if (!ml_uuid) {
       ml_uuid = framework.loadMachineLearner(str);
+      if (ml_uuid) {
+        MAGEEC_DEBUG("Loading machine learner from library '" << str << "'");
+      }
     }
     if (!ml_uuid) {
       MAGEEC_WARN("Unable to load machine learner '"
@@ -147,6 +154,7 @@ getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs) {
     MAGEEC_ERR("No machine learners were successfully loaded");
     return std::set<util::UUID>();
   }
+  MAGEEC_DEBUG("Retrieved " << mls.size() << " machine learners");
   return mls;
 }
 
@@ -223,6 +231,7 @@ static bool trainDatabase(Framework &framework, const std::string &db_path,
   assert(metric_strs.size() > 0);
 
   // Parse the metrics we are training against.
+  MAGEEC_DEBUG("Parsing training metrics");
   std::set<Metric> metrics;
   for (auto str : metric_strs) {
     util::Option<Metric> metric = util::stringToMetric(str);
@@ -238,6 +247,7 @@ static bool trainDatabase(Framework &framework, const std::string &db_path,
   }
 
   // The database to be trained.
+  MAGEEC_DEBUG("Retrieving database '" << db_path << "' for training");
   std::unique_ptr<Database> db = framework.getDatabase(db_path, false);
   if (!db) {
     MAGEEC_ERR("Error retrieving database. The database may not exist, "
@@ -260,6 +270,7 @@ static util::Option<std::set<Database::InputResult>>
 parseResults(const std::string &result_path) {
   std::set<Database::InputResult> results;
 
+  MAGEEC_DEBUG("Opening file '" << result_path << "' to parse results");
   std::ifstream result_file(result_path);
   if (!result_file) {
     MAGEEC_ERR("Could not open results file '" << result_path << "', the "
@@ -369,6 +380,7 @@ static bool addResults(Framework &framework, const std::string &db_path,
                 "added to the database");
     return true;
   }
+  MAGEEC_DEBUG("Adding parsed results to the database");
   db->addResults(results.get());
   return true;
 }
