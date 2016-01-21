@@ -26,6 +26,7 @@
 #include "mageec/Database.h"
 #include "mageec/Framework.h"
 #include "mageec/ML/C5.h"
+#include "mageec/ML/FileML.h"
 #include "mageec/Util.h"
 
 #include <fstream>
@@ -285,46 +286,37 @@ parseResults(const std::string &result_path) {
     std::string metric_str;
     std::string value_str;
 
-    auto line_it = line.begin();
-    for (; std::isspace(*line_it) && line_it != line.end(); line_it++)
-      ;
-    if (line_it == line.end() || *line_it == '#') {
-      continue;
-    }
-
     // read the id
-    for (; !std::isspace(*line_it) && line_it != line.end(); line_it++) {
+    auto line_it = line.begin();
+    for (; line_it != line.end() && *line_it != ','; line_it++) {
       id_str.push_back(*line_it);
     }
-    for (; std::isspace(*line_it) && line_it != line.end(); line_it++)
-      ;
+    if (line_it == line.end() || id_str.size() == 0) {
+      MAGEEC_ERR("Malformed results file line\n" << line);
+      continue;
+    }
+    assert(*line_it == ',');
+    line_it++;
 
     // metric string
-    if (line_it == line.end() || *line_it == '#') {
-      MAGEEC_ERR("Malformed results file line:\n" << line);
-      return nullptr;
-    }
-    for (; !std::isspace(*line_it) && line_it != line.end(); line_it++) {
+    for (; line_it != line.end() && *line_it != ','; line_it++) {
       metric_str.push_back(*line_it);
     }
-    for (; std::isspace(*line_it) && line_it != line.end(); line_it++)
-      ;
+    if (line_it == line.end() || metric_str.size() == 0) {
+      MAGEEC_WARN("Malformed results file line\n" << line);
+      continue;
+    }
+    assert(*line_it == ',');
+    line_it++;
 
     // value string
-    if (line_it == line.end() || *line_it == '#') {
-      MAGEEC_ERR("Malformed results file line:\n" << line);
-      return nullptr;
-    }
-    for (; !std::isspace(*line_it) && line_it != line.end(); line_it++) {
+    for (; line_it != line.end() && *line_it != ','; line_it++) {
       value_str.push_back(*line_it);
     }
-
-    for (; std::isspace(*line_it) && line_it != line.end(); line_it++)
-      ;
-    if (line_it != line.end() && *line_it != '#') {
+    if (line_it != line.end() || value_str.size() == 0) {
       // junk on the end of the line
-      MAGEEC_ERR("Malformed results file line:\n" << line);
-      return nullptr;
+      MAGEEC_WARN("Malformed results file line\n" << line);
+      continue;
     }
 
     // Convert each field to its expected type.
@@ -521,8 +513,14 @@ int main(int argc, const char *argv[]) {
   Framework framework(with_debug);
 
   // C5 classifier
+  MAGEEC_DEBUG("Registering C5.0 machine learner interface");
   std::unique_ptr<IMachineLearner> c5_ml(new C5Driver());
   framework.registerMachineLearner(std::move(c5_ml));
+
+  // FileML
+  MAGEEC_DEBUG("Registering FileML machine learner interface");
+  std::unique_ptr<IMachineLearner> file_ml(new FileML());
+  framework.registerMachineLearner(std::move(file_ml));
 
   // Get the UUIDs of the machine learners provided on the command line
   std::set<util::UUID> mls;

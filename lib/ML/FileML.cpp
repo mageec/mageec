@@ -67,32 +67,21 @@ bool FileML::setDecisionConfig(std::string config_path) {
     std::string result_value;
 
     auto line_it = line.begin();
-    for (; std::isspace(*line_it) && line_it != line.end(); line_it++)
-      ;
-    if (line_it == line.end() || *line_it == '#') {
-      continue;
-    }
-
-    // read the id of the request
-    for (; !std::isspace(*line_it) && line_it != line.end(); line_it++) {
+    for (; line_it != line.end() && *line_it != ','; line_it++) {
       request_id.push_back(*line_it);
     }
-    for (; std::isspace(*line_it) && line_it != line.end(); line_it++)
-      ;
-
-    // read the result value
-    if (line_it == line.end() || *line_it == '#') {
-      // no result value field
+    if (line_it == line.end() || request_id.size() == 0) {
+      // No result value field
       MAGEEC_DEBUG("Malformed FileML config file field:\n" << line);
       return false;
     }
-    for (; !std::isspace(*line_it) && line_it != line.end(); line_it++) {
+    assert(*line_it == ',');
+    line_it++;
+
+    for (; line_it != line.end() && *line_it != ','; line_it++) {
       result_value.push_back(*line_it);
     }
-
-    for (; std::isspace(*line_it) && line_it != line.end(); line_it++)
-      ;
-    if (line_it != line.end() && *line_it != '#') {
+    if (line_it != line.end() || result_value.size() == 0) {
       // junk on the end of the line
       MAGEEC_DEBUG("Malformed FileML config file field:\n" << line);
       return false;
@@ -100,7 +89,7 @@ bool FileML::setDecisionConfig(std::string config_path) {
 
     if (m_decision_map.count(request_id) != 0) {
       MAGEEC_DEBUG("Multiple entries for decision: " << request_id
-                                                     << " in the config file");
+                << " in the config file");
       return false;
     }
 

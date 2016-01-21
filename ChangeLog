@@ -1,5 +1,12 @@
 2016-01-21  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/Driver.cpp (parseResults): Change results file format to
+	be a simpler .csv format.
+	* lib/FileML.cpp (setDecisionConfig): Change decision configuration
+	file to be a simpler .csv format.
+
+2016-01-21  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/Database.cpp: Add more debug.
 	* lib/Driver.cpp: Likewise.
 	* lib/Framework.cpp: Likewise.
