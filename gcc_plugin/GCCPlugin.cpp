@@ -458,7 +458,9 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
         mageec_context.framework->getMachineLearners();
 
     // Print the machine learner interfaces
-    printMLInterfaces(ml_interfaces);
+    if (with_print_ml_interfaces) {
+      printMLInterfaces(ml_interfaces);
+    }
 
     // Check if the user must specify a metric to the machine learner
     // An interface which requires training also requires a database,

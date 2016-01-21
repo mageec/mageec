@@ -1,5 +1,15 @@
 2016-01-21  Edward Jones  <ed.jones@embecosm.com>
 
+	* GCCCallbacks.cpp (mageecStartFile): Emit filename in debug.
+	(mageecFinishFile): Retrieve the module name, used when saving a
+	compiler configuration in the database. Emit the module name in
+	debug.
+	* GCCPlugin.cpp (parseArguments): Fix bug where we would accidentally
+	print machine learners when the optimize flag was provided to the
+	plugin.
+
+2016-01-21  Edward Jones  <ed.jones@embecosm.com>
+
 	* GCCCallbacks.cpp: Add more debug.
 	* GCCPlugin.cpp: Likewise.
 

@@ -78,7 +78,7 @@ extractModuleFeatures(
 
 void mageecStartFile(void *, void *) {
   // FIXME: Output filename
-  MAGEEC_DEBUG("Start file");
+  MAGEEC_DEBUG("Start file '" << main_input_filename << "'");
 
   // Check that the feature set and pass sequence is empty
   assert(mageec_context.func_features.size() == 0);
@@ -128,8 +128,7 @@ void mageecFinishFile(void *, void *) {
       MAGEEC_DEBUG("All functions have a common configuration, so extracting "
                    "module level features");
 
-      // FIXME: Get the actual module name
-      module_name = std::string("placeholder");
+      module_name = std::string(main_input_filename);
 
       // Add module level features and group to the database
       std::unique_ptr<mageec::FeatureSet> module_features =
@@ -160,8 +159,9 @@ void mageecFinishFile(void *, void *) {
           nullptr /* parent */);
 
       // Emit the compilation id for the module
-      *mageec_context.out_file << "module," << module_name << ","
-                               << static_cast<uint64_t>(module_compilation_id)
+      *mageec_context.out_file << "module," << module_name.get() << ","
+                               << static_cast<uint64_t>(
+                                   module_compilation_id.get())
                                << "\n";
     }
 
@@ -247,7 +247,7 @@ void mageecFinishFile(void *, void *) {
   mageec_context.func_passes.clear();
 
   // FIXME: Output filename
-  MAGEEC_DEBUG("End file");
+  MAGEEC_DEBUG("End file '" << main_input_filename << "'");
 }
 
 void mageecFinish(void *gcc_data __attribute__((unused)),
