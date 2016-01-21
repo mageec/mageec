@@ -590,14 +590,17 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
 int plugin_init(struct plugin_name_args *plugin_info,
                 struct plugin_gcc_version *version) {
   // Initialize the MAGEEC framework
+  MAGEEC_DEBUG("Initializing the MAGEEC framework");
   assert(!mageec_context.framework);
   mageec_context.framework.reset(new mageec::Framework());
 
   // Load built in machine learners into the framework.
   // C5 classifier
+  MAGEEC_DEBUG("Registering C5 machine learner");
   std::unique_ptr<mageec::IMachineLearner> c5_ml(new mageec::C5Driver());
   mageec_context.framework->registerMachineLearner(std::move(c5_ml));
   // FileML
+  MAGEEC_DEBUG("Registering FileML machine learner");
   std::unique_ptr<mageec::IMachineLearner> file_ml(new mageec::FileML());
   mageec_context.framework->registerMachineLearner(std::move(file_ml));
 
@@ -620,6 +623,7 @@ int plugin_init(struct plugin_name_args *plugin_info,
   register_callback(plugin_info->base_name, PLUGIN_OVERRIDE_GATE,
                     mageecPassGate, NULL);
 
+  MAGEEC_DEBUG("Registering feature extraction pass");
   mageecRegisterFeatureExtract();
   return 0;
 }

@@ -88,6 +88,9 @@ void mageecStartFile(void *, void *) {
 void mageecFinishFile(void *, void *) {
   // If necessary, store the features and pass sequences in the database
   if (mageec_context.with_feature_extract) {
+    MAGEEC_DEBUG("Checking if a common configuration was used for all "
+                 "functions");
+
     // If the same compiler configuration was used for every function in the
     // module, then module level features can be extracted.
     bool has_common_config = true;
@@ -122,6 +125,9 @@ void mageecFinishFile(void *, void *) {
     mageec::util::Option<mageec::ParameterSetID> module_parameter_set_id;
     mageec::util::Option<mageec::CompilationID>  module_compilation_id;
     if (has_common_config) {
+      MAGEEC_DEBUG("All functions have a common configuration, so extracting "
+                   "module level features");
+
       // FIXME: Get the actual module name
       module_name = std::string("placeholder");
 
@@ -144,6 +150,8 @@ void mageecFinishFile(void *, void *) {
           new mageec::ParameterSet());
       module_parameter_set_id =
           mageec_context.db->newParameterSet(*module_params);
+
+      MAGEEC_DEBUG("Storing module configuration in the database");
 
       // Compilation id for the module
       module_compilation_id = mageec_context.db->newCompilation(
@@ -215,6 +223,7 @@ void mageecFinishFile(void *, void *) {
 
       // Create the compilation for this function
       // Add the module as a parent if it has a compilation
+      MAGEEC_DEBUG("Creating compilation for function '" << func_name << "'");
       mageec::CompilationID compilation_id;
       if (has_common_config) {
         compilation_id = mageec_context.db->newCompilation(
