@@ -567,7 +567,8 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
 
   // If feature extraction is enabled, open the output file
   if (with_feature_extract) {
-    mageec_context.out_file.reset(new std::ofstream(out_file_str.get()));
+    mageec_context.out_file.reset(
+        new std::ofstream(out_file_str.get(), std::ofstream::app));
   } else {
     mageec_context.out_file = nullptr;
   }

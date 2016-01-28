@@ -91,6 +91,12 @@ void mageecFinishFile(void *, void *) {
     MAGEEC_DEBUG("Checking if a common configuration was used for all "
                  "functions");
 
+    // Emit this filename into the compilation id file before any module or
+    // function compilation ids. This means that we can associate any modules
+    // or functions with the source file which they came from, as they will
+    // always be preceded by a file.
+    *mageec_context.out_file << "file," << main_input_filename << "\n";
+
     // If the same compiler configuration was used for every function in the
     // module, then module level features can be extracted.
     bool has_common_config = true;

@@ -1,3 +1,10 @@
+2016-01-28  Edward Jones  <ed.jones@embecosm.com>
+
+	* GCCCallbacks.cpp (mageecFinishFile): Emit the full filename into the
+	compilation id file.
+	* GCCPlugin.cpp (parseArguments): Open the output file for appending
+	instead of writing.
+
 2016-01-21  Edward Jones  <ed.jones@embecosm.com>
 
 	* GCCCallbacks.cpp (mageecStartFile): Emit filename in debug.
