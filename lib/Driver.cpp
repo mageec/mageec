@@ -558,11 +558,20 @@ int main(int argc, const char *argv[]) {
   case DriverMode::kNone:
     return 0;
   case DriverMode::kCreate:
-    return createDatabase(framework, db_str.get());
+    if (!createDatabase(framework, db_str.get())) {
+      return -1;
+    }
+    return 0;
   case DriverMode::kTrain:
-    return trainDatabase(framework, db_str.get(), mls, metric_strs);
+    if (!trainDatabase(framework, db_str.get(), mls, metric_strs)) {
+      return -1;
+    }
+    return 0;
   case DriverMode::kAddResults:
-    return addResults(framework, db_str.get(), results_path.get());
+    if (!addResults(framework, db_str.get(), results_path.get())) {
+      return -1;
+    }
+    return 0;
   }
   return 0;
 }
