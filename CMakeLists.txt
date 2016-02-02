@@ -115,6 +115,12 @@ install(TARGETS mageec_driver mageec_ml mageec_core
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
 
+# Install scripts
+install (DIRECTORY script/ DESTINATION bin PATTERN "*"
+         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                     GROUP_READ GROUP_EXECUTE
+                     WORLD_READ WORLD_EXECUTE)
+
 # Documentation
 if (MAGEEC_WITH_USER_DOCS OR MAGEEC_WITH_DESIGN_DOCS OR MAGEEC_WITH_DOXYGEN)
   add_subdirectory (doc)

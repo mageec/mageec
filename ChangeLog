@@ -1,5 +1,12 @@
 2016-02-02  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Install newly added scripts.
+	* scripts/build-and-measure.py: New file.
+	* scripts/generate-build.py: Likewise.
+	* scripts/measure-code-size.py: Likewise.
+
+2016-02-02  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/Driver.cpp (main): Actually return 0 on success.
 
 2016-01-21  Edward Jones  <ed.jones@embecosm.com>
