@@ -119,8 +119,8 @@ private:
   const IdentifierT m_id;
 };
 
-/// A PassList is a list of pass name strings
-typedef std::vector<std::string> PassList;
+/// A PassSeq is a list of pass name strings
+typedef std::vector<std::string> PassSeq;
 
 // Types of decision requests which can be made, and decisions which can result
 typedef DecisionRequest<DecisionRequestType::kBool, DecisionType::kBool,
@@ -132,8 +132,8 @@ typedef DecisionRequest<DecisionRequestType::kRange, DecisionType::kRange,
 typedef DecisionRequest<DecisionRequestType::kPassGate, DecisionType::kBool,
                         std::string> PassGateDecisionRequest;
 
-typedef DecisionRequest<DecisionRequestType::kPassList, DecisionType::kPassList,
-                        unsigned> PassListDecisionRequest;
+typedef DecisionRequest<DecisionRequestType::kPassSeq, DecisionType::kPassSeq,
+                        unsigned> PassSeqDecisionRequest;
 
 /// \class NativeDecision
 ///
@@ -144,7 +144,7 @@ public:
 };
 typedef Decision<DecisionType::kBool, bool> BoolDecision;
 typedef Decision<DecisionType::kRange, int64_t> RangeDecision;
-typedef Decision<DecisionType::kPassList, PassList> PassListDecision;
+typedef Decision<DecisionType::kPassSeq, PassSeq> PassSeqDecision;
 
 } // end of namespace mageec
 

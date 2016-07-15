@@ -38,8 +38,6 @@ typedef uint64_t ID;
 enum class CompilationID    : ID {};
 enum class FeatureSetID     : ID {};
 enum class FeatureGroupID   : ID {};
-enum class PassID           : ID {};
-enum class PassSequenceID   : ID {};
 enum class ParameterSetID   : ID {};
 enum class ParameterGroupID : ID {};
 
@@ -52,11 +50,11 @@ enum class Metric : TypeID { kCodeSize, kTime, kEnergy };
 
 enum class FeatureType : TypeID { kBool, kInt };
 
-enum class ParameterType : TypeID { kBool, kRange };
+enum class ParameterType : TypeID { kBool, kRange, kPassSeq };
 
-enum class DecisionType : TypeID { kNative, kBool, kRange, kPassList };
+enum class DecisionType : TypeID { kNative, kBool, kRange, kPassSeq };
 
-enum class DecisionRequestType : TypeID { kBool, kRange, kPassList, kPassGate };
+enum class DecisionRequestType : TypeID { kBool, kRange, kPassSeq, kPassGate };
 
 struct FeatureDesc {
   unsigned id;

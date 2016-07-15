@@ -165,7 +165,6 @@ public:
   /// \return The identifier of the feature group in the database
   FeatureGroupID newFeatureGroup(std::set<FeatureSetID> group);
 
-  /// TODO: Continuous feature extraction
 
 //===----------------------- Compiler interface ---------------------------===//
 
@@ -177,8 +176,6 @@ public:
   /// \param features  The group of features for the initial program unit
   /// \param parameters  Set of parameters which apply to the overall
   /// compilation
-  /// \param pass_sequence  Optional sequence of passes which were applied to
-  /// this compilation
   /// \param parent  Optional parent of this compilation. For example the
   /// encapsulating module for a function. (debug)
   ///
@@ -186,7 +183,6 @@ public:
   CompilationID newCompilation(std::string name, std::string type,
                                FeatureGroupID features,
                                ParameterSetID parameters,
-                               util::Option<PassSequenceID> pass_sequence,
                                util::Option<CompilationID> parent);
 
   /// \brief Create a new set of parameters
@@ -196,17 +192,9 @@ public:
   /// \return The identifier of the new parameter set in the database
   ParameterSetID newParameterSet(ParameterSet parameters);
 
-  /// \brief Create a new pass sequence
-  ///
-  /// \param pass_names  A sequence of names used to identify each pass in
-  /// turn.
-  ///
-  /// \return The identifier of the new pass sequence
-  PassSequenceID newPassSequence(std::vector<std::string> pass_names);
-
-  /// FIXME: Add support for pass parameters
 
 //===------------------------ Results interface ---------------------------===//
+
 
   /// \struct InputResult Structure for results to be added to the database
   struct InputResult {

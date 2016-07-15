@@ -1,3 +1,27 @@
+2016-07-15  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Attribute.h: Add PassSeqParameter attribute, a
+	parameter which represents the passes executed during the compile.
+	* include/mageec/Database.h (Database::newPassSequence): Delete
+	method, pass sequences are now expressed as a parameter.
+	(Database::newCompilation): Remove pass_sequence parameter.
+	* include/mageec/Decision.h: Rename PassList to PassSeq
+	* include/mageec/Result.h (Result::m_pass_sequence): Remove member.
+	(Result::m_pass_features): Likewise.
+	(Result::getPassSequence): Remove method.
+	(Result::getPassParameters): Likewise.
+	(Result::getFeaturesAfterPass): Likewise.
+	(Result::addPass): Likewise.
+	(Result::addFeatures): Likewise.
+	* include/mageec/Types.h: Rename kPassList to kPassSeq.
+	(ParameterType): Add kPassSeq enumeration value.
+	(PassID PassSequenceID): Add enumerations.
+	* lib/Database.cpp: Remove FeatureType, ParameterType, and
+	PassSequencePass tables.
+	* lib/ML/C5.cpp: Updated to handle that pass sequences are now a
+	parameter.
+	* lib/ML/FileML.cpp: Rename kPassList to kPassSeq.
+
 2016-02-02  Edward Jones  <ed.jones@embecosm.com>
 
 	* CMakeLists.txt: Install newly added scripts.

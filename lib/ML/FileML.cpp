@@ -123,7 +123,7 @@ FileML::makeDecision(const DecisionRequestBase &request, const FeatureSet &,
   switch (request.getType()) {
   case DecisionRequestType::kBool:
   case DecisionRequestType::kRange:
-  case DecisionRequestType::kPassList: {
+  case DecisionRequestType::kPassSeq: {
     // Get the identifier for the decision request as a string.
     // Also retrieve the expected type of the resultant decision.
     if (request.getType() == DecisionRequestType::kBool) {
@@ -135,9 +135,9 @@ FileML::makeDecision(const DecisionRequestBase &request, const FeatureSet &,
           *static_cast<const RangeDecisionRequest *>(&request);
       request_id = std::to_string(range_request.getID());
       decision_type = range_request.getDecisionType();
-    } else if (request.getType() == DecisionRequestType::kPassList) {
+    } else if (request.getType() == DecisionRequestType::kPassSeq) {
       auto &pass_request =
-          *static_cast<const PassListDecisionRequest *>(&request);
+          *static_cast<const PassSeqDecisionRequest *>(&request);
       request_id = std::to_string(pass_request.getID());
       decision_type = pass_request.getDecisionType();
     } else {
@@ -184,7 +184,7 @@ FileML::makeDecision(const DecisionRequestBase &request, const FeatureSet &,
     MAGEEC_DEBUG("Unknown value for range decision:\n" << result_str);
     return std::unique_ptr<DecisionBase>(new NativeDecision());
   }
-  case DecisionType::kPassList:
+  case DecisionType::kPassSeq:
     assert(0 && "Unsupport decision type");
     return std::unique_ptr<DecisionBase>(new NativeDecision());
   case DecisionType::kNative:

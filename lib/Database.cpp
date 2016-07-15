@@ -51,24 +51,15 @@ const util::Version Database::version(MAGEEC_DATABASE_VERSION_MAJOR,
 //===------------------- Database table creation queries ------------------===//
 
 // metadata table creation
-static const char *const create_metadata_table = "CREATE TABLE Metadata("
-                                                 "field INTEGER PRIMARY KEY, "
-                                                 "value TEXT NOT NULL"
-                                                 ")";
+static const char *const create_metadata_table =
+    "CREATE TABLE Metadata(field INTEGER PRIMARY KEY, value TEXT NOT NULL)";
 
 // database feature table creation strings
-static const char *const create_feature_type_table =
-    "CREATE TABLE FeatureType("
-    "feature_type_id INTEGER PRIMARY KEY, "
-    "feature_type    INTEGER NOT NULL"
-    ")";
-
 static const char *const create_feature_instance_table =
     "CREATE TABLE FeatureInstance("
-    "feature_id      INTEGER PRIMARY KEY, "
-    "feature_type_id INTEGER NOT NULL, "
-    "value           BLOB NOT NULL, "
-    "FOREIGN KEY(feature_type_id) REFERENCES FeatureType(feature_type_id)"
+    "feature_id   INTEGER PRIMARY KEY, "
+    "feature_type INTEGER NOT NULL, "
+    "value        BLOB NOT NULL, "
     ")";
 
 static const char *const create_feature_set_feature_table =
@@ -87,18 +78,11 @@ static const char *const create_feature_group_set_table =
     ")";
 
 // database parameter table creation strings
-static const char *const create_parameter_type_table =
-    "CREATE TABLE ParameterType("
-    "parameter_type_id INTEGER PRIMARY KEY, "
-    "parameter_type    INTEGER NOT NULL"
-    ")";
-
 static const char *const create_parameter_instance_table =
     "CREATE TABLE ParameterInstance("
-    "parameter_id      INTEGER PRIMARY KEY, "
-    "parameter_type_id INTEGER NOT NULL, "
-    "value             BLOB NOT NULL, "
-    "FOREIGN KEY(parameter_type_id) REFERENCES ParameterType(parameter_type_id)"
+    "parameter_id   INTEGER PRIMARY KEY, "
+    "parameter_type INTEGER NOT NULL, "
+    "value          BLOB NOT NULL"
     ")";
 
 static const char *const create_parameter_set_parameter_table =
@@ -109,25 +93,12 @@ static const char *const create_parameter_set_parameter_table =
     "FOREIGN KEY(parameter_id) REFERENCES ParameterInstance(parameter_id)"
     ")";
 
-// pass sequence table creation strings
-static const char *const create_pass_sequence_pass_table =
-    "CREATE TABLE PassSequencePass("
-    "pass_id          INTEGER PRIMARY KEY, "
-    "pass_sequence_id INTEGER NOT NULL, "
-    "pass_pos         INTEGER NOT NULL, "
-    "pass_name_id     TEXT NOT NULL, "
-    "parameter_set_id INTEGER, "
-    "UNIQUE(pass_sequence_id, pass_id), "
-    "UNIQUE(pass_id, pass_pos)"
-    ")";
-
 // compilation table creation strings
 static const char *const create_compilation_table =
     "CREATE TABLE Compilation("
     "compilation_id   INTEGER PRIMARY KEY, "
     "feature_group_id INTEGER NOT NULL, "
-    "parameter_set_id INTEGER, "
-    "pass_sequence_id INTEGER"
+    "parameter_set_id INTEGER"
     ")";
 
 // result table creation strings
@@ -162,16 +133,14 @@ static const char *const create_program_unit_debug_table =
 
 static const char *const create_feature_debug_table =
     "CREATE TABLE FeatureDebug("
-    "feature_type_id INTEGER PRIMARY KEY, "
-    "name            TEXT NOT NULL, "
-    "FOREIGN KEY(feature_type_id) REFERENCES FeatureType(feature_type_id)"
+    "feature_type INTEGER PRIMARY KEY, "
+    "name         TEXT NOT NULL"
     ")";
 
 static const char *const create_parameter_debug_table =
     "CREATE TABLE ParameterDebug("
-    "parameter_type_id INTEGER PRIMARY KEY, "
-    "name              TEXT NOT NULL, "
-    "FOREIGN KEY(parameter_type_id) REFERENCES ParameterType(parameter_type_id)"
+    "parameter_type INTEGER PRIMARY KEY, "
+    "name           TEXT NOT NULL"
     ")";
 
 //===-------------------- Database implementation -------------------------===//
@@ -240,6 +209,9 @@ Database::getDatabase(std::string db_path,
 Database::Database(sqlite3 &db, std::map<util::UUID, IMachineLearner *> mls,
                    bool create)
     : m_db(&db), m_mls(mls) {
+  // Set a busy timeout for all database transactions
+  sqlite3_busy_timeout(m_db, 10000);
+
   // Enable foreign keys (requires sqlite 3.6.19 or above)
   // If foreign keys are not available the database is still usable, but no
   // foreign key checking will do done.
@@ -274,20 +246,15 @@ void Database::init_db(sqlite3 &db) {
   DatabaseQuery(db, create_metadata_table).execute().assertDone();
 
   // Create tables to hold features
-  DatabaseQuery(db, create_feature_type_table).execute().assertDone();
   DatabaseQuery(db, create_feature_instance_table).execute().assertDone();
   DatabaseQuery(db, create_feature_set_feature_table).execute().assertDone();
   DatabaseQuery(db, create_feature_group_set_table).execute().assertDone();
 
   // Tables to hold parameters
-  DatabaseQuery(db, create_parameter_type_table).execute().assertDone();
   DatabaseQuery(db, create_parameter_instance_table).execute().assertDone();
   DatabaseQuery(db, create_parameter_set_parameter_table)
       .execute()
       .assertDone();
-
-  // Pass sequences
-  DatabaseQuery(db, create_pass_sequence_pass_table).execute().assertDone();
 
   // Compilation
   DatabaseQuery(db, create_compilation_table).execute().assertDone();
@@ -410,23 +377,15 @@ void Database::setMetadata(MetadataField field, std::string value) {
 FeatureSetID Database::newFeatureSet(FeatureSet features) {
   DatabaseQuery get_features =
       DatabaseQueryBuilder(*m_db)
-      << "SELECT FeatureInstance.feature_type_id, FeatureInstance.value "
+      << "SELECT FeatureInstance.feature_type, FeatureInstance.value "
       << "FROM FeatureSetFeature, FeatureInstance "
       << "WHERE "
       << "FeatureSetFeature.feature_id = FeatureInstance.feature_id AND "
       << "FeatureSetFeature.feature_set_id = " << QueryParamType::kInteger;
 
-  // FIXME: This should check that the keys are identical if a conflict
-  // arises.
-  DatabaseQuery insert_feature_type =
-      DatabaseQueryBuilder(*m_db)
-      << "INSERT OR IGNORE INTO FeatureType(feature_type_id, feature_type) "
-      << "VALUES (" << QueryParamType::kInteger << ", "
-      << QueryParamType::kInteger << ")";
-
   DatabaseQuery insert_feature =
       DatabaseQueryBuilder(*m_db)
-      << "INSERT INTO FeatureInstance(feature_type_id, value) VALUES ("
+      << "INSERT INTO FeatureInstance(feature_type, value) VALUES ("
       << QueryParamType::kInteger << ", " << QueryParamType::kBlob << ")";
 
   DatabaseQuery insert_into_feature_set =
@@ -438,7 +397,7 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
   // arises.
   DatabaseQuery insert_feature_debug =
       DatabaseQueryBuilder(*m_db)
-      << "INSERT OR IGNORE INTO FeatureDebug(feature_type_id, name) VALUES ("
+      << "INSERT OR IGNORE INTO FeatureDebug(feature_type, name) VALUES ("
       << QueryParamType::kInteger << ", " << QueryParamType::kText << ")";
 
   // Sort the feature in the feature set using a map, then serialize to a
@@ -496,15 +455,9 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
       // features into the database.
       for (auto I : features) {
         // clear parameters bindings for all queries
-        insert_feature_type.clearAllBindings();
         insert_feature.clearAllBindings();
         insert_into_feature_set.clearAllBindings();
         insert_feature_debug.clearAllBindings();
-
-        // add feature type first if not present
-        insert_feature_type << static_cast<int64_t>(I->getID())
-                            << static_cast<int64_t>(I->getType());
-        insert_feature_type.execute().assertDone();
 
         // feature insertion
         insert_feature << static_cast<int64_t>(I->getID())
@@ -603,12 +556,11 @@ FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
 CompilationID
 Database::newCompilation(std::string name, std::string type,
                          FeatureGroupID features, ParameterSetID parameters,
-                         util::Option<PassSequenceID> pass_sequence,
                          util::Option<CompilationID> parent) {
   DatabaseQuery insert_into_compilation =
       DatabaseQueryBuilder(*m_db)
       << "INSERT INTO Compilation("
-      << "feature_group_id, parameter_set_id, pass_sequence_id) "
+      << "feature_group_id, parameter_set_id) "
       << "VALUES (" << QueryParamType::kInteger << ", "
       << QueryParamType::kInteger << ", " << QueryParamType::kInteger << ")";
 
@@ -625,11 +577,6 @@ Database::newCompilation(std::string name, std::string type,
   // Add the compilation
   insert_into_compilation << static_cast<int64_t>(features)
                           << static_cast<int64_t>(parameters);
-  if (pass_sequence) {
-    insert_into_compilation << static_cast<int64_t>(pass_sequence.get());
-  } else {
-    insert_into_compilation << nullptr;
-  }
   insert_into_compilation.execute().assertDone();
 
   // The rowid of the insert is the compilation_id, retrieve it
@@ -654,7 +601,7 @@ Database::newCompilation(std::string name, std::string type,
 ParameterSetID Database::newParameterSet(ParameterSet parameters) {
   DatabaseQuery get_parameters =
       DatabaseQueryBuilder(*m_db)
-      << "SELECT ParameterInstance.parameter_type_id, ParameterInstance.value "
+      << "SELECT ParameterInstance.parameter_type, ParameterInstance.value "
       << "FROM ParameterSetParameter, ParameterInstance "
       << "WHERE "
       << "ParameterSetParameter.parameter_id = "
@@ -662,18 +609,9 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
       << "ParameterSetParameter.parameter_set_id = "
       << QueryParamType::kInteger;
 
-  // FIXME: This should check that the keys are identical if a conflict
-  // arises.
-  DatabaseQuery insert_parameter_type =
-      DatabaseQueryBuilder(*m_db)
-      << "INSERT OR IGNORE INTO ParameterType(parameter_type_id, "
-         "parameter_type) "
-      << "VALUES (" << QueryParamType::kInteger << ", "
-      << QueryParamType::kInteger << ")";
-
   DatabaseQuery insert_parameter =
       DatabaseQueryBuilder(*m_db)
-      << "INSERT INTO ParameterInstance(parameter_type_id, value) VALUES ("
+      << "INSERT INTO ParameterInstance(parameter_type, value) VALUES ("
       << QueryParamType::kInteger << ", " << QueryParamType::kBlob << ")";
 
   DatabaseQuery insert_into_parameter_set =
@@ -686,7 +624,7 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
   // arises.
   DatabaseQuery insert_parameter_debug =
       DatabaseQueryBuilder(*m_db)
-      << "INSERT OR IGNORE INTO ParameterDebug(parameter_type_id, name) VALUES "
+      << "INSERT OR IGNORE INTO ParameterDebug(parameter_type, name) VALUES "
          "(" << QueryParamType::kInteger << ", " << QueryParamType::kText
       << ")";
 
@@ -743,15 +681,9 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
     } else {
       for (auto I : parameters) {
         // clear parameters bindings for all queries
-        insert_parameter_type.clearAllBindings();
         insert_parameter.clearAllBindings();
         insert_into_parameter_set.clearAllBindings();
         insert_parameter_debug.clearAllBindings();
-
-        // add parameter type first if not present
-        insert_parameter_type << static_cast<int64_t>(I->getID())
-                              << static_cast<int64_t>(I->getType());
-        insert_parameter_type.execute().assertDone();
 
         // parameter insertion
         insert_parameter << static_cast<int64_t>(I->getID())
@@ -776,93 +708,6 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
   }
   db_transaction.commit();
   return param_set_id;
-}
-
-PassSequenceID Database::newPassSequence(std::vector<std::string> pass_names) {
-  // FIXME: Introduce pass parameters
-  DatabaseQuery get_passes =
-      DatabaseQueryBuilder(*m_db)
-      << "SELECT pass_name_id FROM PassSequencePass "
-      << "WHERE pass_sequence_id = " << QueryParamType::kInteger << " "
-      << "ORDER BY pass_pos";
-
-  DatabaseQuery select_pass_sequence_pos =
-      DatabaseQueryBuilder(*m_db)
-      << "SELECT MAX(pass_pos) FROM PassSequencePass "
-      << "WHERE pass_sequence_id = " << QueryParamType::kInteger;
-
-  DatabaseQuery insert_pass_into_sequence =
-      DatabaseQueryBuilder(*m_db)
-      << "INSERT INTO PassSequencePass("
-      << "pass_sequence_id, pass_pos, pass_name_id, parameter_set_id) "
-      << "VALUES(" << QueryParamType::kInteger << ", "
-      << QueryParamType::kInteger << ", " << QueryParamType::kText << ", "
-      << QueryParamType::kInteger << ")";
-
-  // Build a pass sequence id by hashing the passes
-  std::vector<uint8_t> blob;
-  for (auto pass : pass_names) {
-    blob.insert(blob.begin(), pass.begin(), pass.end());
-    blob.push_back(0);
-  }
-  mageec::ID tmp_id =
-      util::crc64(blob.data(), static_cast<unsigned>(blob.size()));
-  PassSequenceID pass_sequence_id = static_cast<PassSequenceID>(tmp_id);
-
-  // Do all operations in a single transaction
-  DatabaseTransaction db_transaction(m_db);
-
-  bool pass_seq_found = false;
-  while (!pass_seq_found) {
-    get_passes.clearAllBindings();
-    get_passes << static_cast<int64_t>(pass_sequence_id);
-
-    auto pass_iter = get_passes.execute();
-    if (!pass_iter.done()) {
-      // A pass seqeunce with this id already exists. Extract the set to
-      // compare against the one we hashed.
-      std::vector<std::string> db_pass_names;
-      for (; !pass_iter.done(); pass_iter = pass_iter.next()) {
-        std::string pass = pass_iter.getText(0);
-        db_pass_names.push_back(pass);
-      }
-      if ((db_pass_names.size() != pass_names.size()) ||
-          !std::equal(pass_names.begin(), pass_names.end(),
-                      db_pass_names.begin())) {
-        // We have a hash collision, compare against the next consecutive
-        // pass sequence.
-        uint64_t tmp = static_cast<uint64_t>(pass_sequence_id);
-        pass_sequence_id = static_cast<PassSequenceID>(tmp + 1);
-      } else {
-        pass_seq_found = true;
-      }
-    } else {
-      for (const auto &pass_name : pass_names) {
-        // Clear any bound data for the query
-        select_pass_sequence_pos.clearAllBindings();
-        insert_pass_into_sequence.clearAllBindings();
-
-        // The next pass index is the current maximum for this sequence +1
-        select_pass_sequence_pos << static_cast<int64_t>(pass_sequence_id);
-
-        auto res = select_pass_sequence_pos.execute();
-        int64_t pass_pos = 0;
-        assert(res.numColumns() == 1);
-        if (!res.isNull(0)) {
-          pass_pos = res.getInteger(0) + 1;
-          assert(pass_pos != 0 && "pass_pos overflowed");
-        }
-
-        // FIXME: Insert pass parameters if appropriate.
-        insert_pass_into_sequence << static_cast<int64_t>(pass_sequence_id)
-                                  << pass_pos << pass_name << nullptr;
-        insert_pass_into_sequence.execute().assertDone();
-      }
-      pass_seq_found = true;
-    }
-  }
-  db_transaction.commit();
-  return pass_sequence_id;
 }
 
 //===------------------------ Results interface ---------------------------===//
@@ -895,14 +740,15 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric) {
   // Get all of the feature types and parameter types, even if some of them
   // don't occur for this metric. These will all be distinct.
   DatabaseQuery select_feature_types(
-      *m_db, "SELECT feature_type_id, feature_type FROM FeatureType");
+      *m_db, "SELECT DISTINCT feature_type FROM FeatureInstance");
 
   DatabaseQuery select_parameter_types(
-      *m_db, "SELECT parameter_type_id, parameter_type FROM ParameterType");
+      *m_db, "SELECT DISTINCT parameter_type FROM ParameterInstance");
 
-  // Get all of the passes encountered in the database
-  DatabaseQuery select_pass_names(
-      *m_db, "SELECT DISTINCT pass_name_id FROM PassSequencePass");
+  DatabaseQuery select_pass_sequences(
+      *m_db, "SELECT DISTINCT value FROM ParameterInstance "
+             "WHERE parameter_type = "
+                 + static_cast<unsigned>(ParameterType::kPassSeq));
 
   // Insert a blob for the provided machine learner and metric
   // This will fail if there is already training data
@@ -940,15 +786,23 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric) {
     parameter_descs.insert(desc);
   }
 
-  for (auto pass_iter = select_pass_names.execute(); !pass_iter.done();
-       pass_iter = pass_iter.next()) {
-    assert(pass_iter.numColumns() == 1);
-    std::string name = pass_iter.getText(0);
-    pass_names.insert(name);
+  for (auto pass_seq_iter = select_pass_sequences.execute();
+       !pass_seq_iter.done(); pass_seq_iter = pass_seq_iter.next()) {
+    assert(pass_seq_iter.numColumns() == 1);
+
+    // Split on commas, add each encountered pass to the set
+    std::vector<uint8_t> blob = pass_seq_iter.getBlob(0);
+    std::string pass;
+    for (auto c : blob) {
+      if (c == ',') {
+        pass_names.insert(pass);
+        pass = std::string();
+      } else {
+        pass.push_back(c);
+      }
+    }
+    pass_names.insert(pass);
   }
-
-  // TODO: Read pass names
-
   db_transaction.commit();
 
   // Iterator to select each set of results in turn
@@ -976,7 +830,7 @@ ResultIterator::ResultIterator(sqlite3 &db, Metric metric)
       DatabaseQueryBuilder(*m_db)
       << "SELECT "
       << "Compilation.feature_group_id, Compilation.parameter_set_id, "
-      << "Compilation.pass_sequence_id, Result.result "
+      << "Result.result "
       << "FROM Compilation, Result "
       << "WHERE "
       << "Compilation.compilation_id = Result.compilation_id AND "
@@ -1009,14 +863,11 @@ util::Option<Result> ResultIterator::operator*() {
   // Get all of the features in a feature group
   DatabaseQuery select_features =
       DatabaseQueryBuilder(*m_db)
-      << "SELECT "
-      << "FeatureInstance.feature_type_id, FeatureType.feature_type, "
+      << "SELECT FeatureInstance.feature_id, FeatureInstance.feature_type, "
       << "FeatureInstance.value "
-      << "FROM FeatureInstance, FeatureType, FeatureSetFeature, "
-      << "FeatureGroupSet "
+      << "FROM FeatureInstance, FeatureSetFeature, FeatureGroupSet "
       << "WHERE "
       << "FeatureInstance.feature_id = FeatureSetFeature.feature_id AND "
-      << "FeatureType.feature_type_id = FeatureInstance.feature_type_id AND "
       << "FeatureSetFeature.feature_set_id = FeatureGroupSet.feature_set_id "
       << "AND "
       << "FeatureGroupSet.feature_group_id = " << QueryParamType::kInteger;
@@ -1025,7 +876,7 @@ util::Option<Result> ResultIterator::operator*() {
   DatabaseQuery select_parameters =
       DatabaseQueryBuilder(*m_db)
       << "SELECT "
-      << "ParameterInstance.parameter_id, ParameterInstance.parameter_type_id, "
+      << "ParameterInstance.parameter_id, ParameterInstance.parameter_type, "
       << "ParameterInstance.value "
       << "FROM ParameterInstance, ParameterSetParameter "
       << "WHERE "
@@ -1050,11 +901,7 @@ util::Option<Result> ResultIterator::operator*() {
   if (!m_result_iter->isNull(1)) {
     param_set = static_cast<ParameterSetID>(m_result_iter->getInteger(1));
   }
-  util::Option<PassSequenceID> pass_seq;
-  if (!m_result_iter->isNull(2)) {
-    pass_seq = static_cast<PassSequenceID>(m_result_iter->getInteger(2));
-  }
-  uint64_t value = static_cast<uint64_t>(m_result_iter->getInteger(3));
+  uint64_t value = static_cast<uint64_t>(m_result_iter->getInteger(2));
 
   // Feature and parameter set
   FeatureSet features;
@@ -1101,6 +948,9 @@ util::Option<Result> ResultIterator::operator*() {
         break;
       case ParameterType::kRange:
         parameters.add(RangeParameter::fromBlob(param_id, param_blob, {}));
+        break;
+      case ParameterType::kPassSeq:
+        parameters.add(PassSeqParameter::fromBlob(param_id, param_blob, {}));
         break;
       }
     }

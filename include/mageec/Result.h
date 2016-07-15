@@ -44,93 +44,30 @@ class Result {
 public:
   Result() = delete;
 
-  /// \brief Get the initial features of the program unit
+  /// \brief Get the features of the program unit
   FeatureSet getFeatures(void) const { return m_features; }
 
-  /// \brief Get the global parameters of the compilation
+  /// \brief Get the parameters of the compilation
   ParameterSet getParameters(void) const { return m_parameters; }
-
-  /// \brief Get the sequence of passes run
-  std::vector<std::string> getPassSequence(void) const {
-    std::vector<std::string> seq;
-    for (auto pass_conf : m_pass_sequence) {
-      seq.push_back(pass_conf.name);
-    }
-    return seq;
-  }
-
-  /// \brief Get the parameters for the pass at a position in the pass sequence
-  ParameterSet getPassParameters(unsigned i) const {
-    assert(i < m_pass_sequence.size() && "Index out of bounds!");
-    return m_pass_sequence[i].parameters;
-  }
-
-  /// \brief Get the features extracted after the pass at the provided position
-  /// in the pass sequence
-  util::Option<FeatureSet> getFeaturesAfterPass(unsigned i) const {
-    assert(i < m_pass_sequence.size() && "Index out of bounds!");
-    if (i >= m_pass_features.size()) {
-      return util::Option<FeatureSet>();
-    }
-    return m_pass_features[i];
-  }
 
   /// \brief Get the numerical value of the result
   uint64_t getValue(void) const { return m_value; }
 
 private:
-  struct PassConfiguration {
-    /// \brief Name used to identify the pass
-    std::string name;
-
-    /// \brief Parameters used by the pass
-    ParameterSet parameters;
-  };
-
   /// \brief Construct a new result with the provided initial features,
   /// compilation parameters and result value.
   ///
   /// This is restricted to be accessible by friend classes. User code should
   /// never be creating results
   Result(FeatureSet features, ParameterSet parameters, uint64_t value)
-      : m_features(features), m_parameters(parameters), m_pass_sequence(),
-        m_pass_features(), m_value(value) {}
+      : m_features(features), m_parameters(parameters), m_value(value) {}
 
-  /// \brief Add a new pass to the pass sequence for the results.
-  ///
-  /// \param name  Identifier of the pass as used in the database
-  /// \param parameters  Parameters for the provided pass
-  /// \return The index of the newly added
-  unsigned addPass(std::string name, ParameterSet parameters) {
-    unsigned pos = static_cast<unsigned>(m_pass_sequence.size());
-    m_pass_sequence.push_back({name, parameters});
-    return pos;
-  }
-
-  /// \brief Add features extracted after the provided pass in the pass
-  /// sequence.
-  ///
-  /// \param pos  Position of the pass in the pass sequence
-  /// \param features  Complete set of features extracted after the pass was
-  /// run.
-  void addFeatures(unsigned pos, FeatureSet features) {
-    assert(pos < m_pass_sequence.size());
-    m_pass_features.resize(pos + 1);
-    m_pass_features[pos] = features;
-  }
-
-  /// \brief Initial features for the program unit
+  /// \brief Features for the program unit
   FeatureSet m_features;
 
   /// \brief Parameters applicable to the overall compilation of the program
   /// unit.
   ParameterSet m_parameters;
-
-  /// \brief Sequence of passes executed and their configurations
-  std::vector<PassConfiguration> m_pass_sequence;
-
-  /// \brief Features extracted after a pass in the pass configuration
-  std::vector<util::Option<FeatureSet>> m_pass_features;
 
   /// \brief Value of the result
   uint64_t m_value;

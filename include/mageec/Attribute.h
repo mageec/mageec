@@ -36,7 +36,7 @@
 
 #include <cassert>
 #include <memory>
-#include <iosfwd>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -98,22 +98,22 @@ public:
   Attribute() = delete;
   ~Attribute() {}
 
-  Attribute(unsigned id, const ValueT &value, std::string name)
+  Attribute(unsigned id, const value_type &value, std::string name)
       : AttributeBase<TypeIDType>(type, id, name), m_value(value) {}
 
   /// \brief Get the value associated with this attribute.
-  const ValueT &getValue() const { return m_value; }
+  const value_type &getValue() const { return m_value; }
 
   /// \brief Convert the held attribute to a binary blob
   std::vector<uint8_t> toBlob(void) const override {
-    static_assert(std::is_integral<ValueT>::value,
+    static_assert(std::is_integral<value_type>::value,
                   "Only integral types handled for now");
 
     std::vector<uint8_t> blob;
-    blob.reserve(sizeof(ValueT));
+    blob.reserve(sizeof(value_type));
 
     const uint8_t *value = reinterpret_cast<const uint8_t *>(&m_value);
-    for (unsigned i = 0; i < sizeof(ValueT); ++i) {
+    for (unsigned i = 0; i < sizeof(value_type); ++i) {
       blob.push_back(value[i]);
     }
     return blob;
@@ -123,24 +123,25 @@ public:
   /// name
   static std::unique_ptr<Attribute>
   fromBlob(unsigned id, std::vector<uint8_t> blob, std::string name) {
-    static_assert(std::is_integral<ValueT>::value,
+    static_assert(std::is_integral<value_type>::value,
                   "Only integral types handled for now");
-    assert(blob.size() == sizeof(ValueT));
+    assert(blob.size() == sizeof(value_type));
 
-    const ValueT *value = reinterpret_cast<const ValueT *>(blob.data());
+    const value_type *value = reinterpret_cast<const value_type *>(blob.data());
     return std::unique_ptr<Attribute>(new Attribute(id, *value, name));
   }
 
   /// \brief Print out an attribute type to the provided stream
   void print(std::ostream &os) const override {
-    static_assert(std::is_integral<ValueT>::value,
+    static_assert(std::is_integral<value_type>::value,
                   "Only integral types handled for now");
     os << this->getName() << ": " << m_value;
   }
 
 private:
-  const ValueT m_value;
+  const value_type m_value;
 };
+
 
 // Types of features supported by MAGEEC
 template <FeatureType type, typename ValueT>
@@ -151,6 +152,7 @@ typedef AttributeBase<FeatureType> FeatureBase;
 typedef Feature<FeatureType::kBool, bool>    BoolFeature;
 typedef Feature<FeatureType::kInt,  int64_t> IntFeature;
 
+
 // Types of parameters supported by MAGEEC
 template <ParameterType type, typename ValueT>
 using Parameter = Attribute<ParameterType, type, ValueT>;
@@ -159,6 +161,82 @@ typedef AttributeBase<ParameterType> ParameterBase;
 
 typedef Parameter<ParameterType::kBool, bool> BoolParameter;
 typedef Parameter<ParameterType::kRange, int64_t> RangeParameter;
+
+// Specialized parameter used to hold a sequence of passes
+template <>
+class Attribute<ParameterType, ParameterType::kPassSeq,
+                std::vector<std::string>>
+                    : public AttributeBase<ParameterType> {
+public:
+  typedef std::vector<std::string> value_type;
+
+  Attribute() = delete;
+  ~Attribute() {}
+
+  Attribute(unsigned id, const value_type &value, std::string name)
+      : AttributeBase<ParameterType>(ParameterType::kPassSeq, id, name),
+        m_value(value) {}
+
+  /// \brief Get the value associated with this attribute.
+  const value_type &getValue() const { return m_value; }
+
+  /// \brief Convert the held attribute to a binary blob
+  std::vector<uint8_t> toBlob(void) const override {
+    std::vector<uint8_t> blob;
+
+    // Separate each pass in the sequence with a comma
+    for (unsigned i = 0; i < m_value.size(); i++) {
+      if (i != 0) {
+        blob.push_back(',');
+      }
+      for (auto c : m_value[i]) {
+        blob.push_back(c);
+      }
+    }
+    return blob;
+  }
+
+  /// \brief Create an attribute of this type given the provided id, blob and
+  /// name
+  static std::unique_ptr<Attribute>
+  fromBlob(unsigned id, std::vector<uint8_t> blob, std::string name) {
+    std::vector<std::string> passes;
+
+    if (blob.size()) {
+      passes[0] = std::string();
+
+      unsigned num_passes = 0;
+      for (auto c : blob) {
+        if (c == ',') {
+          num_passes++;
+          passes[num_passes] = std::string();
+        } else {
+          passes[num_passes].push_back(c);
+        }
+      }
+    }
+    return std::unique_ptr<Attribute>(new Attribute(id, passes, name));
+  }
+
+  /// \brief Print out an attribute type to the provided stream
+  void print(std::ostream &os) const override {
+    os << this->getName() << ": ";
+    for (unsigned i = 0; i < m_value.size(); i++) {
+      std::string str = m_value[i];
+      if (i != 0) {
+        os << ", ";
+      }
+      os << str;
+    }
+  }
+
+private:
+  const value_type m_value;
+};
+
+typedef Attribute<ParameterType, ParameterType::kPassSeq,
+                  std::vector<std::string>> PassSeqParameter;
+
 
 } // end of namespace mageec
 

@@ -382,6 +382,8 @@ C5Driver::makeDecision(const DecisionRequestBase &request,
     case ParameterType::kRange:
       name_file << "continuous.";
       break;
+    default:
+      break;
     }
     name_file << '\n';
     name_file.close();
@@ -489,7 +491,13 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
   unsigned curr_param = 0;
   unsigned param_count = static_cast<unsigned>(parameter_descs.size());
 
+  // Train for all of the simple parameter types. Training for pass sequences
+  // is a little more complicated and is handled separately later.
   for (auto param : parameter_descs) {
+    if (param.type == ParameterType::kPassSeq) {
+      continue;
+    }
+
     MAGEEC_DEBUG("Training parameter " << curr_param << " of " << param_count);
     curr_param++;
 
@@ -530,6 +538,8 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
       break;
     case ParameterType::kRange:
       name_file << "continuous.";
+      break;
+    default:
       break;
     }
     name_file << '\n';
@@ -603,6 +613,8 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
         data_file << value;
         break;
       }
+      default:
+        break;
       }
       data_file << "\n";
     }
@@ -691,7 +703,19 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
                             std::ofstream::binary);
     for (auto res : results) {
       FeatureSet features = res.first.getFeatures();
-      std::vector<std::string> pass_seq = res.first.getPassSequence();
+      ParameterSet parameters = res.first.getParameters();
+
+      // Find the parameter in the parameter set which holds the pass
+      // sequence.
+      // TODO: Don't use a linear search to do this?
+      std::vector<std::string> pass_seq;
+      for (auto p : parameters) {
+        if (p->getType() == ParameterType::kPassSeq) {
+          pass_seq = static_cast<PassSeqParameter *>(p.get())->getValue();
+          break;
+        }
+      }
+      assert(pass_seq.size());
 
       for (auto feat : feature_descs) {
         // Feature values are output in the order they appear in the feature
