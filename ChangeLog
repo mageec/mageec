@@ -1,5 +1,10 @@
 2016-07-15  Edward Jones  <ed.jones@embecosm.com>
 
+	* script/generate-build.py: Make reslient to failures when a
+	benchmark is being generated.
+
+2016-07-15  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Attribute.h: Add PassSeqParameter attribute, a
 	parameter which represents the passes executed during the compile.
 	* include/mageec/Database.h (Database::newPassSequence): Delete

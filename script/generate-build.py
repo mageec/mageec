@@ -93,19 +93,20 @@ def build_benchmark(gcc_plugin_path, benchmark_dir, config_path, db_path,
       return False
 
     # build and install
-    # FIXME: Makefile specific
+    # Provide -k so that a single failure does not ruin the whole benchmark
     print ('-- Building and installing benchmarks into \'' + out_dir + '\'')
-    ret = subprocess.call(['make'], stderr=open(debug_path, 'a'))
+    ret = subprocess.call(['make', '-k', '-j5'], stderr=open(debug_path, 'a'))
     if ret != 0:
-      print ('-- Failed to install benchmark in \'' + build_dir + '\'... '
-             'Aborting')
-      return False
+      print ('-- Failed to built benchmark in \'' + build_dir + '\'')
+      # continue in the case of build errors. It's inevitable that some
+      # compiles will fail, and there's no harm in ignoring them.
 
-    ret = subprocess.call(['make', 'install'], stderr=open(debug_path, 'a'))
+    ret = subprocess.call(['make', 'install', '-k'],
+                          stderr=open(debug_path, 'a'))
     if ret != 0:
       print ('-- Failed to install benchmark to \'' + install_dir + '\'... '
              'Aborting')
-      return False
+      # Continue in case of build errors
 
     # restore to the original working directory
     os.chdir(orig_cwd)
@@ -124,23 +125,24 @@ def build_benchmark(gcc_plugin_path, benchmark_dir, config_path, db_path,
       return False
 
     # build and install
+    # Provide -k so that a single failure does not ruin the whole benchmark
     print ('-- Building and installing benchmarks into \'' + out_dir + '\'')
     make_cmd = [
-      'make', 
+      'make', '-k', '-j5',
       'CFLAGS=' + ' '.join(cflags),
       'CC=' + c_compiler
     ]
     ret = subprocess.call(make_cmd, stderr=open(debug_path, 'a'))
     if ret != 0:
-      print ('-- Failed to install benchmark in \'' + build_dir + '\'... '
-             'Aborting')
-      return False
+      print ('-- Failed to build benchmark in \'' + build_dir + '\'')
+      # continue in the case of build errors. It's inevitable that some
+      # compiles will fail, and there's no harm in ignoring them.
 
-    ret = subprocess.call(['make', 'install'], stderr=open(debug_path, 'a'))
+    ret = subprocess.call(['make', 'install', '-k'],
+                          stderr=open(debug_path, 'a'))
     if ret != 0:
-      print ('-- Failed to install benchmark to \'' + install_dir + '\'... '
-             'Aborting')
-      return False
+      print ('-- Failed to install benchmark to \'' + install_dir + '\'')
+      # Continue in case of build errors
 
     # restore to the original cwd
     os.chdir(orig_cwd)
