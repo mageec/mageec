@@ -32,6 +32,7 @@
 #include "mageec/Decision.h"
 #include "mageec/TrainedML.h"
 #include "MAGEECPlugin.h"
+#include "Parameters.h"
 
 #include "gcc-plugin.h"
 #include "tree-pass.h"
@@ -127,7 +128,6 @@ void mageecFinishFile(void *, void *) {
     // functions in the module.
     mageec::util::Option<std::string> module_name;
     mageec::util::Option<mageec::FeatureSetID>   module_feature_set_id;
-    mageec::util::Option<mageec::PassSequenceID> module_pass_sequence_id;
     mageec::util::Option<mageec::ParameterSetID> module_parameter_set_id;
     mageec::util::Option<mageec::CompilationID>  module_compilation_id;
     if (has_common_config) {
@@ -145,14 +145,10 @@ void mageecFinishFile(void *, void *) {
       mageec::FeatureGroupID module_feature_group_id =
           mageec_context.db->newFeatureGroup({module_feature_set_id.get()});
 
-      // Pass sequence for the module
-      module_pass_sequence_id =
-          mageec_context.db->newPassSequence(module_passes);
-
       // Parameter set for the module
-      // FIXME: Using an empty parameter set for now
-      std::unique_ptr<mageec::ParameterSet> module_params(
-          new mageec::ParameterSet());
+      std::unique_ptr<mageec::ParameterSet> module_params(new mageec::ParameterSet());
+      module_params->add(std::make_shared<mageec::PassSeqParameter>(ParameterID::kPassSeq, module_passes, "Sequence of passes executed"));
+
       module_parameter_set_id =
           mageec_context.db->newParameterSet(*module_params);
 
@@ -161,8 +157,7 @@ void mageecFinishFile(void *, void *) {
       // Compilation id for the module
       module_compilation_id = mageec_context.db->newCompilation(
           module_name.get(), "module", module_feature_group_id,
-          module_parameter_set_id.get(), module_pass_sequence_id.get(),
-          nullptr /* parent */);
+          module_parameter_set_id.get(), nullptr /* parent */);
 
       // Emit the compilation id for the module
       *mageec_context.out_file << "module," << module_name.get() << ","
@@ -205,26 +200,13 @@ void mageecFinishFile(void *, void *) {
                   << "'");
         parameter_set_id = module_parameter_set_id.get();
       } else {
-        // FIXME: Using an empty parameter set for now
-        std::unique_ptr<mageec::ParameterSet> params(
-            new mageec::ParameterSet());
+        assert(mageec_context.func_passes.count(func_name) &&
+               "Function with no pass sequence");
+        auto passes = mageec_context.func_passes[func_name];
+
+        std::unique_ptr<mageec::ParameterSet> params(new mageec::ParameterSet());
+        params->add(std::make_shared<mageec::PassSeqParameter>(ParameterID::kPassSeq, passes, "Sequence of passes executed"));
         parameter_set_id = mageec_context.db->newParameterSet(*params);
-      }
-
-      // Pass sequence
-      // If available, use the module level pass sequence
-      MAGEEC_DEBUG("Saving pass sequence for function '"
-                   << func_name << "' in the database");
-      assert(mageec_context.func_passes.count(func_name) &&
-             "Function with no pass sequence");
-
-      mageec::PassSequenceID pass_sequence_id;
-      if (has_common_config) {
-        pass_sequence_id = module_pass_sequence_id.get();
-      } else {
-        std::vector<std::string> pass_seq =
-            mageec_context.func_passes[func_name];
-        pass_sequence_id = mageec_context.db->newPassSequence(pass_seq);
       }
 
       // Create the compilation for this function
@@ -234,11 +216,11 @@ void mageecFinishFile(void *, void *) {
       if (has_common_config) {
         compilation_id = mageec_context.db->newCompilation(
             func_name, "function", feature_group_id, parameter_set_id,
-            pass_sequence_id, module_compilation_id.get());
+            module_compilation_id.get());
       } else {
         compilation_id = mageec_context.db->newCompilation(
           func_name, "function", feature_group_id, parameter_set_id,
-          pass_sequence_id, nullptr /* parent */);
+          nullptr /* parent */);
       }
 
       // Emit the compilation id for the function into the output file

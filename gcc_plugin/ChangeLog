@@ -1,3 +1,8 @@
+2016-07-15  Edward Jones  <ed.jones@embecosm.com>
+
+	* GCCCallbacks.cpp: Update to handle pass sequences as a parameter.
+	* Parameters.h: Added file, defining the ParameterID enumeration.
+
 2016-01-28  Edward Jones  <ed.jones@embecosm.com>
 
 	* GCCCallbacks.cpp (mageecFinishFile): Emit the full filename into the
