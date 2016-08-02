@@ -1,5 +1,9 @@
 2016-08-02  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Update flag setting when building plugin.
+
+2016-08-02  Edward Jones  <ed.jones@embecosm.com>
+
 	Add a feature extraction only plugin for GCC
 
 	* AUTHORS: Added file.
