@@ -1,5 +1,11 @@
 2016-08-02  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/Attribute.h: Fix compiler cast warning.
+	* lib/Database.cpp: Likewise.
+	* lib/Driver.cpp: Fix iterator not using a reference.
+
+2016-08-02  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/Database.cpp: Fix SQL for FeatureInstance table creation.
 
 2016-08-02  Edward Jones  <ed.jones@embecosm.com>

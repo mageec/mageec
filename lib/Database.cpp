@@ -798,7 +798,7 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric) {
         pass_names.insert(pass);
         pass = std::string();
       } else {
-        pass.push_back(c);
+        pass.push_back(static_cast<char>(c));
       }
     }
     pass_names.insert(pass);

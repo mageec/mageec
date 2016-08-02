@@ -190,7 +190,7 @@ public:
         blob.push_back(',');
       }
       for (auto c : m_value[i]) {
-        blob.push_back(c);
+        blob.push_back(static_cast<uint8_t>(c));
       }
     }
     return blob;
@@ -211,7 +211,7 @@ public:
           num_passes++;
           passes[num_passes] = std::string();
         } else {
-          passes[num_passes].push_back(c);
+          passes[num_passes].push_back(static_cast<char>(c));
         }
       }
     }

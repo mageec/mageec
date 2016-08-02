@@ -185,7 +185,7 @@ static bool printTrainedMLs(Framework &framework,
       return false;
     }
     // Add trained machine learners from the database
-    for (const auto ml : db->getTrainedMachineLearners()) {
+    for (const auto &ml : db->getTrainedMachineLearners()) {
       trained_mls.push_back(ml);
     }
   }
