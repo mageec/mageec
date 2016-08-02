@@ -1,0 +1,9 @@
+MAGEEC GCC Feature Extraction Plugin
+====================================
+
+This directory contains the GCC feature extraction plugin for the MAchine
+Guided Energy Efficient Compilation (MAGEEC) framework. For information
+on MAGEEC, see http://mageec.org.
+
+The MAGEEC GCC Feature Extractor Plugin is open source software. See
+COPYING for license information and copying terms.
