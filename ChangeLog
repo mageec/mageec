@@ -1,5 +1,9 @@
 2016-08-02  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/Database.cpp: Fix SQL for FeatureInstance table creation.
+
+2016-08-02  Edward Jones  <ed.jones@embecosm.com>
+
 	Remove the original GCC plugin
 
 	* CMakeLists.txt: Remove gcc_plugin from the build system.

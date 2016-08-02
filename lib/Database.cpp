@@ -59,7 +59,7 @@ static const char *const create_feature_instance_table =
     "CREATE TABLE FeatureInstance("
     "feature_id   INTEGER PRIMARY KEY, "
     "feature_type INTEGER NOT NULL, "
-    "value        BLOB NOT NULL, "
+    "value        BLOB NOT NULL"
     ")";
 
 static const char *const create_feature_set_feature_table =
