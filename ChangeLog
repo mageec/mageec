@@ -1,5 +1,9 @@
 2016-08-02  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Update flag setting when building mageec.
+
+2016-08-02  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Attribute.h: Fix compiler cast warning.
 	* lib/Database.cpp: Likewise.
 	* lib/Driver.cpp: Fix iterator not using a reference.

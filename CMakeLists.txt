@@ -42,21 +42,29 @@ set (EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 
 # Set compiler options depending on the compiler used
+#
+# In debug mode, disable optimizations, and use -Werror will warnings
+# selectively disabled.
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  # Clang compiler options
-  set (CMAKE_CXX_FLAGS "\
--fPIC -std=c++11 -Werror -Weverything -Wno-c++98-compat \
--Wno-c++98-compat-pedantic -Wno-global-constructors -Wno-padded \
--Wno-weak-vtables -Wno-switch-enum")
+  set (CMAKE_CXX_FLAGS "-fPIC -std=c++11")
+  if (NOT MAGEEC_DEBUG)
+    set (CMAKE_CXX_FLAGS "-O1 ${CMAKE_CXX_FLAGS}")
+  endif()
+
   if (MAGEEC_DEBUG)
-    set (CMAKE_CXX_FLAGS "-g3 ${CMAKE_CXX_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 \
+-Werror -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic \
+-Wno-global-constructors -Wno-padded -Wno-weak-vtables -Wno-switch-enum")
   endif ()
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  # GCC compiler options
-  set (CMAKE_CXX_FLAGS "-fPIC -std=c++11 -Werror -Wall -Wextra")
+  set (CMAKE_CXX_FLAGS "-fPIC -std=c++11")
+  if (NOT MAGEEC_DEBUG)
+    set (CMAKE_CXX_FLAGS "-O1 ${CMAKE_CXX_FLAGS}")
+  endif()
+
   if (MAGEEC_DEBUG)
-    set (CMAKE_CXX_FLAGS "-g3 ${CMAKE_CXX_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Werror -Wall -Wextra")
   endif ()
 
 else ()
