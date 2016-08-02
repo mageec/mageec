@@ -14,9 +14,7 @@ option (MAGEEC_WITH_DESIGN_DOCS
         "Build MAGEEC with design documentation" True)
 option (MAGEEC_WITH_DOXYGEN
         "Generate MAGEEC API documentation with Doxygen" True)
-option (MAGEEC_WITH_GCC_PLUGIN
-        "Build the GCC plugin as well as MAGEEC" True)
-option (MAGEEC_WITH_GCC_FEATURE_EXTRACT_PLUGIN
+option (MAGEEC_WITH_FEATURE_EXTRACT_PLUGIN
         "Build with the GCC feature extraction plugin" True)
 option (MAGEEC_WITH_C5
         "Built the C5 classifier as well as MAGEEC" True)
@@ -128,13 +126,8 @@ if (MAGEEC_WITH_USER_DOCS OR MAGEEC_WITH_DESIGN_DOCS OR MAGEEC_WITH_DOXYGEN)
   add_subdirectory (doc)
 endif ()
 
-# GCC plugin
-if (EXISTS ${PROJECT_SOURCE_DIR}/gcc_plugin AND MAGEEC_WITH_GCC_PLUGIN)
-  add_subdirectory(gcc_plugin)
-endif()
-
 # GCC feature extraction plugin
-if (EXISTS ${PROJECT_SOURCE_DIR}/gcc_plugin AND MAGEEC_WITH_GCC_FEATURE_EXTRACT_PLUGIN)
+if (EXISTS ${PROJECT_SOURCE_DIR}/gcc_plugin AND MAGEEC_WITH_FEATURE_EXTRACT_PLUGIN)
   add_subdirectory(plugin/gcc_feature_extract)
 endif()
 

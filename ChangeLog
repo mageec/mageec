@@ -1,3 +1,21 @@
+2016-08-02  Edward Jones  <ed.jones@embecosm.com>
+
+	Remove the original GCC plugin
+
+	* CMakeLists.txt: Remove gcc_plugin from the build system.
+	* gcc_plugin/.gitignore: Deleted file.
+	* gcc_plugin/AUTHORS: Likewise.
+	* gcc_plugin/CMakeLists.txt: Likewise.
+	* gcc_plugin/COPYING: Likewise.
+	* gcc_plugin/ChangeLog: Likewise.
+	* gcc_plugin/FeatureExtract.cpp: Likewise.
+	* gcc_plugin/Features.h: Likewise.
+	* gcc_plugin/GCCCallbacks.cpp: Likewise.
+	* gcc_plugin/GCCPlugin.cpp: Likewise.
+	* gcc_plugin/MAGEECPlugin.h: Likewise.
+	* gcc_plugin/Parameters.h: Likewise.
+	* gcc_plugin/README: Likewise.
+
 2016-07-15  Edward Jones  <ed.jones@embecosm.com>
 
 	* script/generate-build.py: Make reslient to failures when a
