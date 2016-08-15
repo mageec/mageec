@@ -1,3 +1,7 @@
+2016-08-15  Edward Jones  <ed.jones@embecosm.com>
+
+	* CMakeLists.txt: Add building of GCC standalone driver.
+
 2016-08-02  Edward Jones  <ed.jones@embecosm.com>
 
 	* CMakeLists.txt: Update flag setting when building mageec.

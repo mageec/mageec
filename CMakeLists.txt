@@ -14,8 +14,10 @@ option (MAGEEC_WITH_DESIGN_DOCS
         "Build MAGEEC with design documentation" True)
 option (MAGEEC_WITH_DOXYGEN
         "Generate MAGEEC API documentation with Doxygen" True)
-option (MAGEEC_WITH_FEATURE_EXTRACT_PLUGIN
+option (MAGEEC_WITH_GCC_FEATURE_EXTRACT_PLUGIN
         "Build with the GCC feature extraction plugin" True)
+option (MAGEEC_WITH_GCC_DRIVER
+        "Build with the GCC driver" True)
 option (MAGEEC_WITH_C5
         "Built the C5 classifier as well as MAGEEC" True)
 
@@ -111,9 +113,7 @@ add_library (mageec_ml ${ML_SOURCES})
 target_link_libraries(mageec_ml mageec_core)
 
 # Standalone tool executable
-add_executable (mageec_driver
-  lib/Driver.cpp
-)
+add_executable (mageec_driver lib/Driver.cpp)
 set_target_properties(mageec_driver PROPERTIES OUTPUT_NAME mageec)
 target_link_libraries(mageec_driver mageec_core mageec_ml)
 
@@ -135,8 +135,13 @@ if (MAGEEC_WITH_USER_DOCS OR MAGEEC_WITH_DESIGN_DOCS OR MAGEEC_WITH_DOXYGEN)
 endif ()
 
 # GCC feature extraction plugin
-if (EXISTS ${PROJECT_SOURCE_DIR}/gcc_plugin AND MAGEEC_WITH_FEATURE_EXTRACT_PLUGIN)
+if (EXISTS ${PROJECT_SOURCE_DIR}/plugin/gcc_feature_extract AND MAGEEC_WITH_GCC_FEATURE_EXTRACT_PLUGIN)
   add_subdirectory(plugin/gcc_feature_extract)
+endif()
+
+# GCC driver
+if (EXISTS ${PROJECT_SOURCE_DIR}/tools/gcc_driver AND MAGEEC_WITH_GCC_DRIVER)
+  add_subdirectory(tools/gcc_driver)
 endif()
 
 # Standalone C5 classifier
