@@ -1,0 +1,10 @@
+2016-08-15  Edward Jones  <ed.jones@embecosm.com>
+
+	Added a GCC wrapper driver
+
+	* AUTHORS: Added file.
+	* CMakeLists.txt: Likewise.
+	* COPYING: Likewise.
+	* Driver.cpp: Likewise.
+	* Parameters.h: Likewise.
+	* README: Likewise.

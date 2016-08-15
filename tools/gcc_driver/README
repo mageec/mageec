@@ -1,0 +1,9 @@
+MAGEEC GCC Driver
+====================================
+
+This directory contains the GCC wrapper driver for the MAchine Guided Energy
+Efficient Compilation (MAGEEC) framework. For information on MAGEEC, see
+http://mageec.org.
+
+The MAGEEC GCC Driver is open source software. See COPYING for license
+information and copying terms.
