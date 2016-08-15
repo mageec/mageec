@@ -166,14 +166,14 @@ endif ()
 
 # Plugin library target, link against the mageec core library and the
 # machine learners
-add_library(feature_extract_gcc SHARED
+add_library(gcc_feature_extract SHARED
   FeatureExtract.cpp
   Plugin.cpp
 )
-target_link_libraries(feature_extract_gcc mageec_core)
+target_link_libraries(gcc_feature_extract mageec_core)
 
 # install the plugin
-install(TARGETS feature_extract_gcc
+install(TARGETS gcc_feature_extract
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
