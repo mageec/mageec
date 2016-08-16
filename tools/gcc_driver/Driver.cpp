@@ -1,12 +1,16 @@
+#include "mageec/Attribute.h"
 #include "mageec/Database.h"
 #include "mageec/Framework.h"
 #include "mageec/ML/C5.h"
 #include "mageec/Util.h"
 #include "Parameters.h"
 
+#include <fstream>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
+#include <sstream>
 
 
 #if !defined(GCC_DRIVER_VERSION_MAJOR) || \
@@ -24,7 +28,9 @@ static const mageec::util::Version gcc_driver_version(GCC_DRIVER_VERSION_MAJOR,
 
 enum class DriverMode { kNone, kGather, kOptimize };
 
-static const std::map<std::string, unsigned> flag_to_parameter = {
+// Heap allocate so the destructor does not need to be called
+static const std::map<std::string, unsigned> &flag_to_parameter =
+    *new std::map<std::string, unsigned>({
   {"-faggressive-loop-optimizations",      FlagParameterID::kAggressiveLoopOptimizations},
   {"-falign-functions",                    FlagParameterID::kAlignFunctions},
   {"-falign-jumps",                        FlagParameterID::kAlignJumps},
@@ -158,7 +164,42 @@ static const std::map<std::string, unsigned> flag_to_parameter = {
   {"-fvariable-expansion-in-unroller",     FlagParameterID::kVariableExpansionInUnroller},
   {"-fvect-cost-model",                    FlagParameterID::kVectCostModel},
   {"-fweb",                                FlagParameterID::kWeb},
+});
+
+struct ParameterToFlag {
+  ParameterToFlag() {}
+  operator std::map<unsigned, std::string>() {
+    static bool is_init = false;
+    static std::map<unsigned, std::string> &parameter_to_flag =
+        *new std::map<unsigned, std::string>();
+
+    if (!is_init) {
+      for (auto entry : flag_to_parameter)
+        parameter_to_flag[entry.second] = entry.first;
+      is_init = true;
+    }
+    return parameter_to_flag;
+  }
 };
+static const std::map<unsigned, std::string> &parameter_to_flag =
+    *new ParameterToFlag();
+
+
+static std::vector<std::string> splitString(std::string str, char c) {
+  std::vector<std::string> res;
+
+  std::string buf;
+  for (auto I = str.begin(); I != str.end(); ++I) {
+    if (*I != c) {
+      buf.push_back(*I);
+    } else {
+      res.push_back(buf);
+      buf.clear();
+    }
+  }
+  res.push_back(buf);
+  return res;
+}
 
 
 // Print the help output string
@@ -263,22 +304,220 @@ static void printParameters() {
     mageec::util::out() << param.first << "\n";
 }
 
+
+static mageec::util::Option<std::map<std::string, mageec::FeatureGroupID>>
+loadConfigFile(std::string config_path) {
+  std::map<std::string, mageec::FeatureGroupID> src_to_features;
+
+  std::ifstream config_file(config_path);
+  if (!config_file.is_open()) {
+    MAGEEC_ERR("Error opening config file. The file may not exist, or you "
+               "may not have sufficient permissions to read and write it");
+    return nullptr;
+  }
+
+  std::string line;
+  while (std::getline(config_file, line)) {
+    std::vector<std::string> values = splitString(line, ',');
+    if (values.size() != 5)
+      continue;
+    if ((values[1] != "module") || (values[3] != "feature_group"))
+      continue;
+    if (!values[0].size() || !values[2].size() || !values[4].size())
+      continue;
+
+    // store the mapping from the source file name to the feature group
+    std::string src_path = values[0];
+    if (src_to_features.count(src_path)) {
+      MAGEEC_ERR("Multiple module entries for a file");
+      return nullptr;
+    }
+    std::stringstream feat_id_str(values[4]);
+    uint64_t feat_id;
+    feat_id_str >> feat_id;
+    if (feat_id_str.fail()) {
+      MAGEEC_ERR("Malformed line in config file");
+      return nullptr;
+    }
+
+    src_to_features[src_path] = static_cast<mageec::FeatureGroupID>(feat_id);
+  }
+  return src_to_features;
+}
+
+
+static mageec::util::Option<mageec::CompilationID>
+compile(std::vector<std::string> command_args,
+        std::set<unsigned> enabled_params,
+        std::string src_file,
+        mageec::Database &db,
+        mageec::ParameterSetID param_set_id,
+        mageec::FeatureGroupID feature_group_id) {
+  assert(command_args.size());
+
+  // command word -> parameter flags -> command tail -> input file
+  std::stringstream command_str;
+  command_str << command_args[0];
+  for (unsigned i = FlagParameterID::kFIRST_FLAG_PARAMETER;
+       i <= FlagParameterID::kLAST_FLAG_PARAMETER; ++i) {
+    if (enabled_params.count(i))
+      command_str << " " << parameter_to_flag.at(i);
+  }
+  for (unsigned i = 1; i < command_args.size(); ++i)
+    command_str << " " << command_args[i];
+
+  command_str << " " << src_file;
+
+  MAGEEC_DEBUG("Executing command: " << command_str.get() << "\n");
+  int res = system(command_str.str().c_str());
+  if (!res) {
+    MAGEEC_ERR("Compilation failed\ncommand: " << command_str.get() << "\n");
+    return nullptr;
+  }
+
+  // Insert the successful compilation into the database
+  return db.newCompilation(src_file, "module", feature_group_id, param_set_id,
+                           nullptr);
+}
+
+
 // Compile a set of input source files using the provided set of parameters.
 // Generate a identifier for the compilation of each unit of the program
 // (module/function), which associates the features previous extracted with
 // the configuration of the compiler specified by the given parameters.
 static int gather(mageec::Framework &framework,
-                  std::string db_str,
+                  std::string db_path,
                   std::string config_path,
                   std::vector<std::string> param_list,
-                  std::string command_str) {
-  (void)framework;
-  (void)db_str;
-  (void)config_path;
-  (void)param_list;
-  (void)command_str;
+                  std::vector<std::string> command_args) {
+  auto db = framework.getDatabase(db_path, false);
+  if (!db) {
+    MAGEEC_ERR("Error retrieving database. The database may not exists, or "
+               "you may not have sufficient permissions to read it");
+    return -1;
+  }
+  auto src_to_feature_group = loadConfigFile(config_path);
+  if (!src_to_feature_group) {
+    MAGEEC_ERR("Failed to read config file containing feature group ids");
+    return -1;
+  }
+
+  // The only time that mageec applied is when we are compiling a source file
+  // down to an object file. To do this we (clumsily) check for file extensions
+  // and flags in the gcc command
+  // TODO: Find a better way to achieve this
+  bool to_obj_file = false;
+  bool from_c_file = false;
+  std::vector<std::string> src_files;
+
+  for (unsigned i = 0; i < command_args.size(); ++i) {
+    if (command_args[i] == "-c") {
+      to_obj_file = true;
+      break;
+    } else if (command_args[i] == "-o") {
+      ++i;
+      if (i >= command_args.size()) {
+        MAGEEC_ERR("Ran out of arguments while parsing command string");
+        return -1;
+      }
+      std::string out_file = command_args[i];
+      if ((out_file.size() > 2) &&
+          (out_file.compare(out_file.size() - 2, 2, ".o") == 0)) {
+        to_obj_file = true;
+        break;
+      }
+    }
+  }
+  // Input files should be at the end of the command line. Because we can only
+  // handle a single file at a time, we strip the inputs from the command line
+  // so that they can be run one at a time later.
+  // TODO: Find a better way to achieve this
+  while (command_args.size()) {
+    std::string arg = command_args.back();
+    if ((arg.size() > 2) &&
+        (arg.compare(arg.size() - 2, 2, ".c") == 0)) {
+      from_c_file = true;
+
+      // Record file name, remove from command
+      src_files.push_back(arg);
+      command_args.pop_back();
+    } else {
+      break;
+    }
+  }
+  if (command_args.size() == 0) {
+    MAGEEC_ERR("Malformed compile command");
+    return -1;
+  }
+
+  // If it's not to an object file, and not from a C file, just execute the
+  // original command as-is.
+  if (!to_obj_file || !from_c_file) {
+    assert(command_args.size() > 0);
+    std::string command_str = command_args[0];
+    for (unsigned i = 1; i < command_args.size(); ++i)
+      command_str += " " + command_args[i];
+
+    MAGEEC_DEBUG("Executing command: " << command_str << "\n");
+    return system(command_str.c_str());
+  }
+
+  // Otherwise, compile each source file using mageec instead. Using the
+  // provided parameters.
+  //
+  // First build the parameter set and insert it into the database. The ID
+  // of this parameter set will be associated with the compilation of each
+  // of the source files.
+  std::set<unsigned> enabled_params;
+  for (auto param : param_list) {
+    unsigned param_id = flag_to_parameter.at(param);
+    enabled_params.insert(param_id);
+  }
+
+  mageec::ParameterSet param_set;
+  for (unsigned i = FlagParameterID::kFIRST_FLAG_PARAMETER;
+       i <= FlagParameterID::kLAST_FLAG_PARAMETER; ++i) {
+    if (enabled_params.count(i)) {
+      param_set.add(
+          std::make_shared<mageec::BoolParameter>(i, true,
+                                                  parameter_to_flag.at(i)));
+    } else {
+      param_set.add(
+          std::make_shared<mageec::BoolParameter>(i, false,
+                                                  parameter_to_flag.at(i)));
+    }
+  }
+  mageec::ParameterSetID param_set_id = db->newParameterSet(param_set);
+
+  // For each input file, do the compilation with the provided flags and
+  // record the compilation in mageec and in the temporary file
+  std::ofstream config_file(config_path, std::ios_base::app);
+  if (!config_file.is_open()) {
+    MAGEEC_ERR("Error opening config file. The file may not exist, or you "
+               "may not have sufficient permissions to read and write it");
+    return -1;
+  }
+
+  for (auto file : src_files) {
+    if (!src_to_feature_group.get().count(file))
+      MAGEEC_WARN("No features found for file: " << file << "\n");
+
+    mageec::FeatureGroupID feature_group_id = src_to_feature_group.get()[file];
+    mageec::util::Option<mageec::CompilationID> compilation_id =
+        compile(command_args, enabled_params, file, *db, param_set_id,
+                feature_group_id);
+    if (!compilation_id) {
+      MAGEEC_ERR("Compilation of file '" << file << "' failed");
+      return -1;
+    }
+
+    // Compilation was successful, emit the compilation id into the config file
+    config_file << file << ",module," << file << ",compilation,"
+                << static_cast<uint64_t>(compilation_id) << "\n";
+  }
   return 0;
 }
+
 
 // Optimize the compilation of the input program. Use the set of features
 // extracted in a previous step, along with the provided machine learner and
@@ -289,35 +528,20 @@ static int optimize(mageec::Framework &framework,
                     std::string config_path,
                     std::string ml_str,
                     std::string metric_str,
-                    std::string command_str) {
+                    std::vector<std::string> command_args) {
   (void)framework;
   (void)db_str;
   (void)config_path;
   (void)ml_str;
   (void)metric_str;
-  (void)command_str;
+  (void)command_args;
   return 0;
 }
 
 
 static mageec::util::Option<std::vector<std::string>>
 parseParameterList(std::string arg) {
-  std::vector<std::string> param_list;
-
-  {
-    std::string param;
-    for (unsigned i = 0; i < arg.size(); ++i) {
-
-      char c = arg[i];
-      if (c == ',') {
-        param_list.push_back(param);
-        param.clear();
-      } else {
-        param.push_back(c);
-      }
-    }
-    param_list.push_back(param);
-  }
+  std::vector<std::string> param_list = splitString(arg, ',');
 
   for (auto param : param_list) {
     if (flag_to_parameter.count(param) == 0) {
@@ -344,7 +568,7 @@ int main(int argc, const char *argv[]) {
   std::string metric_str;
   // The command which will be executed in order to compile all of the
   // source files
-  std::string command_str;
+  std::vector<std::string> command_args;
 
   bool with_db                = false;
   bool with_help              = false;
@@ -447,11 +671,8 @@ int main(int argc, const char *argv[]) {
       }
 
       // accumulate the remaining args into the command buffer.
-      std::string command_acc = argv[i];
-      for (++i; i < argc; ++i)
-        command_acc += argv[i];
-
-      command_str = command_acc;
+      for ( ; i < argc; ++i)
+        command_args.push_back(argv[i]);
       with_command = true;
     } else {
       MAGEEC_ERR("Unrecognized argument: '" << arg << "'");
@@ -536,10 +757,10 @@ int main(int argc, const char *argv[]) {
   case DriverMode::kNone:
     return 0;
   case DriverMode::kGather:
-    return gather(framework, db_str, config_path, param_list, command_str);
+    return gather(framework, db_str, config_path, param_list, command_args);
   case DriverMode::kOptimize:
     return optimize(framework, db_str, config_path, ml_str, metric_str,
-                    command_str);
+                    command_args);
   }
   return 0;
 }
