@@ -1,5 +1,9 @@
 2016-08-16  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Rename gcc_driver target executable to mageec-gcc
+
+2016-08-16  Edward Jones  <ed.jones@embecosm.com>
+
 	* Driver.cpp: Add 'gather' functionality to the driver
 
 2016-08-15  Edward Jones  <ed.jones@embecosm.com>

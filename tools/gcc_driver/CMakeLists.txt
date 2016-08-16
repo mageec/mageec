@@ -113,6 +113,7 @@ endif ()
 
 # Driver target, link against the mageec core and the machine learners
 add_executable(gcc_driver Driver.cpp)
+set_target_properties(gcc_driver PROPERTIES OUTPUT_NAME mageec-gcc)
 target_link_libraries(gcc_driver mageec_core mageec_ml)
 
 # install the driver
