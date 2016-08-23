@@ -561,8 +561,9 @@ Database::newCompilation(std::string name, std::string type,
       DatabaseQueryBuilder(*m_db)
       << "INSERT INTO Compilation("
       << "feature_group_id, parameter_set_id) "
-      << "VALUES (" << QueryParamType::kInteger << ", "
-      << QueryParamType::kInteger << ", " << QueryParamType::kInteger << ")";
+      << "VALUES ("
+      << QueryParamType::kInteger << ", "
+      << QueryParamType::kInteger << ")";
 
   DatabaseQuery insert_compilation_debug =
       DatabaseQueryBuilder(*m_db)
