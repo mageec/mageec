@@ -1,3 +1,8 @@
+2016-08-23  Edward Jones  <ed.jones@embecosm.com>
+
+	* Driver.cpp: Reimplement driver so that it's interface matches
+	that of gcc
+
 2016-08-16  Edward Jones  <ed.jones@embecosm.com>
 
 	* CMakeLists.txt: Rename gcc_driver target executable to mageec-gcc
