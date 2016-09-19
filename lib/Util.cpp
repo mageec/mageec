@@ -102,34 +102,5 @@ uint64_t crc64(uint8_t *message, unsigned len) {
   return ~crc;
 }
 
-/// \brief Convert from a metric to a string
-std::string metricToString(Metric metric) {
-  switch (metric) {
-  case Metric::kCodeSize:
-    return "size";
-  case Metric::kTime:
-    return "time";
-  case Metric::kEnergy:
-    return "energy";
-  }
-  assert(0 && "Unreachable");
-  return std::string();
-}
-
-/// \brief Convert from a string to a metric if possible.
-///
-/// \return The metric if possible, or an empty Option type if not.
-Option<Metric> stringToMetric(std::string metric) {
-  if (metric == "size") {
-    return Metric::kCodeSize;
-  } else if (metric == "time") {
-    return Metric::kTime;
-  } else if (metric == "energy") {
-    return Metric::kEnergy;
-  } else {
-    return util::Option<Metric>();
-  }
-}
-
 } // end of namespace util
 } // end of namespace mageec

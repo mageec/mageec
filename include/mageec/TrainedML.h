@@ -67,7 +67,7 @@ public:
   /// \param metric  The metric this machine learner has been trained against
   /// \param blob  A blob of training data to be passed to the machine
   /// learner when making a decision
-  TrainedML(IMachineLearner &ml, Metric metric,
+  TrainedML(IMachineLearner &ml, std::string metric,
             const std::vector<uint8_t> blob);
 
   /// \brief Get the unique identifier for the underlying machine learner
@@ -77,7 +77,7 @@ public:
   std::string getName(void) const;
 
   /// \brief Get the metric which this machine learner was trained against
-  Metric getMetric(void) const;
+  std::string getMetric(void) const;
 
   /// \brief Check whether the machine learner interfaces requires a
   /// configuration file to make a decision
@@ -111,7 +111,7 @@ private:
   IMachineLearner &m_ml;
 
   /// Metric which this machine learner is trained for.
-  const util::Option<Metric> m_metric;
+  const util::Option<std::string> m_metric;
 
   /// Blob of training data for this machine learner
   const std::vector<uint8_t> m_blob;

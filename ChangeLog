@@ -1,3 +1,23 @@
+2016-09-19  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Database.h: Use a string for metric parameters.
+	(Database::getFeatures Database::getParameters): Added functions.
+	(ResultIterator::ResultIterator): Pass in Database& as well as the
+	sqlite3 database connection.
+	(ResultIterator::m_db): Change type from sqlite3* to Database*.
+	* include/mageec/TrainedML.h: Use a string to represent metric.
+	* lib/Database.cpp: Use a string to represent metric in the
+	database.
+	(Database::getFeatures Database::getParameters): Added functions.
+	(ResultIterator::ResultIterator): Pass in Database& as well as the
+	sqlite3 database connection.
+	(ResultIterator::m_db): Change type from sqlite3* to Database*.
+	(ResultIterator::operator*): Simplify implementation by using
+	Database::getFeatures and Database::getParameters.
+	* lib/Driver.cpp: Use a string to represent metrics.
+	* lib/TrainedML.cpp: Likewise.
+	* lib/Util.cpp (metricToString stringToMetric): Remove functions.
+
 2016-08-23  Edward Jones  <ed.jones@embecosm.com>
 
 	* lib/Database.cpp: Correct SQL statement to add compilation to

@@ -44,7 +44,7 @@ TrainedML::TrainedML(IMachineLearner &ml) : m_ml(ml), m_metric(), m_blob() {
          "a metric and blob");
 }
 
-TrainedML::TrainedML(IMachineLearner &ml, Metric metric,
+TrainedML::TrainedML(IMachineLearner &ml, std::string metric,
                      const std::vector<uint8_t> blob)
     : m_ml(ml), m_metric(metric), m_blob(blob) {
   assert(ml.requiresTraining() && "Machine learner does not require training, "
@@ -55,7 +55,7 @@ util::UUID TrainedML::getUUID(void) const { return m_ml.getUUID(); }
 
 std::string TrainedML::getName(void) const { return m_ml.getName(); }
 
-Metric TrainedML::getMetric(void) const {
+std::string TrainedML::getMetric(void) const {
   assert(m_ml.requiresTraining() && "Machine learner does not require "
                                     "training. So it has no training metric");
   return m_metric.get();

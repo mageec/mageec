@@ -105,7 +105,7 @@ static const char *const create_compilation_table =
 static const char *const create_result_table =
     "CREATE TABLE Result("
     "compilation_id INTEGER NOT NULL, "
-    "metric         INTEGER NOT NULL, "
+    "metric         TEXT NOT NULL, "
     "result         INTEGER NOT NULL, "
     "UNIQUE(compilation_id, metric), "
     "FOREIGN KEY(compilation_id) REFERENCES Compilation(compilation_id)"
@@ -115,7 +115,7 @@ static const char *const create_result_table =
 static const char *const create_machine_learner_table =
     "CREATE TABLE MachineLearner("
     "ml_id    BLOB, "
-    "metric   INTEGER, "
+    "metric   TEXT, "
     "ml_blob  BLOB NOT NULL, "
     "UNIQUE(ml_id, metric)"
     ")";
@@ -329,7 +329,7 @@ std::vector<TrainedML> Database::getTrainedMachineLearners(void) {
     auto res = query.execute();
     res.assertDone();
     if (res.numColumns() == 2) {
-      Metric metric = static_cast<Metric>(res.getInteger(0));
+      std::string metric = res.getText(0);
       std::vector<uint8_t> ml_blob = res.getBlob(1);
 
       TrainedML trained_ml(ml, metric, ml_blob);
@@ -551,6 +551,94 @@ FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
   return group_id;
 }
 
+FeatureSet Database::getFeatures(FeatureGroupID feature_group) {
+  // Get all of the features in a feature group
+  DatabaseQuery select_features =
+      DatabaseQueryBuilder(*m_db)
+      << "SELECT FeatureInstance.feature_id, FeatureInstance.feature_type, "
+      << "FeatureInstance.value "
+      << "FROM FeatureInstance, FeatureSetFeature, FeatureGroupSet "
+      << "WHERE "
+      << "FeatureInstance.feature_id = FeatureSetFeature.feature_id AND "
+      << "FeatureSetFeature.feature_set_id = FeatureGroupSet.feature_set_id "
+      << "AND "
+      << "FeatureGroupSet.feature_group_id = " << QueryParamType::kInteger;
+
+  // Perform in a single transaction
+  DatabaseTransaction db_transaction(m_db);
+
+  // Retrieve the features
+  FeatureSet features;
+  select_features << static_cast<int64_t>(feature_group);
+  for (auto feature_iter = select_features.execute(); !feature_iter.done();
+       feature_iter = feature_iter.next()) {
+    assert(feature_iter.numColumns() == 3);
+
+    unsigned feature_id = static_cast<unsigned>(feature_iter.getInteger(0));
+    FeatureType feature_type =
+        static_cast<FeatureType>(feature_iter.getInteger(1));
+    auto feature_blob = feature_iter.getBlob(2);
+
+    // TODO: Also retrieve feature names
+    switch (feature_type) {
+    case FeatureType::kBool:
+      features.add(BoolFeature::fromBlob(feature_id, feature_blob, {}));
+      break;
+    case FeatureType::kInt:
+      features.add(IntFeature::fromBlob(feature_id, feature_blob, {}));
+      break;
+    }
+  }
+  db_transaction.commit();
+  return features;
+}
+
+ParameterSet Database::getParameters(ParameterSetID param_set) {
+  // Get all of the parameters in a parameter set
+  DatabaseQuery select_parameters =
+      DatabaseQueryBuilder(*m_db)
+      << "SELECT "
+      << "ParameterInstance.parameter_id, ParameterInstance.parameter_type, "
+      << "ParameterInstance.value "
+      << "FROM ParameterInstance, ParameterSetParameter "
+      << "WHERE "
+      << "ParameterInstance.parameter_id = ParameterSetParameter.parameter_id "
+         "AND "
+      << "ParameterSetParameter.parameter_set_id = "
+      << QueryParamType::kInteger;
+
+  // Perform in a single transaction
+  DatabaseTransaction db_transaction(m_db);
+
+  // Retrieve parameters
+  ParameterSet parameters;
+  select_parameters << static_cast<int64_t>(param_set);
+  for (auto param_iter = select_parameters.execute(); !param_iter.done();
+       param_iter = param_iter.next()) {
+    assert(param_iter.numColumns() == 3);
+
+    unsigned param_id = static_cast<unsigned>(param_iter.getInteger(0));
+    ParameterType param_type =
+        static_cast<ParameterType>(param_iter.getInteger(1));
+    auto param_blob = param_iter.getBlob(2);
+
+    // TODO: Also retrieve parameter names
+    switch (param_type) {
+    case ParameterType::kBool:
+      parameters.add(BoolParameter::fromBlob(param_id, param_blob, {}));
+      break;
+    case ParameterType::kRange:
+      parameters.add(RangeParameter::fromBlob(param_id, param_blob, {}));
+      break;
+    case ParameterType::kPassSeq:
+      parameters.add(PassSeqParameter::fromBlob(param_id, param_blob, {}));
+      break;
+    }
+  }
+  db_transaction.commit();
+  return parameters;
+}
+
 //===----------------------- Compiler interface ---------------------------===//
 
 CompilationID
@@ -717,7 +805,7 @@ void Database::addResults(std::set<InputResult> results) {
   DatabaseQuery insert_result =
       DatabaseQueryBuilder(*m_db)
       << "INSERT INTO RESULT(compilation_id, metric, result) VALUES("
-      << QueryParamType::kInteger << ", " << QueryParamType::kInteger << ", "
+      << QueryParamType::kInteger << ", " << QueryParamType::kText << ", "
       << QueryParamType::kInteger << ")";
 
   // All results in a single transaction
@@ -726,7 +814,7 @@ void Database::addResults(std::set<InputResult> results) {
   for (const auto &res : results) {
     insert_result.clearAllBindings();
     insert_result << static_cast<int64_t>(res.compilation_id)
-                  << static_cast<int64_t>(res.metric)
+                  << res.metric
                   << static_cast<int64_t>(res.value);
     insert_result.execute().assertDone();
     // FIXME: This will trigger an assertion if the compilation id fails
@@ -737,7 +825,7 @@ void Database::addResults(std::set<InputResult> results) {
 
 //===----------------------- Training interface ---------------------------===//
 
-void Database::trainMachineLearner(util::UUID ml, Metric metric) {
+void Database::trainMachineLearner(util::UUID ml, std::string metric) {
   // Get all of the feature types and parameter types, even if some of them
   // don't occur for this metric. These will all be distinct.
   DatabaseQuery select_feature_types(
@@ -756,7 +844,7 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric) {
   DatabaseQuery insert_blob =
       DatabaseQueryBuilder(*m_db)
       << "INSERT INTO MachineLearner(ml_id, metric, ml_blob) VALUES ("
-      << QueryParamType::kBlob << ", " << QueryParamType::kInteger << ", "
+      << QueryParamType::kBlob << ", " << QueryParamType::kText << ", "
       << QueryParamType::kBlob << ")";
 
   // Get the machine learner interface
@@ -807,7 +895,7 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric) {
   db_transaction.commit();
 
   // Iterator to select each set of results in turn
-  ResultIterator results(*m_db, metric);
+  ResultIterator results(*this, *m_db, metric);
 
   // Retrieve the blob and then insert it into the database
   auto blob = i_ml.train(feature_descs, parameter_descs, pass_names,
@@ -818,27 +906,28 @@ void Database::trainMachineLearner(util::UUID ml, Metric metric) {
 
   insert_blob << std::vector<uint8_t>(std::begin(ml.data()),
                                       std::end(ml.data()))
-              << static_cast<int64_t>(metric) << blob;
+              << metric << blob;
   insert_blob.execute().assertDone();
 }
 
 //===------------------------ Result Iterator -----------------------------===//
 
-ResultIterator::ResultIterator(sqlite3 &db, Metric metric)
+ResultIterator::ResultIterator(Database &db, sqlite3 &raw_db,
+                               std::string metric)
     : m_db(&db), m_metric(metric) {
   // Get each compilation and its accompanying results
   DatabaseQueryBuilder select_compilation_result =
-      DatabaseQueryBuilder(*m_db)
+      DatabaseQueryBuilder(raw_db)
       << "SELECT "
       << "Compilation.feature_group_id, Compilation.parameter_set_id, "
       << "Result.result "
       << "FROM Compilation, Result "
       << "WHERE "
       << "Compilation.compilation_id = Result.compilation_id AND "
-      << "Result.metric = " << QueryParamType::kInteger << " "
+      << "Result.metric = " << QueryParamType::kText << " "
       << "ORDER BY Compilation.compilation_id";
   m_query.reset(new DatabaseQuery(select_compilation_result));
-  *m_query << static_cast<int64_t>(metric);
+  *m_query << metric;
 
   m_result_iter.reset(new DatabaseQueryIterator(m_query->execute()));
 }
@@ -861,103 +950,27 @@ ResultIterator &ResultIterator::operator=(ResultIterator &&other) {
 }
 
 util::Option<Result> ResultIterator::operator*() {
-  // Get all of the features in a feature group
-  DatabaseQuery select_features =
-      DatabaseQueryBuilder(*m_db)
-      << "SELECT FeatureInstance.feature_id, FeatureInstance.feature_type, "
-      << "FeatureInstance.value "
-      << "FROM FeatureInstance, FeatureSetFeature, FeatureGroupSet "
-      << "WHERE "
-      << "FeatureInstance.feature_id = FeatureSetFeature.feature_id AND "
-      << "FeatureSetFeature.feature_set_id = FeatureGroupSet.feature_set_id "
-      << "AND "
-      << "FeatureGroupSet.feature_group_id = " << QueryParamType::kInteger;
-
-  // Get all of the parameters in a parameter set
-  DatabaseQuery select_parameters =
-      DatabaseQueryBuilder(*m_db)
-      << "SELECT "
-      << "ParameterInstance.parameter_id, ParameterInstance.parameter_type, "
-      << "ParameterInstance.value "
-      << "FROM ParameterInstance, ParameterSetParameter "
-      << "WHERE "
-      << "ParameterInstance.parameter_id = ParameterSetParameter.parameter_id "
-         "AND "
-      << "ParameterSetParameter.parameter_set_id = "
-      << QueryParamType::kInteger;
-
-  if (m_result_iter->done()) {
+  if (m_result_iter->done())
     return util::Option<Result>();
-  }
-
-  // Perform the extraction in a single transaction
-  DatabaseTransaction db_transaction(m_db);
 
   assert(m_result_iter->numColumns() == 4);
 
-  FeatureGroupID feature_group =
-      static_cast<FeatureGroupID>(m_result_iter->getInteger(0));
-
-  util::Option<ParameterSetID> param_set;
-  if (!m_result_iter->isNull(1)) {
-    param_set = static_cast<ParameterSetID>(m_result_iter->getInteger(1));
-  }
-  uint64_t value = static_cast<uint64_t>(m_result_iter->getInteger(2));
-
-  // Feature and parameter set
   FeatureSet features;
   ParameterSet parameters;
 
-  // Retrieve the features
-  select_features << static_cast<int64_t>(feature_group);
-  for (auto feature_iter = select_features.execute(); !feature_iter.done();
-       feature_iter = feature_iter.next()) {
-    assert(feature_iter.numColumns() == 3);
+  auto feature_group =
+      static_cast<FeatureGroupID>(m_result_iter->getInteger(0));
+  features = m_db->getFeatures(feature_group);
+  assert(features.size() != 0);
 
-    unsigned feature_id = static_cast<unsigned>(feature_iter.getInteger(0));
-    FeatureType feature_type =
-        static_cast<FeatureType>(feature_iter.getInteger(1));
-    auto feature_blob = feature_iter.getBlob(2);
-
-    // TODO: Also retrieve feature names
-    switch (feature_type) {
-    case FeatureType::kBool:
-      features.add(BoolFeature::fromBlob(feature_id, feature_blob, {}));
-      break;
-    case FeatureType::kInt:
-      features.add(IntFeature::fromBlob(feature_id, feature_blob, {}));
-      break;
-    }
+  if (!m_result_iter->isNull(1)) {
+    auto param_set = static_cast<ParameterSetID>(m_result_iter->getInteger(1));
+    parameters = m_db->getParameters(param_set);
+    assert(parameters.size() != 0);
   }
 
-  // Retrieve parameters
-  if (param_set) {
-    select_parameters << static_cast<int64_t>(param_set.get());
-    for (auto param_iter = select_parameters.execute(); !param_iter.done();
-         param_iter = param_iter.next()) {
-      assert(param_iter.numColumns() == 3);
-
-      unsigned param_id = static_cast<unsigned>(param_iter.getInteger(0));
-      ParameterType param_type =
-          static_cast<ParameterType>(param_iter.getInteger(1));
-      auto param_blob = param_iter.getBlob(2);
-
-      // TODO: Also retrieve parameter names
-      switch (param_type) {
-      case ParameterType::kBool:
-        parameters.add(BoolParameter::fromBlob(param_id, param_blob, {}));
-        break;
-      case ParameterType::kRange:
-        parameters.add(RangeParameter::fromBlob(param_id, param_blob, {}));
-        break;
-      case ParameterType::kPassSeq:
-        parameters.add(PassSeqParameter::fromBlob(param_id, param_blob, {}));
-        break;
-      }
-    }
-  }
-  db_transaction.commit();
-  return Result(features, parameters, value);
+  uint64_t res = static_cast<uint64_t>(m_result_iter->getInteger(2));
+  return Result(features, parameters, res);
 }
 
 ResultIterator ResultIterator::next() {

@@ -194,7 +194,7 @@ static bool printTrainedMLs(Framework &framework,
   for (auto &ml : trained_mls) {
     util::out() << ml.getName() << '\n'
                 << static_cast<std::string>(ml.getUUID()) << '\n'
-                << util::metricToString(ml.getMetric()) << "\n\n";
+                << ml.getMetric() << "\n\n";
   }
   return true;
 }
@@ -233,17 +233,12 @@ static bool trainDatabase(Framework &framework, const std::string &db_path,
 
   // Parse the metrics we are training against.
   MAGEEC_DEBUG("Parsing training metrics");
-  std::set<Metric> metrics;
-  for (auto str : metric_strs) {
-    util::Option<Metric> metric = util::stringToMetric(str);
-    if (!metric) {
-      MAGEEC_WARN("Unrecognized metric specified '" << str << "'");
-    } else {
-      metrics.insert(metric.get());
-    }
+  std::set<std::string> metrics;
+  for (auto metric : metric_strs) {
+    metrics.insert(metric);
   }
   if (metrics.size() == 0) {
-    MAGEEC_ERR("No recognized metrics specified");
+    MAGEEC_ERR("No metrics specified");
     return false;
   }
 
@@ -259,7 +254,7 @@ static bool trainDatabase(Framework &framework, const std::string &db_path,
   // Train. This will put the training blobs from the machine learners into
   // the database.
   for (auto metric : metrics) {
-    MAGEEC_DEBUG("Training for metric: " << util::metricToString(metric));
+    MAGEEC_DEBUG("Training for metric: " << metric);
     for (auto ml : mls) {
       db->trainMachineLearner(ml, metric);
     }
@@ -330,13 +325,6 @@ parseResults(const std::string &result_path) {
     }
     CompilationID compilation_id = static_cast<CompilationID>(tmp);
 
-    util::Option<Metric> metric = util::stringToMetric(metric_str);
-    if (!metric) {
-      MAGEEC_ERR("Unknown metric '" << metric_str << "' in results file line:\n"
-                                    << line);
-      return nullptr;
-    }
-
     uint64_t value;
     std::istringstream value_stream(value_str);
     value_stream >> value;
@@ -347,7 +335,7 @@ parseResults(const std::string &result_path) {
     }
 
     // Add the now parsed results into the dataset
-    results.insert({compilation_id, metric.get(), value});
+    results.insert({compilation_id, metric_str, value});
   }
   return results;
 }

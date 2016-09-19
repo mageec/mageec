@@ -165,6 +165,18 @@ public:
   /// \return The identifier of the feature group in the database
   FeatureGroupID newFeatureGroup(std::set<FeatureSetID> group);
 
+  /// \brief Retrieve the provided group of features in a single FeatureSet
+  ///
+  /// \param feature_group_id  The id of the group of features to be extracted
+  /// \return The features in that group in a single feature set
+  FeatureSet getFeatures(FeatureGroupID feature_group_id);
+
+  /// \brief Retrieve the provided set of parameters in a ParameterSet
+  ///
+  /// \param param_set_id  The id of the set of parameters to be extracted
+  /// \return The parameters in that set in a ParameterSet
+  ParameterSet getParameters(ParameterSetID param_set_id);
+
 
 //===----------------------- Compiler interface ---------------------------===//
 
@@ -198,7 +210,7 @@ public:
 
   /// \struct InputResult Structure for results to be added to the database
   struct InputResult {
-    InputResult(CompilationID id, Metric m, uint64_t val)
+    InputResult(CompilationID id, std::string m, uint64_t val)
         : compilation_id(id), metric(m), value(val) {}
 
     bool operator<(const InputResult &other) const {
@@ -215,7 +227,7 @@ public:
     }
 
     const CompilationID compilation_id;
-    const Metric metric;
+    const std::string metric;
     const uint64_t value;
   };
 
@@ -236,9 +248,7 @@ public:
   /// this must be the UUID of a machine learner for which we have a
   /// corresponding interface.
   /// \param metric  The metric to train against.
-  void trainMachineLearner(util::UUID ml, Metric metric);
-
-  // TODO: Incremental training interface
+  void trainMachineLearner(util::UUID ml, std::string metric);
 
 private:
   /// Handle to the underlying sqlite3 database
@@ -271,7 +281,7 @@ public:
   ///
   /// \param db  Database to retrieve results from
   /// \param metric  Metric of the results
-  ResultIterator(sqlite3 &db, Metric metric);
+  ResultIterator(Database &db, sqlite3 &raw_db, std::string metric);
 
   ResultIterator() = delete;
   ResultIterator(const ResultIterator &other) = delete;
@@ -283,8 +293,8 @@ public:
   ResultIterator next();
 
 private:
-  sqlite3 *m_db;
-  Metric m_metric;
+  Database *m_db;
+  std::string m_metric;
   std::unique_ptr<DatabaseQuery> m_query;
   std::unique_ptr<DatabaseQueryIterator> m_result_iter;
 };
