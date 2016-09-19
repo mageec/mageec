@@ -70,10 +70,10 @@
   #include "gimple.h"
   #include "gimple-iterator.h"
   #include "tree.h"
-	#include "tree-pass.h"
-	#include "intl.h"
-	#include "diagnostic.h"
-	#include "context.h"
+  #include "tree-pass.h"
+  #include "intl.h"
+  #include "diagnostic.h"
+  #include "context.h"
 #endif
 
 #include <memory>
