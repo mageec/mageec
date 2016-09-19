@@ -1038,8 +1038,7 @@ loadFeaturesFile(std::string features_path) {
     // store the mapping from the source file name to the feature group
     std::string file_path = values[0];
     if (file_to_features.count(file_path)) {
-      MAGEEC_ERR("Multiple module entries for a file");
-      return nullptr;
+      MAGEEC_WARN("Multiple module feature entries for file: " << file_path);
     }
     std::stringstream feat_id_str(values[4]);
     uint64_t feat_id;
@@ -1323,13 +1322,25 @@ int main(int argc, const char *argv[]) {
     }
   }
 
+  // Replace the original command word with the command specified through the
+  // -mageec-gcc option, or with gcc otherwise
+  if (with_gcc_command) {
+    command_args[0] = gcc_command;
+  } else {
+    command_args[0] = "gcc";
+  }
+
   // If we are not in 'gather' or 'optimize' modes, or if we're not compiling
   // to an object file, then just run the original command
   if (!to_obj || (mode == DriverMode::kNone)) {
     std::stringstream command;
-    command << command_args[0];
-    for (unsigned i = 1; i < command_args.size(); ++i)
-      command << " " << command_args[i];
+    for (unsigned i = 0; i < command_args.size(); ++i) {
+      if (i == 0) {
+        command << command_args[i];
+      } else {
+        command << " " << command_args[i];
+      }
+    }
 
     // FIXME: Windows?
     return system(command.str().c_str());
@@ -1483,11 +1494,6 @@ int main(int argc, const char *argv[]) {
     // Build the command to compile each file in turn
     for (auto file : input_files) {
       std::vector<std::string> file_cmd = command_args;
-      if (with_gcc_command) {
-        file_cmd[0] = gcc_command;
-      } else {
-        file_cmd[0] = "gcc";
-      }
       file_cmd.push_back(file);
 
       // Add to the mapping from input files to commands
@@ -1601,13 +1607,13 @@ int main(int argc, const char *argv[]) {
     auto file_cmd = input_file_commands[file];
 
     std::stringstream command;
-    if (with_gcc_command) {
-      command << gcc_command;
-    } else {
-      command << "gcc";
+    for (unsigned i = 0; i < file_cmd.size(); ++i) {
+      if (i == 0) {
+        command << file_cmd[i];
+      } else {
+        command << " " << file_cmd[i];
+      }
     }
-    for (unsigned i = 1; i < file_cmd.size(); ++i)
-      command << " " << file_cmd[i];
 
     // FIXME: Windows?
     MAGEEC_DEBUG("Executing command: " << command.str());
