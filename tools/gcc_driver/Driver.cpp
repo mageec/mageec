@@ -1015,22 +1015,22 @@ static void printFrameworkVersion(mageec::Framework &framework) {
 }
 
 static mageec::util::Option<std::map<std::string, mageec::FeatureGroupID>>
-loadConfigFile(std::string config_path) {
+loadFeaturesFile(std::string features_path) {
   std::map<std::string, mageec::FeatureGroupID> file_to_features;
 
-  std::ifstream config_file(config_path);
-  if (!config_file.is_open()) {
-    MAGEEC_ERR("Error opening config file. The file may not exist, or you "
+  std::ifstream features_file(features_path);
+  if (!features_file.is_open()) {
+    MAGEEC_ERR("Error opening features file. The file may not exist, or you "
                "may not have sufficient permissions to read and write it");
     return nullptr;
   }
 
   std::string line;
-  while (std::getline(config_file, line)) {
+  while (std::getline(features_file, line)) {
     std::vector<std::string> values = splitString(line, ',');
     if (values.size() != 5)
       continue;
-    if ((values[1] != "module") || (values[3] != "feature_group"))
+    if ((values[1] != "module") || (values[3] != "features"))
       continue;
     if (!values[0].size() || !values[2].size() || !values[4].size())
       continue;
@@ -1045,7 +1045,7 @@ loadConfigFile(std::string config_path) {
     uint64_t feat_id;
     feat_id_str >> feat_id;
     if (feat_id_str.fail()) {
-      MAGEEC_ERR("Malformed line in config file");
+      MAGEEC_ERR("Malformed line in features file");
       return nullptr;
     }
 
@@ -1069,8 +1069,8 @@ static void printHelp() {
 "  -fmageec-mode=<mode>        Mode of the driver, valid values are\n"
 "                              gather and optimize\n"
 "  -fmageec-database=<file>    Database to record to\n"
-"  -fmageec-config=<file>      File containing feature group identifiers,\n"
-"                              and to output compilation ids to\n"
+"  -fmageec-features=<file>    File containing feature group identifiers\n"
+"  -fmageec-out=<file>         File to output compilation ids into\n"
 "  -fmageec-ml=<id>            UUID or shared object identifying the machine\n"
 "                              learner to be used\n"
 "  -fmageec-metric=<name>      Metric to optimize for\n";
@@ -1083,9 +1083,10 @@ int main(int argc, const char *argv[]) {
   std::string gcc_command;
   // The database to gather into, or use when optimizing
   std::string db_str;
-  // Config file holding the features for the input program, and which will
-  // hold the compilation ids for the compiled program.
-  std::string config_path;
+  // File holding the features for input programs
+  std::string features_path;
+  // File into which the compilation ids for the program should be output
+  std::string out_path;
   // Params which this compilation will be compiled with
   std::vector<std::string> param_list;
   // The machine learner to optimize with
@@ -1100,7 +1101,8 @@ int main(int argc, const char *argv[]) {
   bool with_debug             = false;
   bool with_gcc_command       = false;
   bool with_db                = false;
-  bool with_config            = false;
+  bool with_features          = false;
+  bool with_out               = false;
   bool with_ml                = false;
   bool with_metric            = false;
 
@@ -1158,13 +1160,20 @@ int main(int argc, const char *argv[]) {
         return -1;
       }
       with_db = true;
-    } else if (arg.compare(0, strlen("config="), "config=") == 0) {
-      config_path = std::string(arg.begin() + strlen("config="), arg.end());
-      if (config_path.size() == 0) {
+    } else if (arg.compare(0, strlen("features="), "features=") == 0) {
+      features_path = std::string(arg.begin() + strlen("features="), arg.end());
+      if (features_path.size() == 0) {
+        MAGEEC_ERR("No feature path provided");
+        return -1;
+      }
+      with_features = true;
+    } else if (arg.compare(0, strlen("out="), "out=") == 0) {
+      out_path = std::string(arg.begin() + strlen("out="), arg.end());
+      if (out_path.size() == 0) {
         MAGEEC_ERR("No config file path provided");
         return -1;
       }
-      with_config = true;
+      with_out = true;
     } else if (arg.compare(0, strlen("ml="), "ml=") == 0) {
       ml_str = std::string(arg.begin() + strlen("ml="), arg.end());
       if (ml_str.size() == 0) {
@@ -1192,8 +1201,12 @@ int main(int argc, const char *argv[]) {
       MAGEEC_ERR("Optimize mode specified without a database");
       have_error = true;
     }
-    if (!with_config) {
-      MAGEEC_ERR("Optimize mode specified without a config file");
+    if (!with_features) {
+      MAGEEC_ERR("Optimize mode specified without a features file");
+      have_error = true;
+    }
+    if (!with_out) {
+      MAGEEC_ERR("Optimize mode specified without an output file");
       have_error = true;
     }
     if (!with_metric) {
@@ -1209,8 +1222,12 @@ int main(int argc, const char *argv[]) {
       MAGEEC_ERR("Gather mode specified without a database");
       have_error = true;
     }
-    if (!with_config) {
-      MAGEEC_ERR("Gather mode specified without a configuration");
+    if (!with_features) {
+      MAGEEC_ERR("Gather mode specified without a features file ");
+      have_error = true;
+    }
+    if (!with_out) {
+      MAGEEC_ERR("Gather mode specified without an output file");
       have_error = true;
     }
   }
@@ -1338,10 +1355,10 @@ int main(int argc, const char *argv[]) {
     return -1;
   }
 
-  // Load the config file to get the feature groups
-  auto feature_groups = loadConfigFile(config_path);
+  // Load the features file to get the feature groups
+  auto feature_groups = loadFeaturesFile(features_path);
   if (!feature_groups) {
-    MAGEEC_ERR("Failed to retrieve feature groups from config file");
+    MAGEEC_ERR("Failed to retrieve feature groups from features file");
     return -1;
   }
   input_file_features = feature_groups.get();
@@ -1602,10 +1619,10 @@ int main(int argc, const char *argv[]) {
   }
 
   // All file compiled successfully, generate compilation ids for them, output
-  // these ids into the config file
-  std::ofstream config_file(config_path, std::ios::app);
-  if (!config_file.is_open()) {
-    MAGEEC_ERR("Error opening config file. The file may not exist, or you "
+  // these ids into the output file
+  std::ofstream out_file(out_path, std::ios::app);
+  if (!out_file.is_open()) {
+    MAGEEC_ERR("Error opening output file. The file may not exist, or you "
                "may not have sufficient permissions to read and write it");
     return -1;
   }
@@ -1619,14 +1636,14 @@ int main(int argc, const char *argv[]) {
       continue;
     assert(parameter_set_id != input_file_params.end());
 
-    // Append the generated compilation ids to the config file
+    // Append the generated compilation ids to the output file
     auto compilation = db->newCompilation(file, "module",
                                           feature_group_id->second,
                                           parameter_set_id->second, nullptr);
 
     // TODO: Avoid static_cast here
     uint64_t tmp = static_cast<uint64_t>(compilation);
-    config_file << file << ",module," << file << ",compilation," << tmp << "\n";
+    out_file << file << ",module," << file << ",compilation," << tmp << "\n";
   }
   return 0;
 }
