@@ -484,7 +484,7 @@ void featureExtractFinishUnit(void *, void *) {
       getContext().getDatabase().newFeatureGroup({module_feature_set_id});
 
   getContext().getOutFile() << main_input_filename << ",module,"
-                            << module_name << ",feature_group,"
+                            << module_name << ",features,"
                             << (uint64_t)module_feature_group_id << "\n";
 
   // Insert the features of each function into the database

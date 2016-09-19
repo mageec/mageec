@@ -1,5 +1,10 @@
 2016-09-19  Edward Jones  <ed.jones@embecosm.com>
 
+	* Plugin.cpp: FeatureGroupID entries in the output file are
+	marked with 'features', instead of 'feature_group'.
+
+2016-09-19  Edward Jones  <ed.jones@embecosm.com>
+
 	* FeatureExtract.cpp: Fix indentation.
 	* Plugin.cpp: Likewise.
 
