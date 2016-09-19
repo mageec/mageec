@@ -1,3 +1,8 @@
+2016-09-19  Edward Jones  <ed.jones@embecosm.com>
+
+	* Driver.cpp: Refactor. Add ability to optimize using a selected
+	machine learner.
+
 2016-08-23  Edward Jones  <ed.jones@embecosm.com>
 
 	* Driver.cpp: Reimplement driver so that it's interface matches

@@ -1223,6 +1223,39 @@ int main(int argc, const char *argv[]) {
   std::unique_ptr<mageec::IMachineLearner> c5_ml(new mageec::C5Driver());
   framework.registerMachineLearner(std::move(c5_ml));
 
+  // Select the machine learner chosen by the user. If the user provided a
+  // UUID, this should be one of the builtin machine learners, otherwise if
+  // they provided a shared object, register it as a new machine learner.
+  mageec::IMachineLearner *ml = nullptr;
+  if (with_ml) {
+    MAGEEC_DEBUG("Selecting machine learner: " << ml_str)
+    auto ml_uuid = mageec::util::UUID::parse(ml_str);
+    if (!ml_uuid) {
+      MAGEEC_DEBUG(ml_str << " not a UUID.. attempting to load as a plugin");
+
+      ml_uuid = framework.loadMachineLearner(ml_str);
+      if (!ml_uuid) {
+        MAGEEC_ERR("Could not load user machine learner plugin: " << ml_str);
+        return -1;
+      } else {
+        MAGEEC_DEBUG("Loaded machine learner plugin: " << ml_str);
+        return -1;
+      }
+    }
+    assert(ml_uuid);
+
+    for (auto *ml_interface : framework.getMachineLearners()) {
+      if (ml_interface->getUUID() == ml_uuid.get()) {
+        ml = ml_interface;
+        break;
+      }
+    }
+    if (!ml) {
+      MAGEEC_ERR("Could not select machine learner: " << ml_str);
+      return -1;
+    }
+  }
+
   // Handle basic options
   if (with_help)
     printHelp();
@@ -1329,69 +1362,85 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  if (mode == DriverMode::kGather) {
-    // Extract the flags that were provided to the compiler on the command
-    // line, and build this into a set to be added into the database
-    std::set<unsigned> params;
+  // Extract the parameters that were provided to the compiler on the command
+  // line. Use this to build up a parameter set.
+  std::set<unsigned> params;
 
-    // First, setup the parameter set according to the basic optimization level
-    // The rightmost optimization flag takes precedence
-    std::string opt_level = "-O0";
-    for (auto arg : command_args) {
-      if (arg == "-O0" || arg == "-O"  || arg == "-O1" || arg == "-O2" ||
-          arg == "-O3" || arg == "-O4" || arg == "-Os" || arg == "-Ofast") {
-        opt_level = arg;
-      }
+  // A copy of the command with the optimization flags stripped out
+  std::vector<std::string> stripped_command_args;
+
+  // First set the parameter set according to the basic optimization level
+  // The rightmost optimization flag takes precedence.
+  std::string opt_level = "-O0";
+  for (auto arg : command_args) {
+    if (arg == "-O0" || arg == "-O"  || arg == "-O1" || arg == "-O2" ||
+        arg == "-O3" || arg == "-O4" || arg == "-Os" || arg == "-Ofast") {
+      opt_level = arg;
     }
-    std::vector<std::string> flags;
-    if (opt_level == "-O0")
-      flags = opt_flags_O0;
-    if (opt_level == "-O" || opt_level == "-O1")
-      flags = opt_flags_O1;
-    if (opt_level == "-O2")
-      flags = opt_flags_O2;
-    if (opt_level == "-O3")
-      flags = opt_flags_O3;
-    if (opt_level == "-O4")
-      flags = opt_flags_O4;
-    if (opt_level == "-Os")
-      flags = opt_flags_Os;
-    if (opt_level == "-Ofast")
-      flags = opt_flags_Ofast;
+  }
+  std::vector<std::string> flags;
+  if (opt_level == "-O0")
+    flags = opt_flags_O0;
+  if (opt_level == "-O" || opt_level == "-O1")
+    flags = opt_flags_O1;
+  if (opt_level == "-O2")
+    flags = opt_flags_O2;
+  if (opt_level == "-O3")
+    flags = opt_flags_O3;
+  if (opt_level == "-O4")
+    flags = opt_flags_O4;
+  if (opt_level == "-Os")
+    flags = opt_flags_Os;
+  if (opt_level == "-Ofast")
+    flags = opt_flags_Ofast;
 
-    // flag -> parameter
-    for (auto f : flags) {
-      auto p = flag_to_parameter.find(f);
-      if (p != flag_to_parameter.end())
-        params.insert(p->second);
+  // flag -> parameter
+  for (auto f : flags) {
+    auto p = flag_to_parameter.find(f);
+    if (p != flag_to_parameter.end())
+      params.insert(p->second);
+  }
+
+  // Now, toggle individual flags, modifying the base set of flags. The
+  // rightmost flag takes precedence.
+  //
+  // Also build a stripped command, with all of the recognize optimization flags
+  // omitted.
+  for (auto arg : command_args) {
+    if (arg == "-O0" || arg == "-O"  || arg == "-O1" || arg == "-O2" ||
+        arg == "-O3" || arg == "-O4" || arg == "-Os" || arg == "-Ofast") {
+      continue;
     }
 
-    // Handle individual flags. These modify the base set of flags, with the
-    // rightmost flag taking precedence.
-    //
     // Individual flags may enable the parameter, or disable it if it has a
     // "-fno-" prefix. First check if the flag enables a parameter, then if
     // it disables one.
-    for (auto arg : command_args) {
-      auto p = flag_to_parameter.find(arg);
-      if (p != flag_to_parameter.end()) {
-        params.insert(p->second);
-      } else {
-        if (arg.size() > strlen("-fno-") &&
-            !arg.compare(0, strlen("-fno-"), "-fno-")) {
-          arg = std::string("-f") +
-                std::string(arg.begin() + strlen("-fno-"), arg.end());
+    auto p = flag_to_parameter.find(arg);
+    if (p != flag_to_parameter.end()) {
+      params.insert(p->second);
+      continue;
+    } else {
+      if (arg.size() > strlen("-fno-") &&
+          !arg.compare(0, strlen("-fno-"), "-fno-")) {
+        arg = std::string("-f") +
+              std::string(arg.begin() + strlen("-fno-"), arg.end());
 
-          p = flag_to_parameter.find(arg);
-          if (p != flag_to_parameter.end()) {
-            params.erase(p->second);
-          }
+        p = flag_to_parameter.find(arg);
+        if (p != flag_to_parameter.end()) {
+          params.erase(p->second);
+          continue;
         }
       }
     }
+    // If this isn't an -O flag, or a parameter flag we recognize, add it to
+    // the stripped command arguments
+    stripped_command_args.push_back(arg);
+  }
 
-    // Turn the set of parameters into a mageec ParameterSet and add it to the
-    // database. Use the same parameter set for every file.
+  // When gathering, convert the set of input parameters into a mageec
+  // ParameterSet and add it to the database. Use the same parameter set for
+  // every file.
+  if (mode == DriverMode::kGather) {
     mageec::ParameterSet param_set;
     for (unsigned i = FlagParameterID::kFIRST_FLAG_PARAMETER;
          i <= FlagParameterID::kLAST_FLAG_PARAMETER; ++i) {
@@ -1403,7 +1452,7 @@ int main(int argc, const char *argv[]) {
     for (auto file : input_files)
       input_file_params[file] = param_set_id;
 
-    // Build a command to compile each file in turn
+    // Build the command to compile each file in turn
     for (auto file : input_files) {
       std::vector<std::string> file_cmd = command_args;
       file_cmd[0] = "gcc"; // FIXME: Don't hardcode in gcc
@@ -1413,47 +1462,62 @@ int main(int argc, const char *argv[]) {
       input_file_commands[file] = file_cmd;
     }
   } else if (mode == DriverMode::kOptimize) {
-    // Strip flags which we can recognize from the command line, build a new
-    // command line with those flags omitted
-    std::vector<std::string> orig_command_args = command_args;
-    std::vector<std::string> new_command_args;
-    for (auto arg : command_args) {
-      if (arg == "-O0" || arg == "-O"  || arg == "-O1" || arg == "-O2" ||
-          arg == "-O3" || arg == "-O4" || arg == "-Os" || arg == "-Ofast") {
-        continue;
-      }
+    // Find a selected machine learner trained for the specified metric
+    std::vector<mageec::TrainedML> trained_mls =
+        db->getTrainedMachineLearners();
+    mageec::TrainedML *chosen_ml = nullptr;
 
-      if (flag_to_parameter.count(arg))
-        continue;
-
-      if (arg.size() > strlen("-fno-") &&
-          !arg.compare(0, strlen("-fno-"), "-fno")) {
-        std::string tmp = std::string("-f") +
-                          std::string(arg.begin() + strlen("-fno-"), arg.end());
-        if (flag_to_parameter.count(tmp))
-          continue;
+    bool found_ml = false;
+    for (auto &trained_ml : trained_mls) {
+      if (trained_ml.getUUID() == ml->getUUID()) {
+        found_ml = true;
+        if (trained_ml.getMetric() == metric_str) {
+          chosen_ml = &trained_ml;
+          break;
+        }
       }
-      // Not a flag that we need to strip
-      new_command_args.push_back(arg);
     }
-    command_args = new_command_args;
+    if (!found_ml) {
+      MAGEEC_ERR("Could not find training data for specified machine learner "
+                 "and metric");
+      return -1;
+    }
 
     // For each input file, use the set of features to generate the flags
+    // If there are no features found for a file, then use the original
+    // command with the file appended as an input.
     for (auto file : input_files) {
-      // If there are no features found for a file, then use the original
-      // command with the file appended as an input
       auto feature_group_id = input_file_features.find(file);
       if (feature_group_id == input_file_features.end()) {
-        std::vector<std::string> file_cmd = orig_command_args;
+        std::vector<std::string> file_cmd = command_args;
         file_cmd.push_back(file);
         input_file_commands[file] = file_cmd;
         continue;
       }
 
-      // Generate a parameter set based on the input features
-      std::set<unsigned> params;
-      // TODO: Spawn a bunch of decisions and get the machine learner to
-      // produce the set of parameters.
+      // Generate a parameter set based on the features of the file
+      //
+      // Use the original parameter configuration provided on the command line
+      // as the base set of flags. If a parameter value is not overridden by
+      // mageec then this will form the 'native' decision.
+      mageec::FeatureSet features = db->getFeatures(feature_group_id->second);
+      assert(features.size() != 0);
+
+      for (unsigned i = FlagParameterID::kFIRST_FLAG_PARAMETER;
+           i <= FlagParameterID::kLAST_FLAG_PARAMETER; ++i) {
+        mageec::BoolDecisionRequest req(i);
+
+        assert(chosen_ml);
+        auto res = chosen_ml->makeDecision(req, features);
+        if (res->getType() == mageec::DecisionType::kNative)
+          continue;
+
+        auto *decision = static_cast<mageec::BoolDecision*>(res.get());
+        if (decision->getValue() == true)
+          params.insert(i);
+        else
+          params.erase(i);
+      }
 
       // Turn the set of parameters into a mageec ParameterSet and add it to
       // the database
@@ -1466,9 +1530,9 @@ int main(int argc, const char *argv[]) {
       }
       mageec::ParameterSetID param_set_id = db->newParameterSet(param_set);
 
-      // Build the command line for this file, with the given parameters as
-      // its configuration.
-      auto cmd_iter = command_args.begin();
+      // Build the command line for this file based on the 'stripped' command
+      // line derived early. Add in optimization flags for this configuration.
+      auto cmd_iter = stripped_command_args.begin();
 
       // Add the original command word
       std::vector<std::string> file_cmd;
@@ -1489,7 +1553,7 @@ int main(int argc, const char *argv[]) {
         }
       }
       // Add the remaining flags from the original command
-      for (; cmd_iter != command_args.end(); ++cmd_iter)
+      for (; cmd_iter != stripped_command_args.end(); ++cmd_iter)
         file_cmd.push_back(*cmd_iter);
       // Add the input filename
       file_cmd.push_back(file);
