@@ -500,7 +500,7 @@ void featureExtractFinishUnit(void *, void *) {
 																										func_feature_set_id});
 
     getContext().getOutFile() << main_input_filename << ",function,"
-                         			<< features.first << ",feature_group,"
-                         			<< (uint64_t)func_feature_group_id << "\n";
+                              << features.first << ",features,"
+                              << (uint64_t)func_feature_group_id << "\n";
   }
 }

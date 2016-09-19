@@ -1,3 +1,8 @@
+2016-09-19  Edward Jones  <ed.jones@embecosm.com>
+
+	* Plugin.cpp: FeatureGroupID Entries in the output file are
+	marked with 'features', instead of 'feature_group'.
+
 2016-08-15  Edward Jones  <ed.jones@embecosm.com>
 
 	* CMakeLists.txt: Rename feature_extract_gcc target to
