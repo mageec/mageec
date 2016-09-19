@@ -1,5 +1,10 @@
 2016-09-19  Edward Jones  <ed.jones@embecosm.com>
 
+	* Driver.cpp: Add -mageec-gcc option to specify the command to
+	invoke gcc.
+
+2016-09-19  Edward Jones  <ed.jones@embecosm.com>
+
 	* Driver.cpp: Refactor. Add ability to optimize using a selected
 	machine learner.
 

@@ -1065,6 +1065,7 @@ static void printHelp() {
 "  -fmageec-database-version   Print the version of the provided database\n"
 "  -fmageec-framework-version  Print the version of the MAGEEC framework\n"
 "  -fmageec-debug              Enable debug output\n"
+"  -fmageec-gcc=<command>      Command to invoke gcc\n"
 "  -fmageec-mode=<mode>        Mode of the driver, valid values are\n"
 "                              gather and optimize\n"
 "  -fmageec-database=<file>    Database to record to\n"
@@ -1078,6 +1079,8 @@ static void printHelp() {
 int main(int argc, const char *argv[]) {
   DriverMode mode = DriverMode::kNone;
 
+  // The gcc command to use
+  std::string gcc_command;
   // The database to gather into, or use when optimizing
   std::string db_str;
   // Config file holding the features for the input program, and which will
@@ -1095,6 +1098,7 @@ int main(int argc, const char *argv[]) {
   bool with_db_version        = false;
   bool with_framework_version = false;
   bool with_debug             = false;
+  bool with_gcc_command       = false;
   bool with_db                = false;
   bool with_config            = false;
   bool with_ml                = false;
@@ -1129,7 +1133,14 @@ int main(int argc, const char *argv[]) {
       continue;
 
     // Flags with values
-    if (arg.compare(0, strlen("mode="), "mode=") == 0) {
+    if (arg.compare(0, strlen("gcc="), "gcc=") == 0) {
+      gcc_command = std::string(arg.begin() + strlen("gcc="), arg.end());
+      if (gcc_command == "") {
+        MAGEEC_ERR("No gcc command provided");
+        return -1;
+      }
+      with_gcc_command = true;
+    } else if (arg.compare(0, strlen("mode="), "mode=") == 0) {
       std::string mode_str(arg.begin() + strlen("mode="), arg.end());
 
       if (mode_str == "gather") {
@@ -1455,7 +1466,11 @@ int main(int argc, const char *argv[]) {
     // Build the command to compile each file in turn
     for (auto file : input_files) {
       std::vector<std::string> file_cmd = command_args;
-      file_cmd[0] = "gcc"; // FIXME: Don't hardcode in gcc
+      if (with_gcc_command) {
+        file_cmd[0] = gcc_command;
+      } else {
+        file_cmd[0] = "gcc";
+      }
       file_cmd.push_back(file);
 
       // Add to the mapping from input files to commands
@@ -1569,7 +1584,11 @@ int main(int argc, const char *argv[]) {
     auto file_cmd = input_file_commands[file];
 
     std::stringstream command;
-    command << "gcc"; // FIXME: Don't hardcode in gcc
+    if (with_gcc_command) {
+      command << gcc_command;
+    } else {
+      command << "gcc";
+    }
     for (unsigned i = 1; i < file_cmd.size(); ++i)
       command << " " << file_cmd[i];
 
