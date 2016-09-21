@@ -1,5 +1,10 @@
 2016-09-21  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/ML/C5.cpp: Correct field name for the target parameter in the
+	.names field for the C5 machine learner.
+
+2016-09-21  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/Database.cpp: Readd FeatureType and ParameterType tables.
 	These are needed by the machine learner when training.
 

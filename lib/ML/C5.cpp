@@ -510,7 +510,7 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
 
     // Output the target parameter first
     // TODO: Comment containing parameter description
-    name_file << "parameter_" << param.id << ".names\n";
+    name_file << "parameter_" << param.id << ".\n";
 
     // Output columns for all of the features which we have seen in the
     // training set.
@@ -565,6 +565,8 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
           p = it.get();
         }
       }
+      if (!p)
+        continue;
 
       for (auto feat : feature_descs) {
         // Feature values are output in the order they appear in the feature
@@ -654,6 +656,8 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
       // save the tree for the current parameter
       context->parameter_classifier_trees.insert(
           std::make_pair(param.id, tree_blob));
+    } else {
+      MAGEEC_WARN("Could not read .tree file from C5 machine learner");
     }
     tree_file.close();
   }
