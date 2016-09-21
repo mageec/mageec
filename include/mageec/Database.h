@@ -147,9 +147,7 @@ private:
 
 public:
 
-
 //===------------------- Feature extractor interface-----------------------===//
-
 
   /// \brief Add a new set of features to the database
   ///
@@ -177,9 +175,7 @@ public:
   /// \return The parameters in that set in a ParameterSet
   ParameterSet getParameters(ParameterSetID param_set_id);
 
-
 //===----------------------- Compiler interface ---------------------------===//
-
 
   /// \brief Create a new compilation of a program unit
   ///
@@ -204,9 +200,7 @@ public:
   /// \return The identifier of the new parameter set in the database
   ParameterSetID newParameterSet(ParameterSet parameters);
 
-
 //===------------------------ Results interface ---------------------------===//
-
 
   /// \struct InputResult Structure for results to be added to the database
   struct InputResult {
@@ -237,9 +231,7 @@ public:
   /// \param results A set of results to be added to the database
   void addResults(std::set<InputResult> results);
 
-
 //===----------------------- Training interface ---------------------------===//
-
 
   /// \brief Train the provided machine learner using the results data in the
   /// database for the target metric.

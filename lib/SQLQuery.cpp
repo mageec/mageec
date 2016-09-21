@@ -44,7 +44,7 @@ SQLQuery::~SQLQuery(void) {
 
     if (res != SQLITE_OK) {
       MAGEEC_DEBUG("Error destroying database query:\n"
-                << sqlite3_errmsg(&m_db));
+                   << sqlite3_errmsg(&m_db));
     }
     assert(res == SQLITE_OK && "Error destroying query statement!");
   }
@@ -55,14 +55,14 @@ SQLQuery::SQLQuery(SQLQuery &&other)
       m_stmt(other.m_stmt), m_curr_param(other.m_curr_param),
       m_param_count(other.m_param_count), m_param_types(other.m_param_types) {
   assert(!other.m_is_locked && "Cannot moved a query which is currently "
-         "being executed");
+                               "being executed");
   other.m_is_init = false;
   m_is_init = true;
 }
 
 SQLQuery::SQLQuery(sqlite3 &db, std::string str)
-    : m_is_init(false), m_db(db), m_is_locked(false), m_stmt(),
-      m_curr_param(0), m_param_count(0), m_param_types() {
+    : m_is_init(false), m_db(db), m_is_locked(false), m_stmt(), m_curr_param(0),
+      m_param_count(0), m_param_types() {
   int res = sqlite3_prepare_v2(&m_db, str.c_str(), -1, &m_stmt, NULL);
 
   if (res != SQLITE_OK) {
@@ -73,7 +73,7 @@ SQLQuery::SQLQuery(sqlite3 &db, std::string str)
 }
 
 SQLQuery::SQLQuery(sqlite3 &db, std::vector<std::string> substrs,
-                             std::vector<SQLType> params)
+                   std::vector<SQLType> params)
     : m_is_init(false), m_db(db), m_is_locked(false), m_stmt(), m_curr_param(0),
       m_param_count(params.size()), m_param_types(params) {
   assert(substrs.size() == (m_param_count + 0) ||
@@ -267,8 +267,7 @@ SQLQueryIterator::SQLQueryIterator(sqlite3 &db, SQLQuery &query)
   *this = next();
 }
 
-SQLQueryIterator &SQLQueryIterator::
-operator=(SQLQueryIterator &&other) {
+SQLQueryIterator &SQLQueryIterator::operator=(SQLQueryIterator &&other) {
   m_done = std::move(other.m_done);
   m_query = std::move(other.m_query);
   m_stmt = std::move(other.m_stmt);
@@ -313,9 +312,7 @@ void SQLQueryIterator::assertDone() const {
 
 bool SQLQueryIterator::done() const { return m_done; }
 
-int SQLQueryIterator::numColumns(void) {
-  return sqlite3_data_count(m_stmt);
-}
+int SQLQueryIterator::numColumns(void) { return sqlite3_data_count(m_stmt); }
 
 bool SQLQueryIterator::isNull(int index) {
   validate();

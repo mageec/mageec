@@ -43,10 +43,9 @@ enum class DriverMode { kNone, kCreate, kTrain, kAddResults };
 using namespace mageec;
 
 /// \brief Print out the version of the MAGEEC framework
-static void printVersion(const Framework &framework)
-{
-  util::out() << MAGEEC_PREFIX "Framework version: " <<
-      static_cast<std::string>(framework.getVersion()) << '\n';
+static void printVersion(const Framework &framework) {
+  util::out() << MAGEEC_PREFIX "Framework version: "
+              << static_cast<std::string>(framework.getVersion()) << '\n';
 }
 
 /// \brief Print out the version of the database
@@ -60,8 +59,8 @@ static int printDatabaseVersion(Framework &framework,
                "or you may not have sufficient permissions to read it");
     return -1;
   }
-  util::out() << MAGEEC_PREFIX "Database version: " <<
-      static_cast<std::string>(db->getVersion()) << '\n';
+  util::out() << MAGEEC_PREFIX "Database version: "
+              << static_cast<std::string>(db->getVersion()) << '\n';
   return 0;
 }
 
@@ -269,9 +268,11 @@ parseResults(const std::string &result_path) {
   MAGEEC_DEBUG("Opening file '" << result_path << "' to parse results");
   std::ifstream result_file(result_path);
   if (!result_file) {
-    MAGEEC_ERR("Could not open results file '" << result_path << "', the "
-               "file may not exist, or you may not have permissions to "
-               "read it");
+    MAGEEC_ERR("Could not open results file '"
+               << result_path
+               << "', the "
+                  "file may not exist, or you may not have permissions to "
+                  "read it");
     return nullptr;
   }
 
@@ -330,7 +331,8 @@ parseResults(const std::string &result_path) {
     value_stream >> value;
     if (id_stream.fail()) {
       MAGEEC_ERR("Malformed result value '" << value_str << "' in result "
-                 "file line:\n" << line);
+                                                            "file line:\n"
+                                            << line);
       return nullptr;
     }
 

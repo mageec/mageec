@@ -1,5 +1,15 @@
 2016-09-21  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/Attribute.h: Make formatting more consistent.
+	* include/mageec/SQLQuery.h: Likewise.
+	* include/mageec/Util.h: Likewise.
+	* lib/Database.cpp: Likewise.
+	* lib/Driver.cpp: Likewise.
+	* lib/ML/FileML.cpp: Likewise.
+	* lib/SQLQuery.cpp: Likewise.
+
+2016-09-21  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/SQLQuery.h (SQLQuery::execute): Rename to exec
 	* lib/SQLQuery.cpp (SQLQuery::execute): Likewise.
 	* lib/Database.cpp: Use SQLQuery::exec instead of 'execute'

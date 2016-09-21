@@ -142,7 +142,6 @@ private:
   const value_type m_value;
 };
 
-
 // Types of features supported by MAGEEC
 template <FeatureType type, typename ValueT>
 using Feature = Attribute<FeatureType, type, ValueT>;
@@ -151,7 +150,6 @@ typedef AttributeBase<FeatureType> FeatureBase;
 
 typedef Feature<FeatureType::kBool, bool>    BoolFeature;
 typedef Feature<FeatureType::kInt,  int64_t> IntFeature;
-
 
 // Types of parameters supported by MAGEEC
 template <ParameterType type, typename ValueT>
@@ -166,7 +164,7 @@ typedef Parameter<ParameterType::kRange, int64_t> RangeParameter;
 template <>
 class Attribute<ParameterType, ParameterType::kPassSeq,
                 std::vector<std::string>>
-                    : public AttributeBase<ParameterType> {
+    : public AttributeBase<ParameterType> {
 public:
   typedef std::vector<std::string> value_type;
 
@@ -236,7 +234,6 @@ private:
 
 typedef Attribute<ParameterType, ParameterType::kPassSeq,
                   std::vector<std::string>> PassSeqParameter;
-
 
 } // end of namespace mageec
 

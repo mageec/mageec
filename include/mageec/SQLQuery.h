@@ -201,7 +201,7 @@ public:
   /// preceded by a substring.
   /// \param params  Parameter slots which make up the query.
   SQLQuery(sqlite3 &db, std::vector<std::string> substrs,
-                std::vector<SQLType> params);
+           std::vector<SQLType> params);
 
   /// \brief Bind an integer value to the next available parameter
   SQLQuery &operator<<(int64_t i);

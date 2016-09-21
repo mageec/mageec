@@ -89,7 +89,7 @@ bool FileML::setDecisionConfig(std::string config_path) {
 
     if (m_decision_map.count(request_id) != 0) {
       MAGEEC_DEBUG("Multiple entries for decision: " << request_id
-                << " in the config file");
+                                                     << " in the config file");
       return false;
     }
 
