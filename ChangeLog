@@ -1,3 +1,8 @@
+2016-09-21  Edward Jones  <ed.jones@embecosm.com>
+
+	* lib/Database.cpp: Readd FeatureType and ParameterType tables.
+	These are needed by the machine learner when training.
+
 2016-09-19  Edward Jones  <ed.jones@embecosm.com>
 
 	* include/mageec/Database.h: Use a string for metric parameters.
