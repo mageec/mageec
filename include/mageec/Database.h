@@ -184,6 +184,7 @@ public:
   /// \param features  The group of features for the initial program unit
   /// \param parameters  Set of parameters which apply to the overall
   /// compilation
+  /// \param command  The command used to compile the program unit
   /// \param parent  Optional parent of this compilation. For example the
   /// encapsulating module for a function. (debug)
   ///
@@ -191,6 +192,7 @@ public:
   CompilationID newCompilation(std::string name, std::string type,
                                FeatureGroupID features,
                                ParameterSetID parameters,
+                               util::Option<std::string> command,
                                util::Option<CompilationID> parent);
 
   /// \brief Create a new set of parameters

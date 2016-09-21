@@ -1,5 +1,12 @@
 2016-09-21  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/Database.cpp: Store command for compilation in the database.
+	(Database::newCompilation): Add command argument.
+	* include/mageec/Database.h
+	(Database::newCompilation): Add command argument.
+
+2016-09-21  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Attribute.h: Make formatting more consistent.
 	* include/mageec/SQLQuery.h: Likewise.
 	* include/mageec/Util.h: Likewise.

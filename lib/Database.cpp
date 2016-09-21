@@ -136,10 +136,11 @@ static const char *const create_machine_learner_table =
 
 // debug table creation
 static const char *const create_program_unit_debug_table =
-    "CREATE TABLE ProgramUnitDebug("
+    "CREATE TABLE CompilationDebug("
     "compilation_id INTEGER PRIMARY KEY, "
     "name           TEXT NOT NULL, "
     "type           TEXT NOT NULL, "
+    "command        TEXT, "
     "parent_id      INTEGER, "
     "FOREIGN KEY(compilation_id) REFERENCES Compilation(compilation_id), "
     "FOREIGN KEY(parent_id) REFERENCES Compilation(compilation_id)"
@@ -670,6 +671,7 @@ ParameterSet Database::getParameters(ParameterSetID param_set) {
 CompilationID Database::newCompilation(std::string name, std::string type,
                                        FeatureGroupID features,
                                        ParameterSetID parameters,
+                                       util::Option<std::string> command,
                                        util::Option<CompilationID> parent) {
   SQLQuery insert_into_compilation =
       SQLQueryBuilder(*m_db)
@@ -678,8 +680,10 @@ CompilationID Database::newCompilation(std::string name, std::string type,
 
   SQLQuery insert_compilation_debug =
       SQLQueryBuilder(*m_db)
-      << "INSERT INTO ProgramUnitDebug(compilation_id, name, type, parent_id) "
+      << "INSERT INTO CompilationDebug(compilation_id, name, type, command, "
+                                      "parent_id) "
          "VALUES(" << SQLType::kInteger << ", "
+                   << SQLType::kText << ", "
                    << SQLType::kText << ", "
                    << SQLType::kText << ", "
                    << SQLType::kInteger << ")";
@@ -700,6 +704,12 @@ CompilationID Database::newCompilation(std::string name, std::string type,
   // Add debug information
   insert_compilation_debug << static_cast<int64_t>(compilation_id) << name
                            << type;
+
+  if (command) {
+    insert_compilation_debug << command.get();
+  } else {
+    insert_compilation_debug << nullptr;
+  }
   if (parent) {
     insert_compilation_debug << static_cast<int64_t>(parent.get());
   } else {
