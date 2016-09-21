@@ -1,5 +1,10 @@
 2016-09-21  Edward Jones  <ed.jones@embecosm.com>
 
+	* Driver.cpp: Pass the command used to compile modules and
+	functions to Database::newCompilation.
+
+2016-09-21  Edward Jones  <ed.jones@embecosm.com>
+
 	* Driver.cpp: Generate compilation ids for functions as well as
 	modules.
 

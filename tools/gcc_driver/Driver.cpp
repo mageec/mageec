@@ -1637,24 +1637,28 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  // Compile each input file in turn, if any fail, error out early
+  std::map<std::string, std::string> file_commands;
   for (auto file : input_files) {
-    auto file_cmd = input_file_commands[file];
+    auto args = input_file_commands[file];
 
     std::stringstream command;
-    for (unsigned i = 0; i < file_cmd.size(); ++i) {
+    for (unsigned i = 0; i < args.size(); ++i) {
       if (i == 0) {
-        command << file_cmd[i];
+        command << args[i];
       } else {
-        command << " " << file_cmd[i];
+        command << " " << args[i];
       }
     }
+    file_commands[file] = command.str();
+  }
 
+  // Compile each input file in turn, if any fail, error out early
+  for (auto command : file_commands) {
     // FIXME: Windows?
-    MAGEEC_DEBUG("Executing command: " << command.str());
-    int res = system(command.str().c_str());
+    MAGEEC_DEBUG("Executing command: " << command.second);
+    int res = system(command.second.c_str());
     if (res) {
-      MAGEEC_ERR("Compilation failed\ncommand: " << command.str());
+      MAGEEC_ERR("Compilation failed\ncommand: " << command.second);
       return res;
     }
   }
@@ -1685,6 +1689,7 @@ int main(int argc, const char *argv[]) {
     auto module_compilation = db->newCompilation(module_entry.name, "module",
                                                  module_entry.id,
                                                  parameter_set_id->second,
+                                                 file_commands[file],
                                                  nullptr);
 
     // TODO: Avoid static_cast here
@@ -1698,6 +1703,7 @@ int main(int argc, const char *argv[]) {
                                                      "function",
                                                      function_entry.id,
                                                      parameter_set_id->second,
+                                                     file_commands[file],
                                                      module_compilation);
       // TODO: Avoid static cast here
       tmp = static_cast<uint64_t>(function_compilation);
