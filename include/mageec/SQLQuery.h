@@ -219,7 +219,7 @@ public:
   /// to the results.
   ///
   /// Only one iterator may be executing the query at a given point.
-  iterator execute(void);
+  iterator exec(void);
 
   /// \brief Returns true if values are bound to all of the paramters
   bool allBindingsPopulated(void) const;

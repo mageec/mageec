@@ -165,7 +165,7 @@ SQLQuery &SQLQuery::operator<<(std::nullptr_t nullp) {
   return *this;
 }
 
-SQLQuery::iterator SQLQuery::execute(void) {
+SQLQuery::iterator SQLQuery::exec(void) {
   validate();
   assert(allBindingsPopulated() &&
          "Cannot execute query with unbound parameters");

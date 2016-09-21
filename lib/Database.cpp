@@ -231,7 +231,7 @@ Database::Database(sqlite3 &db, std::map<util::UUID, IMachineLearner *> mls,
   // Enable foreign keys (requires sqlite 3.6.19 or above)
   // If foreign keys are not available the database is still usable, but no
   // foreign key checking will do done.
-  SQLQuery(*m_db, "PRAGMA foreign_keys = ON").execute().assertDone();
+  SQLQuery(*m_db, "PRAGMA foreign_keys = ON").exec().assertDone();
 
   if (create) {
     init_db(*m_db);
@@ -259,34 +259,32 @@ void Database::init_db(sqlite3 &db) {
   MAGEEC_DEBUG("Creating database tables");
 
   // Create table to hold database metadata
-  SQLQuery(db, create_metadata_table).execute().assertDone();
+  SQLQuery(db, create_metadata_table).exec().assertDone();
 
   // Create tables to hold features
-  SQLQuery(db, create_feature_type_table).execute().assertDone();
-  SQLQuery(db, create_feature_instance_table).execute().assertDone();
-  SQLQuery(db, create_feature_set_feature_table).execute().assertDone();
-  SQLQuery(db, create_feature_group_set_table).execute().assertDone();
+  SQLQuery(db, create_feature_type_table).exec().assertDone();
+  SQLQuery(db, create_feature_instance_table).exec().assertDone();
+  SQLQuery(db, create_feature_set_feature_table).exec().assertDone();
+  SQLQuery(db, create_feature_group_set_table).exec().assertDone();
 
   // Tables to hold parameters
-  SQLQuery(db, create_parameter_type_table).execute().assertDone();
-  SQLQuery(db, create_parameter_instance_table).execute().assertDone();
-  SQLQuery(db, create_parameter_set_parameter_table)
-      .execute()
-      .assertDone();
+  SQLQuery(db, create_parameter_type_table).exec().assertDone();
+  SQLQuery(db, create_parameter_instance_table).exec().assertDone();
+  SQLQuery(db, create_parameter_set_parameter_table).exec().assertDone();
 
   // Compilation
-  SQLQuery(db, create_compilation_table).execute().assertDone();
+  SQLQuery(db, create_compilation_table).exec().assertDone();
 
   // Results
-  SQLQuery(db, create_result_table).execute().assertDone();
+  SQLQuery(db, create_result_table).exec().assertDone();
 
   // Machine learner
-  SQLQuery(db, create_machine_learner_table).execute().assertDone();
+  SQLQuery(db, create_machine_learner_table).exec().assertDone();
 
   // Debug tables
-  SQLQuery(db, create_program_unit_debug_table).execute().assertDone();
-  SQLQuery(db, create_feature_debug_table).execute().assertDone();
-  SQLQuery(db, create_parameter_debug_table).execute().assertDone();
+  SQLQuery(db, create_program_unit_debug_table).exec().assertDone();
+  SQLQuery(db, create_feature_debug_table).exec().assertDone();
+  SQLQuery(db, create_parameter_debug_table).exec().assertDone();
 
   // Manually insert the version into the metadata table
   SQLQuery query = SQLQueryBuilder(db)
@@ -295,7 +293,7 @@ void Database::init_db(sqlite3 &db) {
                         << SQLType::kText << ")";
   query << static_cast<int64_t>(MetadataField::kDatabaseVersion);
   query << std::string(Database::version);
-  query.execute().assertDone();
+  query.exec().assertDone();
 
   // Finish this transaction before setting metadata (which may create its
   // own transactions.
@@ -344,7 +342,7 @@ std::vector<TrainedML> Database::getTrainedMachineLearners(void) {
     query.clearAllBindings();
     query << std::vector<uint8_t>(uuid.data().begin(), uuid.data().end());
 
-    auto res = query.execute();
+    auto res = query.exec();
     res.assertDone();
     if (res.numColumns() == 2) {
       std::string metric = res.getText(0);
@@ -368,7 +366,7 @@ std::string Database::getMetadata(MetadataField field) {
       << "SELECT value FROM Metadata WHERE field=" << SQLType::kInteger;
   query << static_cast<int64_t>(field);
 
-  SQLQueryIterator res = query.execute();
+  SQLQueryIterator res = query.exec();
   if (!res.done()) {
     assert(res.numColumns() == 1);
     value = res.getText(0);
@@ -387,7 +385,7 @@ void Database::setMetadata(MetadataField field, std::string value) {
                         << SQLType::kInteger << ")";
   query << static_cast<int64_t>(field) << value;
 
-  query.execute().assertDone();
+  query.exec().assertDone();
 }
 
 //===------------------- Feature extractor interface-----------------------===//
@@ -454,7 +452,7 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
     get_features.clearAllBindings();
     get_features << static_cast<int64_t>(feature_set_id);
 
-    auto feat_iter = get_features.execute();
+    auto feat_iter = get_features.exec();
     if (!feat_iter.done()) {
       // The feature set already exists. Extract the set into a map to
       // compare to the one we hashed.
@@ -489,12 +487,12 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
         // Add feature type first if not present
         insert_feature_type << static_cast<int64_t>(I->getID())
                             << static_cast<int64_t>(I->getType());
-        insert_feature_type.execute().assertDone();
+        insert_feature_type.exec().assertDone();
 
         // feature insertion
         insert_feature << static_cast<int64_t>(I->getID())
                        << I->toBlob();
-        insert_feature.execute().assertDone();
+        insert_feature.exec().assertDone();
 
         // The feature_id is an integer primary key, and so it is equal to the
         // rowid. We use this to add the feature to the feature set
@@ -503,12 +501,12 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
         // feature set
         insert_into_feature_set << static_cast<int64_t>(feature_set_id)
                                 << static_cast<int64_t>(feature_id);
-        insert_into_feature_set.execute().assertDone();
+        insert_into_feature_set.exec().assertDone();
 
         // debug table
         insert_feature_debug << static_cast<int64_t>(I->getID())
                              << I->getName();
-        insert_feature_debug.execute().assertDone();
+        insert_feature_debug.exec().assertDone();
       }
       feature_id_found = true;
     }
@@ -550,7 +548,7 @@ FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
     get_feature_ids.clearAllBindings();
     get_feature_ids << static_cast<int64_t>(group_id);
 
-    auto group_iter = get_feature_ids.execute();
+    auto group_iter = get_feature_ids.exec();
     if (!group_iter.done()) {
       // Group already exists. Extract the group to compare against the one we
       // hashed.
@@ -574,7 +572,7 @@ FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
         insert_into_feature_group.clearAllBindings();
         insert_into_feature_group << static_cast<int64_t>(group_id)
                                   << static_cast<int64_t>(I);
-        insert_into_feature_group.execute().assertDone();
+        insert_into_feature_group.exec().assertDone();
       }
       group_id_found = true;
     }
@@ -604,7 +602,7 @@ FeatureSet Database::getFeatures(FeatureGroupID feature_group) {
   // Retrieve the features
   FeatureSet features;
   select_features << static_cast<int64_t>(feature_group);
-  for (auto feature_iter = select_features.execute(); !feature_iter.done();
+  for (auto feature_iter = select_features.exec(); !feature_iter.done();
        feature_iter = feature_iter.next()) {
     assert(feature_iter.numColumns() == 3);
 
@@ -650,7 +648,7 @@ ParameterSet Database::getParameters(ParameterSetID param_set) {
   // Retrieve parameters
   ParameterSet parameters;
   select_parameters << static_cast<int64_t>(param_set);
-  for (auto param_iter = select_parameters.execute(); !param_iter.done();
+  for (auto param_iter = select_parameters.exec(); !param_iter.done();
        param_iter = param_iter.next()) {
     assert(param_iter.numColumns() == 3);
 
@@ -703,7 +701,7 @@ Database::newCompilation(std::string name, std::string type,
   // Add the compilation
   insert_into_compilation << static_cast<int64_t>(features)
                           << static_cast<int64_t>(parameters);
-  insert_into_compilation.execute().assertDone();
+  insert_into_compilation.exec().assertDone();
 
   // The rowid of the insert is the compilation_id, retrieve it
   int64_t row_id = sqlite3_last_insert_rowid(m_db);
@@ -718,7 +716,7 @@ Database::newCompilation(std::string name, std::string type,
   } else {
     insert_compilation_debug << nullptr;
   }
-  insert_compilation_debug.execute().assertDone();
+  insert_compilation_debug.exec().assertDone();
 
   db_transaction.commit();
   return compilation_id;
@@ -791,7 +789,7 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
     get_parameters.clearAllBindings();
     get_parameters << static_cast<int64_t>(param_set_id);
 
-    auto param_iter = get_parameters.execute();
+    auto param_iter = get_parameters.exec();
     if (!param_iter.done()) {
       // Parameter set already exists. Extract the set to compare against the
       // one we hashed.
@@ -823,12 +821,12 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
         // add parameter type first if not present
         insert_parameter_type << static_cast<int64_t>(I->getID())
                               << static_cast<int64_t>(I->getType());
-        insert_parameter_type.execute().assertDone();
+        insert_parameter_type.exec().assertDone();
 
         // parameter insertion
         insert_parameter << static_cast<int64_t>(I->getID())
                          << I->toBlob();
-        insert_parameter.execute().assertDone();
+        insert_parameter.exec().assertDone();
 
         // The parameter_id is an integer primary key, and so it is equal to the
         // rowid. We use this to add the parameter to the set
@@ -837,11 +835,11 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
         // parameter set
         insert_into_parameter_set << static_cast<int64_t>(param_set_id)
                                   << parameter_id;
-        insert_into_parameter_set.execute().assertDone();
+        insert_into_parameter_set.exec().assertDone();
 
         // debug table
         insert_parameter_debug << I->getID() << I->getName();
-        insert_parameter_debug.execute().assertDone();
+        insert_parameter_debug.exec().assertDone();
       }
       param_set_id_found = true;
     }
@@ -867,7 +865,7 @@ void Database::addResults(std::set<InputResult> results) {
     insert_result << static_cast<int64_t>(res.compilation_id)
                   << res.metric
                   << static_cast<int64_t>(res.value);
-    insert_result.execute().assertDone();
+    insert_result.exec().assertDone();
     // FIXME: This will trigger an assertion if the compilation id fails
     // the foreign key constraint.
   }
@@ -915,7 +913,7 @@ void Database::trainMachineLearner(util::UUID ml, std::string metric) {
   std::set<ParameterDesc> parameter_descs;
   std::set<std::string> pass_names;
 
-  for (auto feat_iter = select_feature_types.execute(); !feat_iter.done();
+  for (auto feat_iter = select_feature_types.exec(); !feat_iter.done();
        feat_iter = feat_iter.next()) {
     assert(feat_iter.numColumns() == 2);
     FeatureDesc desc = {static_cast<unsigned>(feat_iter.getInteger(0)),
@@ -923,7 +921,7 @@ void Database::trainMachineLearner(util::UUID ml, std::string metric) {
     feature_descs.insert(desc);
   }
 
-  for (auto param_iter = select_parameter_types.execute(); !param_iter.done();
+  for (auto param_iter = select_parameter_types.exec(); !param_iter.done();
        param_iter = param_iter.next()) {
     assert(param_iter.numColumns() == 2);
     ParameterDesc desc = {static_cast<unsigned>(param_iter.getInteger(0)),
@@ -931,7 +929,7 @@ void Database::trainMachineLearner(util::UUID ml, std::string metric) {
     parameter_descs.insert(desc);
   }
 
-  for (auto pass_seq_iter = select_pass_sequences.execute();
+  for (auto pass_seq_iter = select_pass_sequences.exec();
        !pass_seq_iter.done(); pass_seq_iter = pass_seq_iter.next()) {
     assert(pass_seq_iter.numColumns() == 1);
 
@@ -963,7 +961,7 @@ void Database::trainMachineLearner(util::UUID ml, std::string metric) {
   insert_blob << std::vector<uint8_t>(std::begin(ml.data()),
                                       std::end(ml.data()))
               << metric << blob;
-  insert_blob.execute().assertDone();
+  insert_blob.exec().assertDone();
 }
 
 //===------------------------ Result Iterator -----------------------------===//
@@ -985,7 +983,7 @@ ResultIterator::ResultIterator(Database &db, sqlite3 &raw_db,
   m_query.reset(new SQLQuery(select_compilation_result));
   *m_query << metric;
 
-  m_result_iter.reset(new SQLQueryIterator(m_query->execute()));
+  m_result_iter.reset(new SQLQueryIterator(m_query->exec()));
 }
 
 ResultIterator::ResultIterator(ResultIterator &&other)
@@ -1041,14 +1039,14 @@ ResultIterator ResultIterator::next() {
 DatabaseTransaction::DatabaseTransaction(sqlite3 *db)
     : m_is_committed(false), m_db(db) {
   SQLQuery start_transaction(*m_db, "BEGIN TRANSACTION");
-  start_transaction.execute().assertDone();
+  start_transaction.exec().assertDone();
   m_is_init = true;
 }
 
 DatabaseTransaction::~DatabaseTransaction() {
   if (m_is_init && !m_is_committed) {
     SQLQuery rollback_transaction(*m_db, "ROLLBACK");
-    rollback_transaction.execute().assertDone();
+    rollback_transaction.exec().assertDone();
   }
 }
 
@@ -1079,7 +1077,7 @@ void DatabaseTransaction::commit() {
   assert(!m_is_committed && "Transaction has already been committed");
 
   SQLQuery commit_transaction(*m_db, "COMMIT");
-  commit_transaction.execute().assertDone();
+  commit_transaction.exec().assertDone();
   m_is_committed = true;
 }
 

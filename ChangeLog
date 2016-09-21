@@ -1,5 +1,11 @@
 2016-09-21  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/SQLQuery.h (SQLQuery::execute): Rename to exec
+	* lib/SQLQuery.cpp (SQLQuery::execute): Likewise.
+	* lib/Database.cpp: Use SQLQuery::exec instead of 'execute'
+
+2016-09-21  Edward Jones  <ed.jones@embecosm.com>
+
 	* CMakeLists.txt: Rename DatabaseQuery.cpp to SQLQuery.cpp
 	* include/mageec/Database.h: Use SQLQuery, SQLQueryBuilder, and
 	SQLType instead of DatabaseQuery, DatabaseQueryBuilder and
