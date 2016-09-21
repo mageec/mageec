@@ -25,8 +25,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "mageec/Database.h"
-#include "mageec/DatabaseQuery.h"
 #include "mageec/ML.h"
+#include "mageec/SQLQuery.h"
 #include "mageec/TrainedML.h"
 #include "mageec/Types.h"
 #include "mageec/Util.h"
@@ -231,7 +231,7 @@ Database::Database(sqlite3 &db, std::map<util::UUID, IMachineLearner *> mls,
   // Enable foreign keys (requires sqlite 3.6.19 or above)
   // If foreign keys are not available the database is still usable, but no
   // foreign key checking will do done.
-  DatabaseQuery(*m_db, "PRAGMA foreign_keys = ON").execute().assertDone();
+  SQLQuery(*m_db, "PRAGMA foreign_keys = ON").execute().assertDone();
 
   if (create) {
     init_db(*m_db);
@@ -259,40 +259,40 @@ void Database::init_db(sqlite3 &db) {
   MAGEEC_DEBUG("Creating database tables");
 
   // Create table to hold database metadata
-  DatabaseQuery(db, create_metadata_table).execute().assertDone();
+  SQLQuery(db, create_metadata_table).execute().assertDone();
 
   // Create tables to hold features
-  DatabaseQuery(db, create_feature_type_table).execute().assertDone();
-  DatabaseQuery(db, create_feature_instance_table).execute().assertDone();
-  DatabaseQuery(db, create_feature_set_feature_table).execute().assertDone();
-  DatabaseQuery(db, create_feature_group_set_table).execute().assertDone();
+  SQLQuery(db, create_feature_type_table).execute().assertDone();
+  SQLQuery(db, create_feature_instance_table).execute().assertDone();
+  SQLQuery(db, create_feature_set_feature_table).execute().assertDone();
+  SQLQuery(db, create_feature_group_set_table).execute().assertDone();
 
   // Tables to hold parameters
-  DatabaseQuery(db, create_parameter_type_table).execute().assertDone();
-  DatabaseQuery(db, create_parameter_instance_table).execute().assertDone();
-  DatabaseQuery(db, create_parameter_set_parameter_table)
+  SQLQuery(db, create_parameter_type_table).execute().assertDone();
+  SQLQuery(db, create_parameter_instance_table).execute().assertDone();
+  SQLQuery(db, create_parameter_set_parameter_table)
       .execute()
       .assertDone();
 
   // Compilation
-  DatabaseQuery(db, create_compilation_table).execute().assertDone();
+  SQLQuery(db, create_compilation_table).execute().assertDone();
 
   // Results
-  DatabaseQuery(db, create_result_table).execute().assertDone();
+  SQLQuery(db, create_result_table).execute().assertDone();
 
   // Machine learner
-  DatabaseQuery(db, create_machine_learner_table).execute().assertDone();
+  SQLQuery(db, create_machine_learner_table).execute().assertDone();
 
   // Debug tables
-  DatabaseQuery(db, create_program_unit_debug_table).execute().assertDone();
-  DatabaseQuery(db, create_feature_debug_table).execute().assertDone();
-  DatabaseQuery(db, create_parameter_debug_table).execute().assertDone();
+  SQLQuery(db, create_program_unit_debug_table).execute().assertDone();
+  SQLQuery(db, create_feature_debug_table).execute().assertDone();
+  SQLQuery(db, create_parameter_debug_table).execute().assertDone();
 
   // Manually insert the version into the metadata table
-  DatabaseQuery query = DatabaseQueryBuilder(db)
+  SQLQuery query = SQLQueryBuilder(db)
                         << "INSERT INTO Metadata(field, value) VALUES("
-                        << QueryParamType::kInteger << ", "
-                        << QueryParamType::kText << ")";
+                        << SQLType::kInteger << ", "
+                        << SQLType::kText << ")";
   query << static_cast<int64_t>(MetadataField::kDatabaseVersion);
   query << std::string(Database::version);
   query.execute().assertDone();
@@ -333,9 +333,9 @@ std::vector<TrainedML> Database::getTrainedMachineLearners(void) {
   // from the database.
   std::vector<TrainedML> trained_mls;
 
-  DatabaseQuery query = DatabaseQueryBuilder(*m_db)
+  SQLQuery query = SQLQueryBuilder(*m_db)
                         << "SELECT metric, ml_blob FROM MachineLearner WHERE "
-                        << "ml_id = " << QueryParamType::kBlob;
+                        << "ml_id = " << SQLType::kBlob;
 
   for (auto I : m_mls) {
     const util::UUID uuid = I.first;
@@ -363,12 +363,12 @@ std::vector<TrainedML> Database::getTrainedMachineLearners(void) {
 std::string Database::getMetadata(MetadataField field) {
   std::string value;
 
-  DatabaseQuery query =
-      DatabaseQueryBuilder(*m_db)
-      << "SELECT value FROM Metadata WHERE field=" << QueryParamType::kInteger;
+  SQLQuery query =
+      SQLQueryBuilder(*m_db)
+      << "SELECT value FROM Metadata WHERE field=" << SQLType::kInteger;
   query << static_cast<int64_t>(field);
 
-  DatabaseQueryIterator res = query.execute();
+  SQLQueryIterator res = query.execute();
   if (!res.done()) {
     assert(res.numColumns() == 1);
     value = res.getText(0);
@@ -381,10 +381,10 @@ std::string Database::getMetadata(MetadataField field) {
 void Database::setMetadata(MetadataField field, std::string value) {
   assert(isCompatible());
 
-  DatabaseQuery query = DatabaseQueryBuilder(*m_db)
+  SQLQuery query = SQLQueryBuilder(*m_db)
                         << "INSERT INTO Metadata(field, value) VALUES("
-                        << QueryParamType::kText << ", "
-                        << QueryParamType::kInteger << ")";
+                        << SQLType::kText << ", "
+                        << SQLType::kInteger << ")";
   query << static_cast<int64_t>(field) << value;
 
   query.execute().assertDone();
@@ -393,38 +393,38 @@ void Database::setMetadata(MetadataField field, std::string value) {
 //===------------------- Feature extractor interface-----------------------===//
 
 FeatureSetID Database::newFeatureSet(FeatureSet features) {
-  DatabaseQuery get_features =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery get_features =
+      SQLQueryBuilder(*m_db)
       << "SELECT FeatureInstance.feature_type_id, FeatureInstance.value "
       << "FROM FeatureSetFeature, FeatureInstance "
       << "WHERE "
       << "FeatureSetFeature.feature_id = FeatureInstance.feature_id AND "
-      << "FeatureSetFeature.feature_set_id = " << QueryParamType::kInteger;
+      << "FeatureSetFeature.feature_set_id = " << SQLType::kInteger;
 
   // FIXME: This should check that the types are identical if a conflict
   // arises
-  DatabaseQuery insert_feature_type =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery insert_feature_type =
+      SQLQueryBuilder(*m_db)
       << "INSERT OR IGNORE INTO FeatureType(feature_type_id, feature_type) "
-      << "Values (" << QueryParamType::kInteger << ", "
-      << QueryParamType::kInteger << ")";
+      << "Values (" << SQLType::kInteger << ", "
+      << SQLType::kInteger << ")";
 
-  DatabaseQuery insert_feature =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery insert_feature =
+      SQLQueryBuilder(*m_db)
       << "INSERT INTO FeatureInstance(feature_type_id, value) VALUES ("
-      << QueryParamType::kInteger << ", " << QueryParamType::kBlob << ")";
+      << SQLType::kInteger << ", " << SQLType::kBlob << ")";
 
-  DatabaseQuery insert_into_feature_set =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery insert_into_feature_set =
+      SQLQueryBuilder(*m_db)
       << "INSERT INTO FeatureSetFeature(feature_set_id, feature_id) VALUES ("
-      << QueryParamType::kInteger << ", " << QueryParamType::kInteger << ")";
+      << SQLType::kInteger << ", " << SQLType::kInteger << ")";
 
   // FIXME: This should check that the keys are identical if a conflict
   // arises.
-  DatabaseQuery insert_feature_debug =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery insert_feature_debug =
+      SQLQueryBuilder(*m_db)
       << "INSERT OR IGNORE INTO FeatureDebug(feature_type_id, name) VALUES ("
-      << QueryParamType::kInteger << ", " << QueryParamType::kText << ")";
+      << SQLType::kInteger << ", " << SQLType::kText << ")";
 
   // Sort the feature in the feature set using a map, then serialize to a
   // a blob and hash. The hash forms the identifier for the feature set
@@ -518,16 +518,16 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
 }
 
 FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
-  DatabaseQuery get_feature_ids =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery get_feature_ids =
+      SQLQueryBuilder(*m_db)
       << "SELECT feature_set_id FROM FeatureGroupSet "
-      << "WHERE feature_group_id = " << QueryParamType::kInteger;
+      << "WHERE feature_group_id = " << SQLType::kInteger;
 
-  DatabaseQuery insert_into_feature_group =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery insert_into_feature_group =
+      SQLQueryBuilder(*m_db)
       << "INSERT INTO FeatureGroupSet(feature_group_id, feature_set_id) "
-      << "VALUES (" << QueryParamType::kInteger << ", "
-      << QueryParamType::kInteger << ")";
+      << "VALUES (" << SQLType::kInteger << ", "
+      << SQLType::kInteger << ")";
 
   // Hash the feature ids in the group to produce the group id.
   std::vector<uint8_t> blob;
@@ -585,8 +585,8 @@ FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
 
 FeatureSet Database::getFeatures(FeatureGroupID feature_group) {
   // Get all of the features in a feature group
-  DatabaseQuery select_features =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery select_features =
+      SQLQueryBuilder(*m_db)
       << "SELECT FeatureInstance.feature_type_id, FeatureType.feature_type, "
                 "FeatureInstance.value "
       << "FROM FeatureInstance, FeatureType, FeatureSetFeature, "
@@ -596,7 +596,7 @@ FeatureSet Database::getFeatures(FeatureGroupID feature_group) {
       << "FeatureType.feature_type_id = FeatureInstance.feature_type_id AND "
       << "FeatureSetFeature.feature_set_id = FeatureGroupSet.feature_set_id "
       << "AND "
-      << "FeatureGroupSet.feature_group_id = " << QueryParamType::kInteger;
+      << "FeatureGroupSet.feature_group_id = " << SQLType::kInteger;
 
   // Perform in a single transaction
   DatabaseTransaction db_transaction(m_db);
@@ -630,8 +630,8 @@ FeatureSet Database::getFeatures(FeatureGroupID feature_group) {
 
 ParameterSet Database::getParameters(ParameterSetID param_set) {
   // Get all of the parameters in a parameter set
-  DatabaseQuery select_parameters =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery select_parameters =
+      SQLQueryBuilder(*m_db)
       << "SELECT ParameterInstance.parameter_type_id, "
                 "ParameterType.parameter_type, "
                 "ParameterInstance.value "
@@ -642,7 +642,7 @@ ParameterSet Database::getParameters(ParameterSetID param_set) {
       << "ParameterType.parameter_type_id = ParameterInstance.parameter_type_id "
       << "AND "
       << "ParameterSetParameter.parameter_set_id = "
-      << QueryParamType::kInteger;
+      << SQLType::kInteger;
 
   // Perform in a single transaction
   DatabaseTransaction db_transaction(m_db);
@@ -682,20 +682,20 @@ CompilationID
 Database::newCompilation(std::string name, std::string type,
                          FeatureGroupID features, ParameterSetID parameters,
                          util::Option<CompilationID> parent) {
-  DatabaseQuery insert_into_compilation =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery insert_into_compilation =
+      SQLQueryBuilder(*m_db)
       << "INSERT INTO Compilation("
       << "feature_group_id, parameter_set_id) "
       << "VALUES ("
-      << QueryParamType::kInteger << ", "
-      << QueryParamType::kInteger << ")";
+      << SQLType::kInteger << ", "
+      << SQLType::kInteger << ")";
 
-  DatabaseQuery insert_compilation_debug =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery insert_compilation_debug =
+      SQLQueryBuilder(*m_db)
       << "INSERT INTO ProgramUnitDebug("
       << "compilation_id, name, type, parent_id) VALUES("
-      << QueryParamType::kInteger << ", " << QueryParamType::kText << ", "
-      << QueryParamType::kText << ", " << QueryParamType::kInteger << ")";
+      << SQLType::kInteger << ", " << SQLType::kText << ", "
+      << SQLType::kText << ", " << SQLType::kInteger << ")";
 
   // add in a single transaction
   DatabaseTransaction db_transaction(m_db);
@@ -725,41 +725,41 @@ Database::newCompilation(std::string name, std::string type,
 }
 
 ParameterSetID Database::newParameterSet(ParameterSet parameters) {
-  DatabaseQuery get_parameters =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery get_parameters =
+      SQLQueryBuilder(*m_db)
       << "SELECT ParameterInstance.parameter_type_id, ParameterInstance.value "
       << "FROM ParameterSetParameter, ParameterInstance "
       << "WHERE "
       << "ParameterSetParameter.parameter_id = "
       << "ParameterInstance.parameter_id AND "
       << "ParameterSetParameter.parameter_set_id = "
-      << QueryParamType::kInteger;
+      << SQLType::kInteger;
 
   // FIXME: This should check that the values are identical if a conflict arises
-  DatabaseQuery insert_parameter_type =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery insert_parameter_type =
+      SQLQueryBuilder(*m_db)
       << "INSERT OR IGNORE INTO ParameterType(parameter_type_id, "
          "parameter_type) "
-      << "VALUES (" << QueryParamType::kInteger << ", "
-      << QueryParamType::kInteger << ")";
+      << "VALUES (" << SQLType::kInteger << ", "
+      << SQLType::kInteger << ")";
 
-  DatabaseQuery insert_parameter =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery insert_parameter =
+      SQLQueryBuilder(*m_db)
       << "INSERT INTO ParameterInstance(parameter_type_id, value) VALUES ("
-      << QueryParamType::kInteger << ", " << QueryParamType::kBlob << ")";
+      << SQLType::kInteger << ", " << SQLType::kBlob << ")";
 
-  DatabaseQuery insert_into_parameter_set =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery insert_into_parameter_set =
+      SQLQueryBuilder(*m_db)
       << "INSERT INTO ParameterSetParameter(parameter_set_id, parameter_id) "
-      << "VALUES (" << QueryParamType::kInteger << ", "
-      << QueryParamType::kInteger << ")";
+      << "VALUES (" << SQLType::kInteger << ", "
+      << SQLType::kInteger << ")";
 
   // FIXME: This should check that the keys are identical if a conflict
   // arises.
-  DatabaseQuery insert_parameter_debug =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery insert_parameter_debug =
+      SQLQueryBuilder(*m_db)
       << "INSERT OR IGNORE INTO ParameterDebug(parameter_type_id, name) VALUES "
-         "(" << QueryParamType::kInteger << ", " << QueryParamType::kText
+         "(" << SQLType::kInteger << ", " << SQLType::kText
       << ")";
 
   // Sort the parameter in the parameter set using a map, then serialize to a
@@ -853,11 +853,11 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
 //===------------------------ Results interface ---------------------------===//
 
 void Database::addResults(std::set<InputResult> results) {
-  DatabaseQuery insert_result =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery insert_result =
+      SQLQueryBuilder(*m_db)
       << "INSERT INTO RESULT(compilation_id, metric, result) VALUES("
-      << QueryParamType::kInteger << ", " << QueryParamType::kText << ", "
-      << QueryParamType::kInteger << ")";
+      << SQLType::kInteger << ", " << SQLType::kText << ", "
+      << SQLType::kInteger << ")";
 
   // All results in a single transaction
   DatabaseTransaction db_transaction(m_db);
@@ -879,14 +879,14 @@ void Database::addResults(std::set<InputResult> results) {
 void Database::trainMachineLearner(util::UUID ml, std::string metric) {
   // Get all of the feature types and parameter types, even if some of them
   // don't occur for this metric. These will all be distinct.
-  DatabaseQuery select_feature_types(
+  SQLQuery select_feature_types(
       *m_db, "SELECT feature_type_id, feature_type FROM FeatureType");
 
-  DatabaseQuery select_parameter_types(
+  SQLQuery select_parameter_types(
       *m_db, "SELECT parameter_type_id, parameter_type FROM ParameterType");
 
-  DatabaseQuery select_pass_sequences =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery select_pass_sequences =
+      SQLQueryBuilder(*m_db)
       << "SELECT DISTINCT value FROM ParameterInstance, ParameterType "
       << "WHERE "
       << "ParameterInstance.parameter_type_id = ParameterType.parameter_type_id "
@@ -896,12 +896,12 @@ void Database::trainMachineLearner(util::UUID ml, std::string metric) {
 
   // Insert a blob for the provided machine learner and metric
   // This will fail if there is already training data
-  DatabaseQuery insert_blob =
-      DatabaseQueryBuilder(*m_db)
+  SQLQuery insert_blob =
+      SQLQueryBuilder(*m_db)
       << "INSERT OR REPLACE INTO MachineLearner(ml_id, metric, ml_blob) "
       << "VALUES ("
-      << QueryParamType::kBlob << ", " << QueryParamType::kText << ", "
-      << QueryParamType::kBlob << ")";
+      << SQLType::kBlob << ", " << SQLType::kText << ", "
+      << SQLType::kBlob << ")";
 
   // Get the machine learner interface
   auto res = m_mls.find(ml);
@@ -972,20 +972,20 @@ ResultIterator::ResultIterator(Database &db, sqlite3 &raw_db,
                                std::string metric)
     : m_db(&db), m_metric(metric) {
   // Get each compilation and its accompanying results
-  DatabaseQueryBuilder select_compilation_result =
-      DatabaseQueryBuilder(raw_db)
+  SQLQueryBuilder select_compilation_result =
+      SQLQueryBuilder(raw_db)
       << "SELECT "
       << "Compilation.feature_group_id, Compilation.parameter_set_id, "
       << "Result.result "
       << "FROM Compilation, Result "
       << "WHERE "
       << "Compilation.compilation_id = Result.compilation_id AND "
-      << "Result.metric = " << QueryParamType::kText << " "
+      << "Result.metric = " << SQLType::kText << " "
       << "ORDER BY Compilation.compilation_id";
-  m_query.reset(new DatabaseQuery(select_compilation_result));
+  m_query.reset(new SQLQuery(select_compilation_result));
   *m_query << metric;
 
-  m_result_iter.reset(new DatabaseQueryIterator(m_query->execute()));
+  m_result_iter.reset(new SQLQueryIterator(m_query->execute()));
 }
 
 ResultIterator::ResultIterator(ResultIterator &&other)
@@ -1040,14 +1040,14 @@ ResultIterator ResultIterator::next() {
 
 DatabaseTransaction::DatabaseTransaction(sqlite3 *db)
     : m_is_committed(false), m_db(db) {
-  DatabaseQuery start_transaction(*m_db, "BEGIN TRANSACTION");
+  SQLQuery start_transaction(*m_db, "BEGIN TRANSACTION");
   start_transaction.execute().assertDone();
   m_is_init = true;
 }
 
 DatabaseTransaction::~DatabaseTransaction() {
   if (m_is_init && !m_is_committed) {
-    DatabaseQuery rollback_transaction(*m_db, "ROLLBACK");
+    SQLQuery rollback_transaction(*m_db, "ROLLBACK");
     rollback_transaction.execute().assertDone();
   }
 }
@@ -1078,7 +1078,7 @@ void DatabaseTransaction::commit() {
   assert(m_is_init && "Transaction has been moved");
   assert(!m_is_committed && "Transaction has already been committed");
 
-  DatabaseQuery commit_transaction(*m_db, "COMMIT");
+  SQLQuery commit_transaction(*m_db, "COMMIT");
   commit_transaction.execute().assertDone();
   m_is_committed = true;
 }

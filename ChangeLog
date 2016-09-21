@@ -1,5 +1,17 @@
 2016-09-21  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Rename DatabaseQuery.cpp to SQLQuery.cpp
+	* include/mageec/Database.h: Use SQLQuery, SQLQueryBuilder, and
+	SQLType instead of DatabaseQuery, DatabaseQueryBuilder and
+	QueryParamType.
+	* lib/Database.cpp: Likewise.
+	* include/mageec/DatabaseQuery.h: Rename to SQLQuery.h.
+	* include/mageec/mageec/SQLQuery.h: Added file.
+	* lib/mageec/DatabaseQuery.cpp: Rename to SQLQuery.cpp.
+	* lib/mageec/SQLQuery.cpp: Added file.
+
+2016-09-21  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/ML/C5.cpp: Correct field name for the target parameter in the
 	.names field for the C5 machine learner.
 

@@ -97,9 +97,9 @@ include_directories(include)
 
 # MAGEEC library
 add_library (mageec_core
-  lib/DatabaseQuery.cpp
   lib/Database.cpp
   lib/Framework.cpp
+  lib/SQLQuery.cpp
   lib/TrainedML.cpp
   lib/Util.cpp
 )

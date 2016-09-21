@@ -22,7 +22,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "mageec/DatabaseQuery.h"
+#include "mageec/SQLQuery.h"
 #include "mageec/Util.h"
 
 #include "sqlite3.h"
@@ -37,7 +37,7 @@ namespace mageec {
 
 //===----------------------------- Database query -------------------------===//
 
-DatabaseQuery::~DatabaseQuery(void) {
+SQLQuery::~SQLQuery(void) {
   if (m_is_init) {
     validate();
     int res = sqlite3_finalize(m_stmt);
@@ -50,7 +50,7 @@ DatabaseQuery::~DatabaseQuery(void) {
   }
 }
 
-DatabaseQuery::DatabaseQuery(DatabaseQuery &&other)
+SQLQuery::SQLQuery(SQLQuery &&other)
     : m_is_init(false), m_db(other.m_db), m_is_locked(false),
       m_stmt(other.m_stmt), m_curr_param(other.m_curr_param),
       m_param_count(other.m_param_count), m_param_types(other.m_param_types) {
@@ -60,7 +60,7 @@ DatabaseQuery::DatabaseQuery(DatabaseQuery &&other)
   m_is_init = true;
 }
 
-DatabaseQuery::DatabaseQuery(sqlite3 &db, std::string str)
+SQLQuery::SQLQuery(sqlite3 &db, std::string str)
     : m_is_init(false), m_db(db), m_is_locked(false), m_stmt(),
       m_curr_param(0), m_param_count(0), m_param_types() {
   int res = sqlite3_prepare_v2(&m_db, str.c_str(), -1, &m_stmt, NULL);
@@ -72,8 +72,8 @@ DatabaseQuery::DatabaseQuery(sqlite3 &db, std::string str)
   m_is_init = true;
 }
 
-DatabaseQuery::DatabaseQuery(sqlite3 &db, std::vector<std::string> substrs,
-                             std::vector<QueryParamType> params)
+SQLQuery::SQLQuery(sqlite3 &db, std::vector<std::string> substrs,
+                             std::vector<SQLType> params)
     : m_is_init(false), m_db(db), m_is_locked(false), m_stmt(), m_curr_param(0),
       m_param_count(params.size()), m_param_types(params) {
   assert(substrs.size() == (m_param_count + 0) ||
@@ -96,9 +96,9 @@ DatabaseQuery::DatabaseQuery(sqlite3 &db, std::vector<std::string> substrs,
   m_is_init = true;
 }
 
-DatabaseQuery &DatabaseQuery::operator<<(int64_t i) {
+SQLQuery &SQLQuery::operator<<(int64_t i) {
   validate();
-  assert(m_param_types[m_curr_param] == QueryParamType::kInteger);
+  assert(m_param_types[m_curr_param] == SQLType::kInteger);
 
   // bind positions index from 1
   int res = sqlite3_bind_int64(m_stmt, static_cast<int>(m_curr_param) + 1, i);
@@ -113,9 +113,9 @@ DatabaseQuery &DatabaseQuery::operator<<(int64_t i) {
   return *this;
 }
 
-DatabaseQuery &DatabaseQuery::operator<<(std::string str) {
+SQLQuery &SQLQuery::operator<<(std::string str) {
   validate();
-  assert(m_param_types[m_curr_param] == QueryParamType::kText);
+  assert(m_param_types[m_curr_param] == SQLType::kText);
 
   // bind positions index from 1
   int res = sqlite3_bind_text(m_stmt, static_cast<int>(m_curr_param) + 1,
@@ -130,9 +130,9 @@ DatabaseQuery &DatabaseQuery::operator<<(std::string str) {
   return *this;
 }
 
-DatabaseQuery &DatabaseQuery::operator<<(const std::vector<uint8_t> blob) {
+SQLQuery &SQLQuery::operator<<(const std::vector<uint8_t> blob) {
   validate();
-  assert(m_param_types[m_curr_param] == QueryParamType::kBlob);
+  assert(m_param_types[m_curr_param] == SQLType::kBlob);
 
   // bind positions index from 1
   int res =
@@ -148,7 +148,7 @@ DatabaseQuery &DatabaseQuery::operator<<(const std::vector<uint8_t> blob) {
   return *this;
 }
 
-DatabaseQuery &DatabaseQuery::operator<<(std::nullptr_t nullp) {
+SQLQuery &SQLQuery::operator<<(std::nullptr_t nullp) {
   (void)nullp;
   validate();
 
@@ -165,18 +165,18 @@ DatabaseQuery &DatabaseQuery::operator<<(std::nullptr_t nullp) {
   return *this;
 }
 
-DatabaseQuery::iterator DatabaseQuery::execute(void) {
+SQLQuery::iterator SQLQuery::execute(void) {
   validate();
   assert(allBindingsPopulated() &&
          "Cannot execute query with unbound parameters");
   return iterator(m_db, *this);
 }
 
-bool DatabaseQuery::allBindingsPopulated(void) const {
+bool SQLQuery::allBindingsPopulated(void) const {
   return m_curr_param == m_param_types.size();
 }
 
-void DatabaseQuery::clearAllBindings(void) {
+void SQLQuery::clearAllBindings(void) {
   validate();
 
   int res = sqlite3_clear_bindings(m_stmt);
@@ -189,14 +189,14 @@ void DatabaseQuery::clearAllBindings(void) {
   m_curr_param = 0;
 }
 
-void DatabaseQuery::unlockQuery(void) { m_is_locked = false; }
+void SQLQuery::unlockQuery(void) { m_is_locked = false; }
 
-sqlite3_stmt &DatabaseQuery::lockQuery(void) {
+sqlite3_stmt &SQLQuery::lockQuery(void) {
   m_is_locked = true;
   return *m_stmt;
 }
 
-void DatabaseQuery::validate(void) const {
+void SQLQuery::validate(void) const {
   assert(m_is_init && "Query is uninitialized");
 
   if (m_param_types.size() != 0) {
@@ -210,14 +210,14 @@ void DatabaseQuery::validate(void) const {
 
 //===----------------------- Database query builder -----------------------===//
 
-DatabaseQueryBuilder::DatabaseQueryBuilder(sqlite3 &db)
+SQLQueryBuilder::SQLQueryBuilder(sqlite3 &db)
     : m_db(db), m_last_input_was_string(false), m_substrs(), m_params() {}
 
-DatabaseQueryBuilder::operator DatabaseQuery(void) {
-  return DatabaseQuery(m_db, m_substrs, m_params);
+SQLQueryBuilder::operator SQLQuery(void) {
+  return SQLQuery(m_db, m_substrs, m_params);
 }
 
-DatabaseQueryBuilder &DatabaseQueryBuilder::operator<<(std::string str) {
+SQLQueryBuilder &SQLQueryBuilder::operator<<(std::string str) {
   if (m_last_input_was_string) {
     assert(m_substrs.size() > 0);
     m_substrs.back() = m_substrs.back() + str;
@@ -228,7 +228,7 @@ DatabaseQueryBuilder &DatabaseQueryBuilder::operator<<(std::string str) {
   return *this;
 }
 
-DatabaseQueryBuilder &DatabaseQueryBuilder::operator<<(QueryParamType param) {
+SQLQueryBuilder &SQLQueryBuilder::operator<<(SQLType param) {
   if (m_last_input_was_string) {
     m_params.push_back(param);
   } else {
@@ -241,7 +241,7 @@ DatabaseQueryBuilder &DatabaseQueryBuilder::operator<<(QueryParamType param) {
 
 //===----------------------- Database query iterator ----------------------===//
 
-DatabaseQueryIterator::~DatabaseQueryIterator(void) {
+SQLQueryIterator::~SQLQueryIterator(void) {
   if (m_query && m_stmt) {
     validate();
 
@@ -255,20 +255,20 @@ DatabaseQueryIterator::~DatabaseQueryIterator(void) {
   }
 }
 
-DatabaseQueryIterator::DatabaseQueryIterator(DatabaseQueryIterator &&other)
+SQLQueryIterator::SQLQueryIterator(SQLQueryIterator &&other)
     : m_done(std::move(other.m_done)), m_db(other.m_db),
       m_query(std::move(other.m_query)), m_stmt(std::move(other.m_stmt)) {
   other.m_query = nullptr;
   other.m_stmt = nullptr;
 }
 
-DatabaseQueryIterator::DatabaseQueryIterator(sqlite3 &db, DatabaseQuery &query)
+SQLQueryIterator::SQLQueryIterator(sqlite3 &db, SQLQuery &query)
     : m_done(false), m_db(db), m_query(&query), m_stmt(&query.lockQuery()) {
   *this = next();
 }
 
-DatabaseQueryIterator &DatabaseQueryIterator::
-operator=(DatabaseQueryIterator &&other) {
+SQLQueryIterator &SQLQueryIterator::
+operator=(SQLQueryIterator &&other) {
   m_done = std::move(other.m_done);
   m_query = std::move(other.m_query);
   m_stmt = std::move(other.m_stmt);
@@ -278,7 +278,7 @@ operator=(DatabaseQueryIterator &&other) {
   return *this;
 }
 
-void DatabaseQueryIterator::restart(void) {
+void SQLQueryIterator::restart(void) {
   validate();
 
   int res = sqlite3_reset(m_stmt);
@@ -288,7 +288,7 @@ void DatabaseQueryIterator::restart(void) {
   *this = next();
 }
 
-DatabaseQueryIterator DatabaseQueryIterator::next(void) {
+SQLQueryIterator SQLQueryIterator::next(void) {
   validate();
   assert(!done() && "Cannot continue execution, no more results");
 
@@ -307,17 +307,17 @@ DatabaseQueryIterator DatabaseQueryIterator::next(void) {
   return std::move(*this);
 }
 
-void DatabaseQueryIterator::assertDone() const {
+void SQLQueryIterator::assertDone() const {
   assert(done() && "Query execution incomplete!");
 }
 
-bool DatabaseQueryIterator::done() const { return m_done; }
+bool SQLQueryIterator::done() const { return m_done; }
 
-int DatabaseQueryIterator::numColumns(void) {
+int SQLQueryIterator::numColumns(void) {
   return sqlite3_data_count(m_stmt);
 }
 
-bool DatabaseQueryIterator::isNull(int index) {
+bool SQLQueryIterator::isNull(int index) {
   validate();
   assert(!done());
   assert(index < numColumns());
@@ -325,7 +325,7 @@ bool DatabaseQueryIterator::isNull(int index) {
   return sqlite3_column_type(m_stmt, index) == SQLITE_NULL;
 }
 
-std::vector<uint8_t> DatabaseQueryIterator::getBlob(int index) {
+std::vector<uint8_t> SQLQueryIterator::getBlob(int index) {
   validate();
   assert(!done());
   assert(index < numColumns());
@@ -344,7 +344,7 @@ std::vector<uint8_t> DatabaseQueryIterator::getBlob(int index) {
   return blob;
 }
 
-std::string DatabaseQueryIterator::getText(int index) {
+std::string SQLQueryIterator::getText(int index) {
   validate();
   assert(!done());
   assert(index < numColumns());
@@ -354,7 +354,7 @@ std::string DatabaseQueryIterator::getText(int index) {
   return std::string(reinterpret_cast<const char *>(text));
 }
 
-int64_t DatabaseQueryIterator::getInteger(int index) {
+int64_t SQLQueryIterator::getInteger(int index) {
   validate();
   assert(!done());
   assert(index < numColumns());
@@ -363,7 +363,7 @@ int64_t DatabaseQueryIterator::getInteger(int index) {
   return sqlite3_column_int64(m_stmt, index);
 }
 
-void DatabaseQueryIterator::validate(void) {
+void SQLQueryIterator::validate(void) {
   assert(m_stmt && "Iterator has been moved");
   assert(m_query && "Query has been moved");
 }

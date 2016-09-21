@@ -27,9 +27,9 @@
 #ifndef MAGEEC_DATABASE_H
 #define MAGEEC_DATABASE_H
 
-#include "mageec/DatabaseQuery.h"
 #include "mageec/AttributeSet.h"
 #include "mageec/Result.h"
+#include "mageec/SQLQuery.h"
 #include "mageec/TrainedML.h"
 #include "mageec/Types.h"
 #include "mageec/Util.h"
@@ -295,8 +295,8 @@ public:
 private:
   Database *m_db;
   std::string m_metric;
-  std::unique_ptr<DatabaseQuery> m_query;
-  std::unique_ptr<DatabaseQueryIterator> m_result_iter;
+  std::unique_ptr<SQLQuery> m_query;
+  std::unique_ptr<SQLQueryIterator> m_result_iter;
 };
 
 /// \class DatabaseTransaction
