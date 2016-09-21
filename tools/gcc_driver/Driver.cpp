@@ -1014,9 +1014,26 @@ static void printFrameworkVersion(mageec::Framework &framework) {
                       << '\n';
 }
 
-static mageec::util::Option<std::map<std::string, mageec::FeatureGroupID>>
-loadFeaturesFile(std::string features_path) {
-  std::map<std::string, mageec::FeatureGroupID> file_to_features;
+
+struct FeatureIDEntry {
+  std::string            name;
+  mageec::FeatureGroupID id;
+
+  bool operator<(const FeatureIDEntry &other) const {
+    if (name < other.name)
+      return true;
+    if (id < other.id)
+      return true;
+    return false;
+  }
+};
+struct FileFeatureIDs {
+  mageec::util::Option<FeatureIDEntry> module;
+  std::set<FeatureIDEntry>             functions;
+};
+static mageec::util::Option<std::map<std::string, FileFeatureIDs>>
+loadFeatureIDs(std::string features_path) {
+  std::map<std::string, FileFeatureIDs> file_to_features;
 
   std::ifstream features_file(features_path);
   if (!features_file.is_open()) {
@@ -1030,16 +1047,13 @@ loadFeaturesFile(std::string features_path) {
     std::vector<std::string> values = splitString(line, ',');
     if (values.size() != 5)
       continue;
-    if ((values[1] != "module") || (values[3] != "features"))
+    if ((values[1] != "module") && (values[1] != "function"))
+      continue;
+    if (values[3] != "features")
       continue;
     if (!values[0].size() || !values[2].size() || !values[4].size())
       continue;
 
-    // store the mapping from the source file name to the feature group
-    std::string file_path = values[0];
-    if (file_to_features.count(file_path)) {
-      MAGEEC_WARN("Multiple module feature entries for file: " << file_path);
-    }
     std::stringstream feat_id_str(values[4]);
     uint64_t feat_id;
     feat_id_str >> feat_id;
@@ -1048,7 +1062,25 @@ loadFeaturesFile(std::string features_path) {
       return nullptr;
     }
 
-    file_to_features[file_path] = static_cast<mageec::FeatureGroupID>(feat_id);
+    // Entry to be inserted into the map
+    FeatureIDEntry entry = { values[2],
+                             static_cast<mageec::FeatureGroupID>(feat_id) };
+
+    FileFeatureIDs &file_entry = file_to_features[values[0]];
+    if (values[1] == "module") {
+      if (file_entry.module) {
+        MAGEEC_WARN("Multiple module feature entries for module: "
+            << entry.name);
+      }
+      file_entry.module = entry;
+    } else {
+      assert(values[1] == "function");
+      if (file_entry.functions.count(entry)) {
+        MAGEEC_WARN("Multiple function feature entries for function: "
+            << entry.name);
+      }
+      file_entry.functions.insert(entry);
+    }
   }
   return file_to_features;
 }
@@ -1355,7 +1387,7 @@ int main(int argc, const char *argv[]) {
 
   // Mapping source files to feature groups and parameter sets
   std::map<std::string, mageec::ParameterSetID> input_file_params;
-  std::map<std::string, mageec::FeatureGroupID> input_file_features;
+  std::map<std::string, FileFeatureIDs>         input_file_features;
 
   // Load the database
   assert((mode == DriverMode::kOptimize) || (mode == DriverMode::kGather));
@@ -1367,7 +1399,7 @@ int main(int argc, const char *argv[]) {
   }
 
   // Load the features file to get the feature groups
-  auto feature_groups = loadFeaturesFile(features_path);
+  auto feature_groups = loadFeatureIDs(features_path);
   if (!feature_groups) {
     MAGEEC_ERR("Failed to retrieve feature groups from features file");
     return -1;
@@ -1525,20 +1557,23 @@ int main(int argc, const char *argv[]) {
     // If there are no features found for a file, then use the original
     // command with the file appended as an input.
     for (auto file : input_files) {
-      auto feature_group_id = input_file_features.find(file);
-      if (feature_group_id == input_file_features.end()) {
+      auto file_feature_ids = input_file_features.find(file);
+      if (file_feature_ids == input_file_features.end()) {
         std::vector<std::string> file_cmd = command_args;
         file_cmd.push_back(file);
         input_file_commands[file] = file_cmd;
         continue;
       }
 
-      // Generate a parameter set based on the features of the file
+      // Generate a parameter set based on the features of the module in the
+      // file.
       //
       // Use the original parameter configuration provided on the command line
       // as the base set of flags. If a parameter value is not overridden by
       // mageec then this will form the 'native' decision.
-      mageec::FeatureSet features = db->getFeatures(feature_group_id->second);
+      assert(file_feature_ids->second.module);
+      auto feature_group_id = file_feature_ids->second.module.get().id;
+      mageec::FeatureSet features = db->getFeatures(feature_group_id);
       assert(features.size() != 0);
 
       for (unsigned i = FlagParameterID::kFIRST_FLAG_PARAMETER;
@@ -1633,23 +1668,42 @@ int main(int argc, const char *argv[]) {
     return -1;
   }
   for (auto file : input_files) {
-    auto feature_group_id = input_file_features.find(file);
+    auto file_feature_ids = input_file_features.find(file);
     auto parameter_set_id = input_file_params.find(file);
 
     // If there were no features for this file, then parameters would not have
     // been derived and there will be no compilation id
-    if (feature_group_id == input_file_features.end())
+    if (file_feature_ids == input_file_features.end()) {
       continue;
+    }
     assert(parameter_set_id != input_file_params.end());
 
+    // Generate a compilation id for the module
     // Append the generated compilation ids to the output file
-    auto compilation = db->newCompilation(file, "module",
-                                          feature_group_id->second,
-                                          parameter_set_id->second, nullptr);
+    assert(file_feature_ids->second.module);
+    auto module_entry = file_feature_ids->second.module.get();
+    auto module_compilation = db->newCompilation(module_entry.name, "module",
+                                                 module_entry.id,
+                                                 parameter_set_id->second,
+                                                 nullptr);
 
     // TODO: Avoid static_cast here
-    uint64_t tmp = static_cast<uint64_t>(compilation);
-    out_file << file << ",module," << file << ",compilation," << tmp << "\n";
+    uint64_t tmp = static_cast<uint64_t>(module_compilation);
+    out_file << file << ",module," << module_entry.name
+                     << ",compilation," << tmp << "\n";
+
+    // Generate a compilation id for each of the functions in the module.
+    for (auto function_entry : file_feature_ids->second.functions) {
+      auto function_compilation = db->newCompilation(function_entry.name,
+                                                     "function",
+                                                     function_entry.id,
+                                                     parameter_set_id->second,
+                                                     module_compilation);
+      // TODO: Avoid static cast here
+      tmp = static_cast<uint64_t>(function_compilation);
+      out_file << file << ",function," << function_entry.name
+                       << ",compilation," << tmp << "\n";
+    }
   }
   return 0;
 }
