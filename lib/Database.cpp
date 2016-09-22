@@ -256,7 +256,7 @@ Database::~Database(void) {
 
 void Database::init_db(sqlite3 &db) {
   // Create the entire database in a single transaction
-  DatabaseTransaction db_transaction(&db);
+  SQLTransaction transaction(&db);
   MAGEEC_DEBUG("Creating database tables");
 
   // Create table to hold database metadata
@@ -298,7 +298,7 @@ void Database::init_db(sqlite3 &db) {
 
   // Finish this transaction before setting metadata (which may create its
   // own transactions.
-  db_transaction.commit();
+  transaction.commit();
 
   // Add other metadata now that the database is in a valid state
   // setMetadata();
@@ -446,7 +446,7 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
       // No feature set matching this id has been found, so insert the
       // features into the database.
       // Whole operation in a single transaction
-      DatabaseTransaction db_transaction(m_db);
+      SQLTransaction transaction(m_db);
       for (auto I : features) {
         // clear feature bindings for all queries
         insert_feature_type.clearAllBindings();
@@ -478,7 +478,7 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
         insert_feature_debug.exec().assertDone();
       }
       feature_set_id_found = true;
-      db_transaction.commit();
+      transaction.commit();
     }
   }
   return feature_set_id;
@@ -505,7 +505,7 @@ FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
   FeatureGroupID group_id = static_cast<FeatureGroupID>(tmp_id);
 
   // Whole operation in a single transaction
-  DatabaseTransaction db_transaction(m_db);
+  SQLTransaction transaction(m_db);
 
   // Check for a feature group with this id in the database.
   // If there is, but the feature set ids don't match, then keep trying the
@@ -544,7 +544,7 @@ FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
       group_id_found = true;
     }
   }
-  db_transaction.commit();
+  transaction.commit();
   return group_id;
 }
 
@@ -560,7 +560,7 @@ FeatureSet Database::getFeatureSetFeatures(FeatureSetID feature_set) {
            "AND FeatureSetFeature.feature_set_id = " << SQLType::kInteger;
 
   // Perform in a single transaction
-  DatabaseTransaction db_transaction(m_db);
+  SQLTransaction transaction(m_db);
 
   // Retrieve the features
   FeatureSet features;
@@ -585,7 +585,7 @@ FeatureSet Database::getFeatureSetFeatures(FeatureSetID feature_set) {
       break;
     }
   }
-  db_transaction.commit();
+  transaction.commit();
   return features;
 }
 
@@ -603,7 +603,7 @@ FeatureSet Database::getFeatureGroupFeatures(FeatureGroupID feature_group) {
            "AND FeatureGroupSet.feature_group_id = " << SQLType::kInteger;
 
   // Perform in a single transaction
-  DatabaseTransaction db_transaction(m_db);
+  SQLTransaction transaction(m_db);
 
   // Retrieve the features
   FeatureSet features;
@@ -628,7 +628,7 @@ FeatureSet Database::getFeatureGroupFeatures(FeatureGroupID feature_group) {
       break;
     }
   }
-  db_transaction.commit();
+  transaction.commit();
   return features;
 }
 
@@ -645,7 +645,7 @@ ParameterSet Database::getParameters(ParameterSetID param_set) {
            "AND ParameterSetParameter.parameter_set_id = " << SQLType::kInteger;
 
   // Perform in a single transaction
-  DatabaseTransaction db_transaction(m_db);
+  SQLTransaction transaction(m_db);
 
   // Retrieve parameters
   ParameterSet parameters;
@@ -672,7 +672,7 @@ ParameterSet Database::getParameters(ParameterSetID param_set) {
       break;
     }
   }
-  db_transaction.commit();
+  transaction.commit();
   return parameters;
 }
 
@@ -699,7 +699,7 @@ CompilationID Database::newCompilation(std::string name, std::string type,
                    << SQLType::kInteger << ")";
 
   // add in a single transaction
-  DatabaseTransaction db_transaction(m_db);
+  SQLTransaction transaction(m_db);
 
   // Add the compilation
   insert_into_compilation << static_cast<int64_t>(features)
@@ -727,7 +727,7 @@ CompilationID Database::newCompilation(std::string name, std::string type,
   }
   insert_compilation_debug.exec().assertDone();
 
-  db_transaction.commit();
+  transaction.commit();
   return compilation_id;
 }
 
@@ -783,7 +783,7 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
     } else {
       // Insert the new parameter set
       // Whole operation in a single transaction
-      DatabaseTransaction db_transaction(m_db);
+      SQLTransaction transaction(m_db);
       for (auto I : parameters) {
         // clear parameters bindings for all queries
         insert_parameter_type.clearAllBindings();
@@ -814,7 +814,7 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
         insert_parameter_debug.exec().assertDone();
       }
       param_set_id_found = true;
-      db_transaction.commit();
+      transaction.commit();
     }
   }
   return param_set_id;
@@ -830,7 +830,7 @@ void Database::addResults(std::set<InputResult> results) {
                    << SQLType::kInteger << ")";
 
   // All results in a single transaction
-  DatabaseTransaction db_transaction(m_db);
+  SQLTransaction transaction(m_db);
 
   for (const auto &res : results) {
     insert_result.clearAllBindings();
@@ -840,7 +840,7 @@ void Database::addResults(std::set<InputResult> results) {
     // FIXME: This will trigger an assertion if the compilation id fails
     // the foreign key constraint.
   }
-  db_transaction.commit();
+  transaction.commit();
 }
 
 //===----------------------- Training interface ---------------------------===//
@@ -876,7 +876,7 @@ void Database::trainMachineLearner(util::UUID ml, std::string metric) {
   const IMachineLearner &i_ml = *res->second;
 
   // Collect all information in a single transaction
-  DatabaseTransaction db_transaction(m_db);
+  SQLTransaction transaction(m_db);
 
   std::set<FeatureDesc> feature_descs;
   std::set<ParameterDesc> parameter_descs;
@@ -915,7 +915,7 @@ void Database::trainMachineLearner(util::UUID ml, std::string metric) {
     }
     pass_names.insert(pass);
   }
-  db_transaction.commit();
+  transaction.commit();
 
   // Iterator to select each set of results in turn
   ResultIterator results(*this, *m_db, metric);
@@ -1003,21 +1003,21 @@ ResultIterator ResultIterator::next() {
   }
 }
 
-DatabaseTransaction::DatabaseTransaction(sqlite3 *db)
+SQLTransaction::SQLTransaction(sqlite3 *db)
     : m_is_committed(false), m_db(db) {
   SQLQuery start_transaction(*m_db, "BEGIN TRANSACTION");
   start_transaction.exec().assertDone();
   m_is_init = true;
 }
 
-DatabaseTransaction::~DatabaseTransaction() {
+SQLTransaction::~SQLTransaction() {
   if (m_is_init && !m_is_committed) {
     SQLQuery rollback_transaction(*m_db, "ROLLBACK");
     rollback_transaction.exec().assertDone();
   }
 }
 
-DatabaseTransaction::DatabaseTransaction(DatabaseTransaction &&other)
+SQLTransaction::SQLTransaction(SQLTransaction &&other)
     : m_is_committed(std::move(other.m_is_committed)),
       m_db(std::move(other.m_db)) {
   assert(other.m_is_init && "Cannot move from a transaction which has already "
@@ -1026,8 +1026,8 @@ DatabaseTransaction::DatabaseTransaction(DatabaseTransaction &&other)
   m_is_init = true;
 }
 
-DatabaseTransaction &DatabaseTransaction::
-operator=(DatabaseTransaction &&other) {
+SQLTransaction &SQLTransaction::
+operator=(SQLTransaction &&other) {
   assert(other.m_is_init && "Cannot move from a transaction which has already "
                             "been moved");
 
@@ -1039,7 +1039,7 @@ operator=(DatabaseTransaction &&other) {
   return *this;
 }
 
-void DatabaseTransaction::commit() {
+void SQLTransaction::commit() {
   assert(m_is_init && "Transaction has been moved");
   assert(!m_is_committed && "Transaction has already been committed");
 

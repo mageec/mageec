@@ -299,21 +299,21 @@ private:
   std::unique_ptr<SQLQueryIterator> m_result_iter;
 };
 
-/// \class DatabaseTransaction
+/// \class SQLTransaction
 ///
 /// This is a wrapper around a transaction, which rolls back a transaction
 /// if it is destroyed before it has been explicitly committed.
-class DatabaseTransaction {
+class SQLTransaction {
 public:
-  DatabaseTransaction() = delete;
-  ~DatabaseTransaction();
+  SQLTransaction() = delete;
+  ~SQLTransaction();
 
-  DatabaseTransaction(sqlite3 *db);
-  DatabaseTransaction(const DatabaseTransaction &other) = delete;
-  DatabaseTransaction(DatabaseTransaction &&other);
+  SQLTransaction(sqlite3 *db);
+  SQLTransaction(const SQLTransaction &other) = delete;
+  SQLTransaction(SQLTransaction &&other);
 
-  DatabaseTransaction &operator=(const DatabaseTransaction &other) = delete;
-  DatabaseTransaction &operator=(DatabaseTransaction &&other);
+  SQLTransaction &operator=(const SQLTransaction &other) = delete;
+  SQLTransaction &operator=(SQLTransaction &&other);
 
   /// \brief Commit the transaction
   ///
