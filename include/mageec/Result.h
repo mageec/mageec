@@ -45,10 +45,10 @@ public:
   Result() = delete;
 
   /// \brief Get the features of the program unit
-  FeatureSet getFeatures(void) const { return m_features; }
+  const FeatureSet& getFeatures(void) const { return m_features; }
 
   /// \brief Get the parameters of the compilation
-  ParameterSet getParameters(void) const { return m_parameters; }
+  const ParameterSet& getParameters(void) const { return m_parameters; }
 
   /// \brief Get the numerical value of the result
   uint64_t getValue(void) const { return m_value; }

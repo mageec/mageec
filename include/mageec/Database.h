@@ -163,11 +163,17 @@ public:
   /// \return The identifier of the feature group in the database
   FeatureGroupID newFeatureGroup(std::set<FeatureSetID> group);
 
+  /// \brief Retrieve the provided set of features
+  ///
+  /// \param feature_set_id  The id of the set of features to be extracted
+  /// \return The corresponding features
+  FeatureSet getFeatureSetFeatures(FeatureSetID feature_set_id);
+
   /// \brief Retrieve the provided group of features in a single FeatureSet
   ///
   /// \param feature_group_id  The id of the group of features to be extracted
   /// \return The features in that group in a single feature set
-  FeatureSet getFeatures(FeatureGroupID feature_group_id);
+  FeatureSet getFeatureGroupFeatures(FeatureGroupID feature_group_id);
 
   /// \brief Retrieve the provided set of parameters in a ParameterSet
   ///

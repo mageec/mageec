@@ -424,61 +424,31 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
       << "INSERT OR IGNORE INTO FeatureDebug(feature_type_id, name) "
          "VALUES (" << SQLType::kInteger << ", " << SQLType::kText << ")";
 
-  // Sort the feature in the feature set using a map, then serialize to a
-  // a blob and hash. The hash forms the identifier for the feature set
-  // in the database.
-  std::map<unsigned, std::vector<uint8_t>> feature_map;
-  for (auto I : features) {
-    feature_map[I->getID()] = I->toBlob();
-  }
-  std::vector<uint8_t> blob;
-  for (auto I : feature_map) {
-    util::write16LE(blob, I.first);
-    blob.insert(blob.end(), I.second.begin(), I.second.end());
-  }
-  FeatureSetID feature_set_id = static_cast<FeatureSetID>(
-      util::crc64(blob.data(), static_cast<unsigned>(blob.size())));
+  // The hash of the feature set forms its identifier in the database
+  FeatureSetID feature_set_id = static_cast<FeatureSetID>(features.hash());
 
-  // Whole operation in a single transaction
-  DatabaseTransaction db_transaction(m_db);
-
-  // Check if there is already a feature set with this id in the database.
-  // If there is, but the feature sets don't actually match, then keep trying
-  // the next consecutive id until either the matching feature set is found,
-  // or no set is found (signifying that it needs to be created)
-  bool feature_id_found = false;
-  while (!feature_id_found) {
-    // Check if there is already a feature set with this id in the database.
+  
+  bool feature_set_id_found = false;
+  while (!feature_set_id_found) {
     get_features.clearAllBindings();
     get_features << static_cast<int64_t>(feature_set_id);
 
-    auto feat_iter = get_features.exec();
-    if (!feat_iter.done()) {
-      // The feature set already exists. Extract the set into a map to
-      // compare to the one we hashed.
-      std::map<unsigned, std::vector<uint8_t>> db_feature_map;
-      for (; !feat_iter.done(); feat_iter = feat_iter.next()) {
-        unsigned feat_type_id = static_cast<unsigned>(feat_iter.getInteger(0));
-        std::vector<uint8_t> feat_blob = feat_iter.getBlob(1);
-
-        db_feature_map[feat_type_id] = feat_blob;
-      }
-      // Compare the sets
-      if ((db_feature_map.size() != feature_map.size()) ||
-          !std::equal(feature_map.begin(), feature_map.end(),
-                      db_feature_map.begin())) {
-        // We have a hash collision, compare against the next consecutive
-        // feature set
+    auto feature_iter = get_features.exec();
+    if (!feature_iter.done()) {
+      // feature set already exists. Get the set and compare
+      if (features == getFeatureSetFeatures(feature_set_id)) {
+        feature_set_id_found = true;
+      } else {
         mageec::ID tmp = static_cast<mageec::ID>(feature_set_id);
         feature_set_id = static_cast<FeatureSetID>(tmp + 1);
-      } else {
-        feature_id_found = true;
       }
     } else {
       // No feature set matching this id has been found, so insert the
       // features into the database.
+      // Whole operation in a single transaction
+      DatabaseTransaction db_transaction(m_db);
       for (auto I : features) {
-        // clear parameters bindings for all queries
+        // clear feature bindings for all queries
         insert_feature_type.clearAllBindings();
         insert_feature.clearAllBindings();
         insert_into_feature_set.clearAllBindings();
@@ -507,10 +477,10 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
                              << I->getName();
         insert_feature_debug.exec().assertDone();
       }
-      feature_id_found = true;
+      feature_set_id_found = true;
+      db_transaction.commit();
     }
   }
-  db_transaction.commit();
   return feature_set_id;
 }
 
@@ -558,7 +528,6 @@ FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
       }
       if ((db_group.size() != group.size()) ||
           !std::equal(group.begin(), group.end(), db_group.begin())) {
-        // Hash collision, compare against the next consecutive group
         mageec::ID tmp = static_cast<mageec::ID>(group_id);
         group_id = static_cast<FeatureGroupID>(tmp + 1);
       } else {
@@ -579,7 +548,48 @@ FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
   return group_id;
 }
 
-FeatureSet Database::getFeatures(FeatureGroupID feature_group) {
+FeatureSet Database::getFeatureSetFeatures(FeatureSetID feature_set) {
+  // Get all of the features in a feature set
+  SQLQuery select_features =
+      SQLQueryBuilder(*m_db)
+      << "SELECT FeatureInstance.feature_type_id, FeatureType.feature_type, "
+                "FeatureInstance.value "
+         "FROM FeatureInstance, FeatureType, FeatureSetFeature "
+         "WHERE FeatureInstance.feature_id = FeatureSetFeature.feature_id "
+           "AND FeatureType.feature_type_id = FeatureInstance.feature_type_id "
+           "AND FeatureSetFeature.feature_set_id = " << SQLType::kInteger;
+
+  // Perform in a single transaction
+  DatabaseTransaction db_transaction(m_db);
+
+  // Retrieve the features
+  FeatureSet features;
+  select_features << static_cast<int64_t>(feature_set);
+  for (auto feature_iter = select_features.exec(); !feature_iter.done();
+       feature_iter = feature_iter.next()) {
+    assert(feature_iter.numColumns() == 3);
+
+    unsigned feature_type_id =
+        static_cast<unsigned>(feature_iter.getInteger(0));
+    FeatureType feature_type =
+        static_cast<FeatureType>(feature_iter.getInteger(1));
+    auto feature_blob = feature_iter.getBlob(2);
+
+    // TODO: Also retrieve feature names
+    switch (feature_type) {
+    case FeatureType::kBool:
+      features.add(BoolFeature::fromBlob(feature_type_id, feature_blob, {}));
+      break;
+    case FeatureType::kInt:
+      features.add(IntFeature::fromBlob(feature_type_id, feature_blob, {}));
+      break;
+    }
+  }
+  db_transaction.commit();
+  return features;
+}
+
+FeatureSet Database::getFeatureGroupFeatures(FeatureGroupID feature_group) {
   // Get all of the features in a feature group
   SQLQuery select_features =
       SQLQueryBuilder(*m_db)
@@ -752,57 +762,28 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
       << "INSERT OR IGNORE INTO ParameterDebug(parameter_type_id, name) "
          "VALUES (" << SQLType::kInteger << ", " << SQLType::kText << ")";
 
-  // Sort the parameter in the parameter set using a map, then serialize to a
-  // a blob and hash. The hash forms the identifier for the parameter set
-  // in the database.
-  std::map<unsigned, std::vector<uint8_t>> param_map;
-  for (auto I : parameters) {
-    param_map[I->getID()] = I->toBlob();
-  }
-  std::vector<uint8_t> blob;
-  for (auto I : param_map) {
-    util::write16LE(blob, I.first);
-    blob.insert(blob.end(), I.second.begin(), I.second.end());
-  }
-  mageec::ID tmp_id =
-      util::crc64(blob.data(), static_cast<unsigned>(blob.size()));
-  ParameterSetID param_set_id = static_cast<ParameterSetID>(tmp_id);
+  // The hash of the parameter set forms its identifier in the database
+  ParameterSetID param_set_id = static_cast<ParameterSetID>(parameters.hash());
 
-  // Whole operation in a single transaction
-  DatabaseTransaction db_transaction(m_db);
-
-  // Check if there is already a parameter set with this id in the database.
-  // If there is, but the feature sets don't actually match, then keep trying
-  // the next consecutive id until either the matching parameter set is found,
-  // or no set is found.
   bool param_set_id_found = false;
   while (!param_set_id_found) {
-    // Check if there is already a parameter set with this id in the database.
     get_parameters.clearAllBindings();
     get_parameters << static_cast<int64_t>(param_set_id);
 
     auto param_iter = get_parameters.exec();
     if (!param_iter.done()) {
-      // Parameter set already exists. Extract the set to compare against the
-      // one we hashed.
-      std::map<unsigned, std::vector<uint8_t>> db_param_map;
-      for (; !param_iter.done(); param_iter = param_iter.next()) {
-        unsigned param_id = static_cast<unsigned>(param_iter.getInteger(0));
-        std::vector<uint8_t> param_blob = param_iter.getBlob(1);
-
-        db_param_map[param_id] = param_blob;
-      }
-      if ((param_map.size() != db_param_map.size()) ||
-          !std::equal(param_map.begin(), param_map.end(),
-                      db_param_map.begin())) {
-        // We have a hash collision, compare against the next consecutive
-        // parameter set
+      // parameter set already exists. Get the set and compare
+      ParameterSet other_parameters = getParameters(param_set_id);
+      if (parameters == getParameters(param_set_id)) {
+        param_set_id_found = true;
+      } else {
         mageec::ID tmp = static_cast<mageec::ID>(param_set_id);
         param_set_id = static_cast<ParameterSetID>(tmp + 1);
-      } else {
-        param_set_id_found = true;
       }
     } else {
+      // Insert the new parameter set
+      // Whole operation in a single transaction
+      DatabaseTransaction db_transaction(m_db);
       for (auto I : parameters) {
         // clear parameters bindings for all queries
         insert_parameter_type.clearAllBindings();
@@ -833,9 +814,9 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
         insert_parameter_debug.exec().assertDone();
       }
       param_set_id_found = true;
+      db_transaction.commit();
     }
   }
-  db_transaction.commit();
   return param_set_id;
 }
 
@@ -1000,7 +981,7 @@ util::Option<Result> ResultIterator::operator*() {
 
   auto feature_group =
       static_cast<FeatureGroupID>(m_result_iter->getInteger(0));
-  features = m_db->getFeatures(feature_group);
+  features = m_db->getFeatureGroupFeatures(feature_group);
   assert(features.size() != 0);
 
   if (!m_result_iter->isNull(1)) {

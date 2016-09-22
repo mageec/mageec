@@ -1,3 +1,24 @@
+2016-09-22  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/AttributeSet.h (AttributeSet::hash)
+	(AttributeSet::operator< AttributeSet::operator==)
+	(AttributeSet::operator!= AttributeSet::compare): Add functions.
+	* include/mageec/Database.h (Database::getFeatures): Replace with
+	Database::getFeatureGroupFeatures.
+	(Database::getFeatureSetFeatures): Added function.
+	(Database::getFeatureGroupFeatures): Likewise.
+	* include/mageec/Result.h (Result::getFeatures)
+	(Result::getParameters): Return by const reference instead of
+	by-value.
+	* lib/Database.cpp (Database::newFeatureSet): Refactor to rely
+	on AttributeSet hashing and comparison functionality.
+	(Database::newParameterSet): Likewise.
+	(Database::getFeatures): Replace with Database::getFeatureSetFeatures
+	(Database::getFeatureSetFeatures)
+	(Database::getFeatureGroupFeatures): Add functions.
+	* lib/C5.cpp (C5Driver::train): Refactor to rely on AttributeSet
+	hashing and comparison functionality.
+
 2016-09-21  Edward Jones  <ed.jones@embecosm.com>
 
 	* lib/Database.cpp: Store command for compilation in the database.

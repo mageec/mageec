@@ -92,56 +92,6 @@ enum class C5BlobField {
   kPassClassifierTree
 };
 
-/// \brief Comparator to sort results based on their constituent features
-///
-/// As the C5 learner only uses the best result for a given feature set, we
-/// need to be able to find common feature sets in the database. For now,
-/// we just do a brute force comparison of features.
-///
-/// FIXME: In the database, the FeatureGroupID and FeatureSetID *almost*
-/// uniquely identify a set of features. If we had that ID at this point,
-/// we would not have to do this expensive comparison.
-struct ResultFeatureComparator {
-  bool operator()(const Result &lhs, const Result &rhs) {
-    FeatureSet lhs_feats = lhs.getFeatures();
-    FeatureSet rhs_feats = rhs.getFeatures();
-
-    if (lhs_feats.size() < rhs_feats.size()) {
-      return true;
-    } else if (lhs_feats.size() > rhs_feats.size()) {
-      return false;
-    }
-
-    auto lhs_iter = lhs_feats.begin();
-    auto rhs_iter = rhs_feats.begin();
-    while (lhs_iter != lhs_feats.end()) {
-      unsigned lhs_id = (*lhs_iter)->getID();
-      unsigned rhs_id = (*rhs_iter)->getID();
-      if (lhs_id < rhs_id) {
-        return true;
-      } else if (lhs_id > rhs_id) {
-        return false;
-      }
-
-      std::vector<uint8_t> lhs_blob = (*lhs_iter)->toBlob();
-      std::vector<uint8_t> rhs_blob = (*rhs_iter)->toBlob();
-      if (lhs_blob.size() < rhs_blob.size()) {
-        return true;
-      } else if (lhs_blob.size() > rhs_blob.size()) {
-        return false;
-      }
-
-      if (lhs_blob < rhs_blob) {
-        return true;
-      }
-
-      lhs_iter++;
-      rhs_iter++;
-    }
-    return true;
-  }
-};
-
 } // end of anonymous namespace
 
 std::unique_ptr<C5Context>
@@ -467,20 +417,35 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
 
   MAGEEC_DEBUG("Training database using C5 Machine Learner");
 
-  // Read all of the results data in one go. We only store the best (lowest)
-  // result for each input set of features.
-  std::map<Result, uint64_t, ResultFeatureComparator> results;
-
+  // Read all of the results data in one go. For each distinct set of input
+  // features, store the best set of results. This is achieved by storing a
+  // hash from a feature set to its current best result.
   MAGEEC_DEBUG("Collecting results");
+  std::map<uint64_t, Result> result_map;
   for (util::Option<Result> result; (result = *result_iter);
        result_iter = result_iter.next()) {
-    Result res = result.get();
-    uint64_t value = res.getValue();
+    const FeatureSet &features = result.get().getFeatures();
+    uint64_t value = result.get().getValue();
+    uint64_t hash = features.hash();
 
-    auto curr_elem = results.insert(std::make_pair(res, value));
-    if (curr_elem.second == false) {
-      if (value < curr_elem.first->second) {
-        curr_elem.first->second = value;
+    bool result_handled = false;
+    while (!result_handled) {
+      auto curr_entry = result_map.find(hash);
+      if (curr_entry != result_map.end()) {
+        const FeatureSet &curr_features = curr_entry->second.getFeatures();
+        uint64_t curr_value = curr_entry->second.getValue();
+
+        if (features == curr_features) {
+          if (value < curr_value) {
+            result_map.at(hash) = result.get();
+          }
+          result_handled = true;
+        } else {
+          hash++;
+        }
+      } else {
+        result_map.at(hash) = result.get();
+        result_handled = true;
       }
     }
   }
@@ -498,7 +463,8 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
       continue;
     }
 
-    MAGEEC_DEBUG("Training parameter " << curr_param << " of " << param_count);
+    MAGEEC_DEBUG("Training parameter " << curr_param << " of "
+                 << param_count - 1);
     curr_param++;
 
     // Output names file (columns for classifier) for this parameter
@@ -552,9 +518,9 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
                                 ".data",
                             std::ofstream::binary);
 
-    for (auto res : results) {
-      ParameterSet parameters = res.first.getParameters();
-      FeatureSet features = res.first.getFeatures();
+    for (auto res : result_map) {
+      ParameterSet parameters = res.second.getParameters();
+      FeatureSet features = res.second.getFeatures();
 
       // Check that this result has an entry for this parameter. If not then
       // skip as we can't use it for training.
@@ -705,9 +671,9 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
     MAGEEC_DEBUG("Building .data file");
     std::ofstream data_file("/tmp/pass_" + pass + ".data",
                             std::ofstream::binary);
-    for (auto res : results) {
-      FeatureSet features = res.first.getFeatures();
-      ParameterSet parameters = res.first.getParameters();
+    for (auto res : result_map) {
+      FeatureSet features = res.second.getFeatures();
+      ParameterSet parameters = res.second.getParameters();
 
       // Find the parameter in the parameter set which holds the pass
       // sequence.

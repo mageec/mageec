@@ -26,6 +26,7 @@
 #define MAGEEC_ATTRIBUTE_SET_H
 
 #include "mageec/Attribute.h"
+#include "mageec/Util.h"
 
 #include <memory>
 #include <ostream>
@@ -84,9 +85,77 @@ public:
     }
   }
 
+  /// \brief Produce a 64-bit hash representing the attributes which make up
+  /// this set.
+  uint64_t hash() const {
+    std::vector<uint8_t> blob;
+    for (auto I : *this) {
+      std::vector<uint8_t> attr_blob = I->toBlob();
+      util::write16LE(blob, I->getID());
+      blob.insert(blob.end(), attr_blob.begin(), attr_blob.end());
+    }
+    return util::crc64(blob.data(), static_cast<unsigned>(blob.size()));
+  }
+
+  bool operator<(const AttributeSet &other) const {
+    return compare(other) < 0;
+  }
+  bool operator==(const AttributeSet &other) const {
+    return compare(other) == 0;
+  }
+  bool operator!=(const AttributeSet &other) const {
+    return compare(other) != 0;
+  }
+
 private:
-  std::set<std::shared_ptr<AttributeBase<TypeIDType>>, AttributeIDComparator>
-      m_attributes;
+  std::set<std::shared_ptr<AttributeBase<TypeIDType>>,
+           AttributeIDComparator> m_attributes;
+
+  /// \brief Compare the current AttributeSet against another
+  /// \return -1 if this < other, 0 if this == other, 1 if this > other
+  int compare(const AttributeSet &other) const {
+    if (size() < other.size())
+      return -1;
+    else if (size() > other.size())
+      return 1;
+
+    // Before checking the values of attribute, check the attribute identifiers
+    auto lhs_iter = begin();
+    auto rhs_iter = other.begin();
+    while (lhs_iter != end()) {
+      unsigned lhs_id = (*lhs_iter)->getID();
+      unsigned rhs_id = (*rhs_iter)->getID();
+      if (lhs_id < rhs_id)
+        return -1;
+      else if (lhs_id > rhs_id)
+        return 1;
+
+      ++lhs_iter;
+      ++rhs_iter;
+    }
+
+    // Now check attributes one by one. For now, we do the expensive thing and
+    // check the serialized blobs
+    lhs_iter = begin();
+    rhs_iter = other.begin();
+    while (lhs_iter != end()) {
+      std::vector<uint8_t> lhs_blob = (*lhs_iter)->toBlob();
+      std::vector<uint8_t> rhs_blob = (*rhs_iter)->toBlob();
+      if (lhs_blob.size() < rhs_blob.size())
+        return -1;
+      else if (lhs_blob.size() > rhs_blob.size())
+        return 1;
+
+      if (lhs_blob < rhs_blob)
+        return -1;
+      else if (lhs_blob > rhs_blob)
+        return 1;
+
+      ++lhs_iter;
+      ++rhs_iter;
+    }
+    return 0;
+  }
 };
 
 // Declare the different types of set that we may have.
