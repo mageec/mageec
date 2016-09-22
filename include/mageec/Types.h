@@ -46,8 +46,6 @@ enum class MetadataField : unsigned {
   kDatabaseVersion = 0
 };
 
-enum class Metric : TypeID { kCodeSize, kTime, kEnergy };
-
 enum class FeatureType : TypeID { kBool, kInt };
 
 enum class ParameterType : TypeID { kBool, kRange, kPassSeq };

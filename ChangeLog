@@ -1,5 +1,11 @@
 2016-09-22  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/Util.h (Metric): Remove type.
+	* include/mageec/Types.h (metricToString stringToMetric):
+	Remove functions.
+
+2016-09-22  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/AttributeSet.h (AttributeSet::dump): Added function.
 	* include/mageec/Framework.h (Framework::print)
 	(Framework::dump): Likewise.
