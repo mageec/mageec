@@ -1,5 +1,10 @@
 2016-09-22  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/ML/C5.cpp: Close the C5.0 .data file before C5 tries to use it.
+	Fix other bugs.
+
+2016-09-22  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/Database.cpp: Merge FeatureInstance table with
 	FeatureSetFeatures, and ParameterInstance table with
 	ParameterSetParameters.

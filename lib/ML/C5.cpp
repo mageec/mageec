@@ -424,7 +424,7 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
   std::map<uint64_t, Result> result_map;
   for (util::Option<Result> result; (result = *result_iter);
        result_iter = result_iter.next()) {
-    const FeatureSet &features = result.get().getFeatures();
+    FeatureSet features = result.get().getFeatures();
     uint64_t value = result.get().getValue();
     uint64_t hash = features.hash();
 
@@ -444,7 +444,7 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
           hash++;
         }
       } else {
-        result_map.at(hash) = result.get();
+        result_map.emplace(hash, result.get());
         result_handled = true;
       }
     }
@@ -586,13 +586,15 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
       }
       data_file << "\n";
     }
+    data_file.close();
 
     // Now we have .names and .data files, run the classifier over them to
     // generate a tree
     // TODO: Running command on windows?
-    MAGEEC_DEBUG("Running the C5.0 classifier");
     std::string command_str("c5.0 -f /tmp/parameter_" +
                             std::to_string(param.id));
+    MAGEEC_DEBUG("Running the C5.0 classifier: " << command_str);
+
     FILE *fpipe = popen(command_str.c_str(), "r");
     if (!fpipe) {
       assert(0 && "Process spawn failed!");
