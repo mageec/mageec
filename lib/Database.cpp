@@ -57,24 +57,17 @@ static const char *const create_metadata_table =
 // database feature table creation strings
 static const char *const create_feature_type_table =
     "CREATE TABLE FeatureType("
-    "feature_type_id INTEGER PRIMARY KEY, "
+    "feature_id INTEGER PRIMARY KEY, "
     "feature_type    INTEGER NOT NULL"
-    ")";
-
-static const char *const create_feature_instance_table =
-    "CREATE TABLE FeatureInstance("
-    "feature_id      INTEGER PRIMARY KEY, "
-    "feature_type_id INTEGER NOT NULL, "
-    "value           BLOB NOT NULL, "
-    "FOREIGN KEY(feature_type_id) REFERENCES FeatureType(feature_type_id)"
     ")";
 
 static const char *const create_feature_set_feature_table =
     "CREATE TABLE FeatureSetFeature("
-    "feature_set_id INTEGER NOT NULL, "
-    "feature_id     INTEGER NOT NULL, "
+    "feature_set_id  INTEGER NOT NULL, "
+    "feature_id INTEGER NOT NULL, "
+    "value           BLOB NOT NULL, "
     "UNIQUE(feature_set_id, feature_id), "
-    "FOREIGN KEY(feature_id) REFERENCES FeatureInstance(feature_id)"
+    "FOREIGN KEY(feature_id) REFERENCES FeatureType(feature_id)"
     ")";
 
 static const char *const create_feature_group_set_table =
@@ -87,24 +80,17 @@ static const char *const create_feature_group_set_table =
 // database parameter table creation strings
 static const char *const create_parameter_type_table =
     "CREATE TABLE ParameterType("
-    "parameter_type_id INTEGER PRIMARY KEY, "
+    "parameter_id INTEGER PRIMARY KEY, "
     "parameter_type    INTEGER NOT NULL"
-    ")";
-
-static const char *const create_parameter_instance_table =
-    "CREATE TABLE ParameterInstance("
-    "parameter_id      INTEGER PRIMARY KEY, "
-    "parameter_type_id INTEGER NOT NULL, "
-    "value             BLOB NOT NULL, "
-    "FOREIGN KEY(parameter_type_id) REFERENCES ParameterType(parameter_type_id)"
     ")";
 
 static const char *const create_parameter_set_parameter_table =
     "CREATE TABLE ParameterSetParameter("
-    "parameter_set_id INTEGER NOT NULL, "
-    "parameter_id     INTEGER NOT NULL, "
+    "parameter_set_id  INTEGER NOT NULL, "
+    "parameter_id INTEGER NOT NULL, "
+    "value             BLOB NOT NULL, "
     "UNIQUE(parameter_set_id, parameter_id), "
-    "FOREIGN KEY(parameter_id) REFERENCES ParameterInstance(parameter_id)"
+    "FOREIGN KEY(parameter_id) REFERENCES ParameterType(parameter_id)"
     ")";
 
 // compilation table creation strings
@@ -148,16 +134,16 @@ static const char *const create_program_unit_debug_table =
 
 static const char *const create_feature_debug_table =
     "CREATE TABLE FeatureDebug("
-    "feature_type_id INTEGER PRIMARY KEY, "
-    "name            TEXT NOT NULL, "
-    "FOREIGN KEY(feature_type_id) REFERENCES FeatureType(feature_type_id)"
+    "feature_id INTEGER PRIMARY KEY, "
+    "name       TEXT NOT NULL, "
+    "FOREIGN KEY(feature_id) REFERENCES FeatureType(feature_id)"
     ")";
 
 static const char *const create_parameter_debug_table =
     "CREATE TABLE ParameterDebug("
-    "parameter_type_id INTEGER PRIMARY KEY, "
+    "parameter_id INTEGER PRIMARY KEY, "
     "name              TEXT NOT NULL, "
-    "FOREIGN KEY(parameter_type_id) REFERENCES ParameterType(parameter_type_id)"
+    "FOREIGN KEY(parameter_id) REFERENCES ParameterType(parameter_id)"
     ")";
 
 //===-------------------- Database implementation -------------------------===//
@@ -264,13 +250,11 @@ void Database::init_db(sqlite3 &db) {
 
   // Create tables to hold features
   SQLQuery(db, create_feature_type_table).exec().assertDone();
-  SQLQuery(db, create_feature_instance_table).exec().assertDone();
   SQLQuery(db, create_feature_set_feature_table).exec().assertDone();
   SQLQuery(db, create_feature_group_set_table).exec().assertDone();
 
   // Tables to hold parameters
   SQLQuery(db, create_parameter_type_table).exec().assertDone();
-  SQLQuery(db, create_parameter_instance_table).exec().assertDone();
   SQLQuery(db, create_parameter_set_parameter_table).exec().assertDone();
 
   // Compilation
@@ -393,47 +377,40 @@ void Database::setMetadata(MetadataField field, std::string value) {
 //===------------------- Feature extractor interface-----------------------===//
 
 FeatureSetID Database::newFeatureSet(FeatureSet features) {
-  SQLQuery get_features =
+  SQLQuery get_feature_set =
       SQLQueryBuilder(*m_db)
-      << "SELECT FeatureInstance.feature_type_id, FeatureInstance.value "
-         "FROM FeatureSetFeature, FeatureInstance "
-         "WHERE FeatureSetFeature.feature_id = FeatureInstance.feature_id "
-           "AND FeatureSetFeature.feature_set_id = " << SQLType::kInteger;
+      << "SELECT feature_set_id FROM FeatureSetFeature "
+         "WHERE feature_set_id = " << SQLType::kInteger;
 
   // FIXME: This should check that the types are identical if a conflict
   // arises
   SQLQuery insert_feature_type =
       SQLQueryBuilder(*m_db)
-      << "INSERT OR IGNORE INTO FeatureType(feature_type_id, feature_type) "
+      << "INSERT OR IGNORE INTO FeatureType(feature_id, feature_type) "
          "VALUES (" << SQLType::kInteger << ", " << SQLType::kInteger << ")";
 
   SQLQuery insert_feature =
       SQLQueryBuilder(*m_db)
-      << "INSERT INTO FeatureInstance(feature_type_id, value) "
-         "VALUES (" << SQLType::kInteger << ", " << SQLType::kBlob << ")";
-
-  SQLQuery insert_into_feature_set =
-      SQLQueryBuilder(*m_db)
-      << "INSERT INTO FeatureSetFeature(feature_set_id, feature_id) "
-         "VALUES (" << SQLType::kInteger << ", " << SQLType::kInteger << ")";
+      << "INSERT INTO FeatureSetFeature(feature_set_id, feature_id, value) "
+      << "VALUES (" << SQLType::kInteger << ", " << SQLType::kInteger << ", "
+                    << SQLType::kBlob << ")";
 
   // FIXME: This should check that the keys are identical if a conflict
   // arises.
   SQLQuery insert_feature_debug =
       SQLQueryBuilder(*m_db)
-      << "INSERT OR IGNORE INTO FeatureDebug(feature_type_id, name) "
+      << "INSERT OR IGNORE INTO FeatureDebug(feature_id, name) "
          "VALUES (" << SQLType::kInteger << ", " << SQLType::kText << ")";
 
   // The hash of the feature set forms its identifier in the database
   FeatureSetID feature_set_id = static_cast<FeatureSetID>(features.hash());
-
   
   bool feature_set_id_found = false;
   while (!feature_set_id_found) {
-    get_features.clearAllBindings();
-    get_features << static_cast<int64_t>(feature_set_id);
+    get_feature_set.clearAllBindings();
+    get_feature_set << static_cast<int64_t>(feature_set_id);
 
-    auto feature_iter = get_features.exec();
+    auto feature_iter = get_feature_set.exec();
     if (!feature_iter.done()) {
       // feature set already exists. Get the set and compare
       if (features == getFeatureSetFeatures(feature_set_id)) {
@@ -451,7 +428,6 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
         // clear feature bindings for all queries
         insert_feature_type.clearAllBindings();
         insert_feature.clearAllBindings();
-        insert_into_feature_set.clearAllBindings();
         insert_feature_debug.clearAllBindings();
 
         // Add feature type first if not present
@@ -460,17 +436,10 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
         insert_feature_type.exec().assertDone();
 
         // feature insertion
-        insert_feature << static_cast<int64_t>(I->getID()) << I->toBlob();
+        insert_feature << static_cast<int64_t>(feature_set_id) 
+                       << static_cast<int64_t>(I->getID())
+                       << I->toBlob();
         insert_feature.exec().assertDone();
-
-        // The feature_id is an integer primary key, and so it is equal to the
-        // rowid. We use this to add the feature to the feature set
-        int64_t feature_id = sqlite3_last_insert_rowid(m_db);
-
-        // feature set
-        insert_into_feature_set << static_cast<int64_t>(feature_set_id)
-                                << static_cast<int64_t>(feature_id);
-        insert_into_feature_set.exec().assertDone();
 
         // debug table
         insert_feature_debug << static_cast<int64_t>(I->getID())
@@ -485,7 +454,7 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
 }
 
 FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
-  SQLQuery get_feature_ids =
+  SQLQuery get_feature_sets =
       SQLQueryBuilder(*m_db)
       << "SELECT feature_set_id FROM FeatureGroupSet "
          "WHERE feature_group_id = " << SQLType::kInteger;
@@ -513,10 +482,10 @@ FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
   bool group_id_found = false;
   while (!group_id_found) {
     // Check for an already existing group
-    get_feature_ids.clearAllBindings();
-    get_feature_ids << static_cast<int64_t>(group_id);
+    get_feature_sets.clearAllBindings();
+    get_feature_sets << static_cast<int64_t>(group_id);
 
-    auto group_iter = get_feature_ids.exec();
+    auto group_iter = get_feature_sets.exec();
     if (!group_iter.done()) {
       // Group already exists. Extract the group to compare against the one we
       // hashed.
@@ -552,11 +521,10 @@ FeatureSet Database::getFeatureSetFeatures(FeatureSetID feature_set) {
   // Get all of the features in a feature set
   SQLQuery select_features =
       SQLQueryBuilder(*m_db)
-      << "SELECT FeatureInstance.feature_type_id, FeatureType.feature_type, "
-                "FeatureInstance.value "
-         "FROM FeatureInstance, FeatureType, FeatureSetFeature "
-         "WHERE FeatureInstance.feature_id = FeatureSetFeature.feature_id "
-           "AND FeatureType.feature_type_id = FeatureInstance.feature_type_id "
+      << "SELECT FeatureSetFeature.feature_id, FeatureType.feature_type, "
+                "FeatureSetFeature.value "
+         "FROM FeatureType, FeatureSetFeature "
+         "WHERE FeatureType.feature_id = FeatureSetFeature.feature_id "
            "AND FeatureSetFeature.feature_set_id = " << SQLType::kInteger;
 
   // Perform in a single transaction
@@ -569,7 +537,7 @@ FeatureSet Database::getFeatureSetFeatures(FeatureSetID feature_set) {
        feature_iter = feature_iter.next()) {
     assert(feature_iter.numColumns() == 3);
 
-    unsigned feature_type_id =
+    unsigned feature_id =
         static_cast<unsigned>(feature_iter.getInteger(0));
     FeatureType feature_type =
         static_cast<FeatureType>(feature_iter.getInteger(1));
@@ -578,10 +546,10 @@ FeatureSet Database::getFeatureSetFeatures(FeatureSetID feature_set) {
     // TODO: Also retrieve feature names
     switch (feature_type) {
     case FeatureType::kBool:
-      features.add(BoolFeature::fromBlob(feature_type_id, feature_blob, {}));
+      features.add(BoolFeature::fromBlob(feature_id, feature_blob, {}));
       break;
     case FeatureType::kInt:
-      features.add(IntFeature::fromBlob(feature_type_id, feature_blob, {}));
+      features.add(IntFeature::fromBlob(feature_id, feature_blob, {}));
       break;
     }
   }
@@ -593,12 +561,10 @@ FeatureSet Database::getFeatureGroupFeatures(FeatureGroupID feature_group) {
   // Get all of the features in a feature group
   SQLQuery select_features =
       SQLQueryBuilder(*m_db)
-      << "SELECT FeatureInstance.feature_type_id, FeatureType.feature_type, "
-                "FeatureInstance.value "
-         "FROM FeatureInstance, FeatureType, FeatureSetFeature, "
-              "FeatureGroupSet "
-         "WHERE FeatureInstance.feature_id = FeatureSetFeature.feature_id "
-           "AND FeatureType.feature_type_id = FeatureInstance.feature_type_id "
+      << "SELECT FeatureSetFeature.feature_id, FeatureType.feature_type, "
+                "FeatureSetFeature.value "
+         "FROM FeatureType, FeatureSetFeature, FeatureGroupSet "
+         "WHERE FeatureType.feature_id = FeatureSetFeature.feature_id "
            "AND FeatureSetFeature.feature_set_id = FeatureGroupSet.feature_set_id "
            "AND FeatureGroupSet.feature_group_id = " << SQLType::kInteger;
 
@@ -612,7 +578,7 @@ FeatureSet Database::getFeatureGroupFeatures(FeatureGroupID feature_group) {
        feature_iter = feature_iter.next()) {
     assert(feature_iter.numColumns() == 3);
 
-    unsigned feature_type_id =
+    unsigned feature_id =
         static_cast<unsigned>(feature_iter.getInteger(0));
     FeatureType feature_type =
         static_cast<FeatureType>(feature_iter.getInteger(1));
@@ -621,10 +587,10 @@ FeatureSet Database::getFeatureGroupFeatures(FeatureGroupID feature_group) {
     // TODO: Also retrieve feature names
     switch (feature_type) {
     case FeatureType::kBool:
-      features.add(BoolFeature::fromBlob(feature_type_id, feature_blob, {}));
+      features.add(BoolFeature::fromBlob(feature_id, feature_blob, {}));
       break;
     case FeatureType::kInt:
-      features.add(IntFeature::fromBlob(feature_type_id, feature_blob, {}));
+      features.add(IntFeature::fromBlob(feature_id, feature_blob, {}));
       break;
     }
   }
@@ -636,12 +602,11 @@ ParameterSet Database::getParameters(ParameterSetID param_set) {
   // Get all of the parameters in a parameter set
   SQLQuery select_parameters =
       SQLQueryBuilder(*m_db)
-      << "SELECT ParameterInstance.parameter_type_id, "
+      << "SELECT ParameterSetParameter.parameter_id, "
                 "ParameterType.parameter_type, "
-                "ParameterInstance.value "
-         "FROM ParameterInstance, ParameterType, ParameterSetParameter "
-         "WHERE ParameterInstance.parameter_id = ParameterSetParameter.parameter_id "
-           "AND ParameterType.parameter_type_id = ParameterInstance.parameter_type_id "
+                "ParameterSetParameter.value "
+         "FROM ParameterType, ParameterSetParameter "
+         "WHERE ParameterType.parameter_id = ParameterSetParameter.parameter_id "
            "AND ParameterSetParameter.parameter_set_id = " << SQLType::kInteger;
 
   // Perform in a single transaction
@@ -732,34 +697,28 @@ CompilationID Database::newCompilation(std::string name, std::string type,
 }
 
 ParameterSetID Database::newParameterSet(ParameterSet parameters) {
-  SQLQuery get_parameters =
+  SQLQuery get_parameter_set =
       SQLQueryBuilder(*m_db)
-      << "SELECT ParameterInstance.parameter_type_id, ParameterInstance.value "
-         "FROM ParameterSetParameter, ParameterInstance "
-         "WHERE ParameterSetParameter.parameter_id = ParameterInstance.parameter_id "
-           "AND ParameterSetParameter.parameter_set_id = " << SQLType::kInteger;
+      << "SELECT parameter_set_id FROM ParameterSetParameter "
+         "WHERE parameter_set_id = " << SQLType::kInteger;
 
   // FIXME: This should check that the values are identical if a conflict arises
   SQLQuery insert_parameter_type =
       SQLQueryBuilder(*m_db)
-      << "INSERT OR IGNORE INTO ParameterType(parameter_type_id, parameter_type) "
+      << "INSERT OR IGNORE INTO ParameterType(parameter_id, parameter_type) "
          "VALUES (" << SQLType::kInteger << ", " << SQLType::kInteger << ")";
 
   SQLQuery insert_parameter =
       SQLQueryBuilder(*m_db)
-      << "INSERT INTO ParameterInstance(parameter_type_id, value) "
-         "VALUES (" << SQLType::kInteger << ", " << SQLType::kBlob << ")";
-
-  SQLQuery insert_into_parameter_set =
-      SQLQueryBuilder(*m_db)
-      << "INSERT INTO ParameterSetParameter(parameter_set_id, parameter_id) "
-         "VALUES (" << SQLType::kInteger << ", " << SQLType::kInteger << ")";
+      << "INSERT INTO ParameterSetParameter(parameter_set_id, parameter_id, value) "
+         "VALUES (" << SQLType::kInteger << ", " << SQLType::kInteger << ", "
+                    << SQLType::kBlob << ")";
 
   // FIXME: This should check that the keys are identical if a conflict
   // arises.
   SQLQuery insert_parameter_debug =
       SQLQueryBuilder(*m_db)
-      << "INSERT OR IGNORE INTO ParameterDebug(parameter_type_id, name) "
+      << "INSERT OR IGNORE INTO ParameterDebug(parameter_id, name) "
          "VALUES (" << SQLType::kInteger << ", " << SQLType::kText << ")";
 
   // The hash of the parameter set forms its identifier in the database
@@ -767,10 +726,10 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
 
   bool param_set_id_found = false;
   while (!param_set_id_found) {
-    get_parameters.clearAllBindings();
-    get_parameters << static_cast<int64_t>(param_set_id);
+    get_parameter_set.clearAllBindings();
+    get_parameter_set << static_cast<int64_t>(param_set_id);
 
-    auto param_iter = get_parameters.exec();
+    auto param_iter = get_parameter_set.exec();
     if (!param_iter.done()) {
       // parameter set already exists. Get the set and compare
       ParameterSet other_parameters = getParameters(param_set_id);
@@ -788,7 +747,6 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
         // clear parameters bindings for all queries
         insert_parameter_type.clearAllBindings();
         insert_parameter.clearAllBindings();
-        insert_into_parameter_set.clearAllBindings();
         insert_parameter_debug.clearAllBindings();
 
         // add parameter type first if not present
@@ -797,17 +755,10 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
         insert_parameter_type.exec().assertDone();
 
         // parameter insertion
-        insert_parameter << static_cast<int64_t>(I->getID()) << I->toBlob();
+        insert_parameter << static_cast<int64_t>(param_set_id)
+                         << static_cast<int64_t>(I->getID())
+                         << I->toBlob();
         insert_parameter.exec().assertDone();
-
-        // The parameter_id is an integer primary key, and so it is equal to the
-        // rowid. We use this to add the parameter to the set
-        int64_t parameter_id = sqlite3_last_insert_rowid(m_db);
-
-        // parameter set
-        insert_into_parameter_set << static_cast<int64_t>(param_set_id)
-                                  << parameter_id;
-        insert_into_parameter_set.exec().assertDone();
 
         // debug table
         insert_parameter_debug << I->getID() << I->getName();
@@ -849,17 +800,17 @@ void Database::trainMachineLearner(util::UUID ml, std::string metric) {
   // Get all of the feature types and parameter types, even if some of them
   // don't occur for this metric. These will all be distinct.
   SQLQuery select_feature_types(
-      *m_db, "SELECT feature_type_id, feature_type FROM FeatureType");
+      *m_db, "SELECT feature_id, feature_type FROM FeatureType");
 
   SQLQuery select_parameter_types(
-      *m_db, "SELECT parameter_type_id, parameter_type FROM ParameterType");
+      *m_db, "SELECT parameter_id, parameter_type FROM ParameterType");
 
   std::string param_type =
       std::to_string(static_cast<unsigned>(ParameterType::kPassSeq));
   SQLQuery select_pass_sequences =
       SQLQueryBuilder(*m_db)
-      << "SELECT DISTINCT value FROM ParameterInstance, ParameterType "
-         "WHERE ParameterInstance.parameter_type_id = ParameterType.parameter_type_id "
+      << "SELECT DISTINCT value FROM ParameterSetParameter, ParameterType "
+         "WHERE ParameterSetParameter.parameter_id = ParameterType.parameter_id "
            "AND ParameterType.parameter_type = " << param_type;
 
   // Insert a blob for the provided machine learner and metric

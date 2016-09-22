@@ -1,5 +1,11 @@
 2016-09-22  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/Database.cpp: Merge FeatureInstance table with
+	FeatureSetFeatures, and ParameterInstance table with
+	ParameterSetParameters.
+
+2016-09-22  Edward Jones  <ed.jones@embecosm.com>
+
 	 * include/mageec/Database.h (DatabaseTransaction): Rename to
 	 SQLTransaction.
 	 * lib/Database.cpp: Rename DatabaseTransactions to SQLTransaction
