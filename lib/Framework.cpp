@@ -97,4 +97,13 @@ std::set<IMachineLearner *> Framework::getMachineLearners() const {
   return mls;
 }
 
+void Framework::print(std::ostream &os) const {
+  os << "Version: " << std::string(Framework::version) << "\n";
+  os << "Machine learner interfaces:\n";
+  for (auto &it : m_mls) {
+    os << std::string(it.second->getUUID()) << " "
+       << it.second->getName() << "\n";
+  }
+}
+
 } // end of namespace mageec

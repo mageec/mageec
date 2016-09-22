@@ -99,6 +99,14 @@ public:
   /// with the framework.
   std::set<IMachineLearner *> getMachineLearners() const;
 
+  /// \brief Print information about this framework
+  void print(std::ostream &os) const;
+
+  /// \brief Dump information about the framework to stdout
+  void dump() const {
+    print(util::out());
+  }
+
 private:
   /// A map of machine learner interfaces registers with the framework, keyed
   /// based on their uuids.

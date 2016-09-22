@@ -1,5 +1,15 @@
 2016-09-22  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/AttributeSet.h (AttributeSet::dump): Added function.
+	* include/mageec/Framework.h (Framework::print)
+	(Framework::dump): Likewise.
+	* include/mageec/TrainedML (TrainedML::print)
+	(TrainedML::dump): Likewise.
+	* lib/Framework.cpp (Framework::print): Added function implementation.
+	* lib/TrainedML.cpp (TrainedML::print): Likewise.
+
+2016-09-22  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/AttributeSet.h (AttributeSet::hash)
 	(AttributeSet::operator< AttributeSet::operator==)
 	(AttributeSet::operator!= AttributeSet::compare): Add functions.

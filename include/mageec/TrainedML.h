@@ -106,6 +106,15 @@ public:
   std::unique_ptr<DecisionBase> makeDecision(const DecisionRequestBase &request,
                                              const FeatureSet &features);
 
+  /// \brief Print information about this trained machine learner to the
+  /// provided output stream
+  void print(std::ostream &os) const;
+
+  /// \brief Dump information about this to stdout
+  void dump() const {
+    return print(util::out());
+  }
+
 private:
   /// Interface to the underlying machine learner.
   IMachineLearner &m_ml;

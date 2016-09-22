@@ -78,4 +78,12 @@ TrainedML::makeDecision(const DecisionRequestBase &request,
   return m_ml.makeDecision(request, features, m_blob);
 }
 
+void TrainedML::print(std::ostream &os) const {
+  os << std::string(getUUID()) << " " << getName();
+  if (m_metric) {
+    os << " " << getMetric();
+  }
+  os << "\n";
+}
+
 } // end of namespace mageec

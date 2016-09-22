@@ -76,15 +76,6 @@ public:
   /// \brief Get a constant iterator to the end of the attribute set
   const_iterator end() const { return m_attributes.cend(); }
 
-  /// \brief Print out the held attributes to the provided output stream
-  void print(std::ostream &os, std::string prefix) const {
-    for (auto attr : m_attributes) {
-      os << prefix;
-      attr->print(os);
-      os << '\n';
-    }
-  }
-
   /// \brief Produce a 64-bit hash representing the attributes which make up
   /// this set.
   uint64_t hash() const {
@@ -105,6 +96,19 @@ public:
   }
   bool operator!=(const AttributeSet &other) const {
     return compare(other) != 0;
+  }
+
+  /// \brief Print out the held attributes to the provided output stream
+  void print(std::ostream &os) const {
+    for (auto attr : m_attributes) {
+      attr->print(os);
+      os << '\n';
+    }
+  }
+
+  /// \brief Dump out the held attributes to stdout
+  void dump() const {
+    print(util::out());
   }
 
 private:
