@@ -1,3 +1,7 @@
+2016-09-22  Edward Jones  <ed.jones@embecosm.com.
+
+	* Driver.cpp: Use getFeatureGroupFeatures instead of getFeatures.
+
 2016-09-21  Edward Jones  <ed.jones@embecosm.com>
 
 	* Driver.cpp: Pass the command used to compile modules and

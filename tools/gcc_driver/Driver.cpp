@@ -1573,7 +1573,7 @@ int main(int argc, const char *argv[]) {
       // mageec then this will form the 'native' decision.
       assert(file_feature_ids->second.module);
       auto feature_group_id = file_feature_ids->second.module.get().id;
-      mageec::FeatureSet features = db->getFeatures(feature_group_id);
+      mageec::FeatureSet features = db->getFeatureGroupFeatures(feature_group_id);
       assert(features.size() != 0);
 
       for (unsigned i = FlagParameterID::kFIRST_FLAG_PARAMETER;
