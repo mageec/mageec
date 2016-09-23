@@ -130,6 +130,10 @@ public:
   /// \return All machine learners in the database which are trained.
   std::vector<TrainedML> getTrainedMachineLearners(void);
 
+  /// \brief Garbage collect any entries in the database which are
+  /// unreachable from the results in the database.
+  void garbageCollect(void);
+
 private:
   /// \brief Get a metadata field of the database
   ///

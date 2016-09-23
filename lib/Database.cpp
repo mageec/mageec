@@ -57,15 +57,15 @@ static const char *const create_metadata_table =
 // database feature table creation strings
 static const char *const create_feature_type_table =
     "CREATE TABLE FeatureType("
-    "feature_id INTEGER PRIMARY KEY, "
-    "feature_type    INTEGER NOT NULL"
+    "feature_id   INTEGER PRIMARY KEY, "
+    "feature_type INTEGER NOT NULL"
     ")";
 
 static const char *const create_feature_set_feature_table =
     "CREATE TABLE FeatureSetFeature("
-    "feature_set_id  INTEGER NOT NULL, "
-    "feature_id INTEGER NOT NULL, "
-    "value           BLOB NOT NULL, "
+    "feature_set_id INTEGER NOT NULL, "
+    "feature_id     INTEGER NOT NULL, "
+    "value          BLOB NOT NULL, "
     "UNIQUE(feature_set_id, feature_id), "
     "FOREIGN KEY(feature_id) REFERENCES FeatureType(feature_id)"
     ")";
@@ -80,15 +80,15 @@ static const char *const create_feature_group_set_table =
 // database parameter table creation strings
 static const char *const create_parameter_type_table =
     "CREATE TABLE ParameterType("
-    "parameter_id INTEGER PRIMARY KEY, "
-    "parameter_type    INTEGER NOT NULL"
+    "parameter_id   INTEGER PRIMARY KEY, "
+    "parameter_type INTEGER NOT NULL"
     ")";
 
 static const char *const create_parameter_set_parameter_table =
     "CREATE TABLE ParameterSetParameter("
-    "parameter_set_id  INTEGER NOT NULL, "
-    "parameter_id INTEGER NOT NULL, "
-    "value             BLOB NOT NULL, "
+    "parameter_set_id INTEGER NOT NULL, "
+    "parameter_id     INTEGER NOT NULL, "
+    "value            BLOB NOT NULL, "
     "UNIQUE(parameter_set_id, parameter_id), "
     "FOREIGN KEY(parameter_id) REFERENCES ParameterType(parameter_id)"
     ")";
@@ -114,9 +114,9 @@ static const char *const create_result_table =
 // machine learner table creation strings
 static const char *const create_machine_learner_table =
     "CREATE TABLE MachineLearner("
-    "ml_id    BLOB, "
-    "metric   TEXT, "
-    "ml_blob  BLOB NOT NULL, "
+    "ml_id   BLOB, "
+    "metric  TEXT, "
+    "ml_blob BLOB NOT NULL, "
     "UNIQUE(ml_id, metric)"
     ")";
 
@@ -128,8 +128,10 @@ static const char *const create_program_unit_debug_table =
     "type           TEXT NOT NULL, "
     "command        TEXT, "
     "parent_id      INTEGER, "
-    "FOREIGN KEY(compilation_id) REFERENCES Compilation(compilation_id), "
-    "FOREIGN KEY(parent_id) REFERENCES Compilation(compilation_id)"
+    "FOREIGN KEY(compilation_id) "
+        "REFERENCES Compilation(compilation_id) ON DELETE CASCADE, "
+    "FOREIGN KEY(parent_id) "
+        "REFERENCES Compilation(compilation_id) ON DELETE SET NULL"
     ")";
 
 static const char *const create_feature_debug_table =
@@ -342,6 +344,40 @@ std::vector<TrainedML> Database::getTrainedMachineLearners(void) {
   }
 
   return trained_mls;
+}
+
+void Database::garbageCollect() {
+  // Delete everything which is not reachable through a result value.
+  // If a compilation does not have a result, then all of its features can
+  // and parameters can be deleted if they are not reachable through some
+  // other means.
+  SQLTransaction transaction(m_db);
+
+  MAGEEC_DEBUG("Deleting unused compilations")
+  SQLQuery gc_compilations(*m_db,
+      "DELETE FROM Compilation WHERE compilation_id NOT IN "
+             "(SELECT DISTINCT compilation_id FROM Result)");
+  gc_compilations.exec().assertDone();
+
+  MAGEEC_DEBUG("Deleting unused feature groups")
+  SQLQuery gc_feature_groups(*m_db,
+      "DELETE FROM FeatureGroupSet WHERE feature_group_id NOT IN "
+             "(SELECT DISTINCT feature_group_id FROM Compilation)");
+  gc_feature_groups.exec().assertDone();
+
+  MAGEEC_DEBUG("Deleting unused features")
+  SQLQuery gc_features(*m_db,
+      "DELETE FROM FeatureSetFeature WHERE feature_set_id NOT IN "
+             "(SELECT DISTINCT feature_set_id FROM FeatureGroupSet)");
+  gc_features.exec().assertDone();
+
+  MAGEEC_DEBUG("Deleting unused parameters")
+  SQLQuery gc_parameters(*m_db,
+      "DELETE FROM ParameterSetParameter WHERE parameter_set_id NOT IN "
+             "(SELECT DISTINCT parameter_set_id FROM Compilation)");
+  gc_parameters.exec().assertDone();
+
+  transaction.commit();
 }
 
 std::string Database::getMetadata(MetadataField field) {

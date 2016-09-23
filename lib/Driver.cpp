@@ -36,7 +36,7 @@
 
 namespace mageec {
 
-enum class DriverMode { kNone, kCreate, kTrain, kAddResults };
+enum class DriverMode { kNone, kCreate, kTrain, kAddResults, kGarbageCollect };
 
 } // end of namespace mageec
 
@@ -79,6 +79,8 @@ static void printHelp()
 "  --create                Create a new empty database.\n"
 "  --train                 Train an existing database, using machine\n"
 "                          learners provided via the --ml flag\n"
+"  --garbage-collect       Delete anything from the database which is not\n"
+"                          associated with a result\n"
 "  --add-results <arg>     Add results from the provided file into the\n"
 "                          database\n"
 "\n"
@@ -367,6 +369,18 @@ static bool addResults(Framework &framework, const std::string &db_path,
   return true;
 }
 
+static bool garbageCollect(Framework &framework, const std::string &db_path) {
+  std::unique_ptr<Database> db = framework.getDatabase(db_path, false);
+  if (!db) {
+    MAGEEC_ERR("Error retrieving database. The database may not exist, "
+               "or you may not have sufficient permissions to read it");
+    return false;
+  }
+  MAGEEC_DEBUG("Garbage collecting unreachable values from the database");
+  db->garbageCollect();
+  return true;
+}
+
 /// \brief Entry point for the MAGEEC driver
 int main(int argc, const char *argv[]) {
   DriverMode mode = DriverMode::kNone;
@@ -413,13 +427,8 @@ int main(int argc, const char *argv[]) {
       } else if (arg == "--train") {
         mode = DriverMode::kTrain;
         continue;
-      } else if (arg == "--add-result") {
-        ++i;
-        if (i >= argc) {
-          MAGEEC_ERR("No '--add-result' value provided");
-          return -1;
-        }
-        mode = DriverMode::kAddResults;
+      } else if (arg == "--garbage-collect") {
+        mode = DriverMode::kGarbageCollect;
         continue;
       }
     }
@@ -480,16 +489,15 @@ int main(int argc, const char *argv[]) {
   }
 
   // Warnings
-  if (mode == DriverMode::kCreate && with_ml) {
-    MAGEEC_WARN("Creation mode specified, '--ml' arguments will be ignored");
-  }
   if (with_db_version && !with_db) {
     MAGEEC_WARN("Cannot get database version as no database was specified");
   }
 
   // Unused arguments
-  if ((mode == DriverMode::kNone) || (mode == DriverMode::kCreate) ||
-      (mode == DriverMode::kAddResults)) {
+  if ((mode == DriverMode::kNone) ||
+      (mode == DriverMode::kCreate) ||
+      (mode == DriverMode::kAddResults) ||
+      (mode == DriverMode::kGarbageCollect)) {
     if (with_metric) {
       MAGEEC_WARN("--metric arguments will be ignored for the specified mode");
     }
@@ -559,6 +567,11 @@ int main(int argc, const char *argv[]) {
     return 0;
   case DriverMode::kAddResults:
     if (!addResults(framework, db_str.get(), results_path.get())) {
+      return -1;
+    }
+    return 0;
+  case DriverMode::kGarbageCollect:
+    if (!garbageCollect(framework, db_str.get())) {
       return -1;
     }
     return 0;

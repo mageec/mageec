@@ -1,3 +1,10 @@
+2016-09-23  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Database.h (Database::garbageCollect): Add function.
+	* lib/Database.cpp (Database::garbageCollect): Add function
+	implementation.
+	* lib/Driver.cpp: Add handling for --garbage-collect mode.
+
 2016-09-22  Edward Jones  <ed.jones@embecosm.com>
 
 	* lib/ML/C5.cpp: Close the C5.0 .data file before C5 tries to use it.
