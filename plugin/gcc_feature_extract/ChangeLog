@@ -1,5 +1,13 @@
 2016-10-25  Edward Jones  <ed.jones@embecosm.com>
 
+	* Features.h: No longer used distinct identifiers in the
+	FunctionFeature and ModuleFeature enumerations.
+	* Plugin.cpp (featureExtractFinishUnit): Add an extra feature_class
+	entry to each line in the output file, specifying the feature class
+	which the set of extracted features belongs to.
+
+2016-10-25  Edward Jones  <ed.jones@embecosm.com>
+
 	* FeatureExtract.cpp: Fix minor incompatibilites with gcc.
 
 2016-09-19  Edward Jones  <ed.jones@embecosm.com>

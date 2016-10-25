@@ -38,10 +38,6 @@ enum {
   kFeatureTypeBit = 12,
   kFeatureReductionBit = 8,
   kFeatureBit = 0,
-
-  // Mark where the function and module features begin
-  kFuncFeaturesBegin     = 0x1000,
-  kModuleFeaturesBegin   = 0x2000,
 };
 
 
@@ -65,7 +61,7 @@ enum : unsigned {
 namespace FunctionFeature {
 enum : unsigned {
   // General function features
-  kArgCount = kFuncFeaturesBegin,
+  kArgCount,
   kCyclomaticComplexity,
   kCFGEdges,
   kCFGAbnormalEdges,
@@ -138,7 +134,7 @@ enum : unsigned {
 namespace ModuleFeature {
 enum : unsigned {
   // General module features
-  kFunctions = kModuleFeaturesBegin,
+  kFunctions,
   kSCCs,
   kFuncRetInt,
   kFuncRetFloat,

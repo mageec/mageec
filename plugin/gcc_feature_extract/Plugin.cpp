@@ -480,12 +480,12 @@ void featureExtractFinishUnit(void *, void *) {
 
   mageec::FeatureSetID module_feature_set_id =
       getContext().getDatabase().newFeatureSet(*module_feature_set);
-  mageec::FeatureGroupID module_feature_group_id =
-      getContext().getDatabase().newFeatureGroup({module_feature_set_id});
 
   getContext().getOutFile() << main_input_filename << ",module,"
                             << module_name << ",features,"
-                            << (uint64_t)module_feature_group_id << "\n";
+                            << (uint64_t)module_feature_set_id
+                            << ",feature_class,"
+                            << (uint64_t)mageec::FeatureClass::kModule << "\n";
 
   // Insert the features of each function into the database
   // Functions also inherit features from their encapsulating module
@@ -495,12 +495,12 @@ void featureExtractFinishUnit(void *, void *) {
 
     mageec::FeatureSetID func_feature_set_id =
         getContext().getDatabase().newFeatureSet(*func_feature_set);
-    mageec::FeatureGroupID func_feature_group_id =
-        getContext().getDatabase().newFeatureGroup({module_feature_set_id,
-                                                    func_feature_set_id});
 
     getContext().getOutFile() << main_input_filename << ",function,"
                               << features.first << ",features,"
-                              << (uint64_t)func_feature_group_id << "\n";
+                              << (uint64_t)func_feature_set_id
+                              << ",feature_class,"
+                              << (uint64_t)mageec::FeatureClass::kFunction
+                              << "\n";
   }
 }
