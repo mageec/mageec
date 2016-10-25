@@ -1,4 +1,11 @@
-2016-09-22  Edward Jones  <ed.jones@embecosm.com.
+2016-10-25  Edward Jones  <ed.jones@embecosm.com>
+
+	* Driver.cpp (loadFeatureIDs): Handle additional feature_class
+	entry in csv file containing feature set identifiers.
+	(main): When optimizing, only use the features which are classified
+	as module features by the feature class.
+
+2016-09-22  Edward Jones  <ed.jones@embecosm.com>
 
 	* Driver.cpp: Use getFeatureGroupFeatures instead of getFeatures.
 

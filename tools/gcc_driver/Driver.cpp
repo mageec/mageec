@@ -1017,20 +1017,25 @@ static void printFrameworkVersion(mageec::Framework &framework) {
 
 struct FeatureIDEntry {
   std::string            name;
-  mageec::FeatureGroupID id;
+  mageec::FeatureSetID   id;
+  mageec::FeatureClass   feature_class;
 
   bool operator<(const FeatureIDEntry &other) const {
     if (name < other.name)
       return true;
     if (id < other.id)
       return true;
+    if (feature_class < other.feature_class)
+      return true;
     return false;
   }
 };
+
 struct FileFeatureIDs {
   mageec::util::Option<FeatureIDEntry> module;
   std::set<FeatureIDEntry>             functions;
 };
+
 static mageec::util::Option<std::map<std::string, FileFeatureIDs>>
 loadFeatureIDs(std::string features_path) {
   std::map<std::string, FileFeatureIDs> file_to_features;
@@ -1045,14 +1050,18 @@ loadFeatureIDs(std::string features_path) {
   std::string line;
   while (std::getline(features_file, line)) {
     std::vector<std::string> values = splitString(line, ',');
-    if (values.size() != 5)
+    if (values.size() != 7)
       continue;
     if ((values[1] != "module") && (values[1] != "function"))
       continue;
     if (values[3] != "features")
       continue;
-    if (!values[0].size() || !values[2].size() || !values[4].size())
+    if (values[5] != "feature_class")
       continue;
+    if (!values[0].size() || !values[2].size() || !values[4].size() ||
+        !values[6].size()) {
+      continue;
+    }
 
     std::stringstream feat_id_str(values[4]);
     uint64_t feat_id;
@@ -1062,9 +1071,18 @@ loadFeatureIDs(std::string features_path) {
       return nullptr;
     }
 
+    std::stringstream feat_class_str(values[6]);
+    unsigned feat_class;
+    feat_class_str >> feat_class;
+    if (feat_class_str.fail()) {
+      MAGEEC_ERR("Malformed line in features file");
+      return nullptr;
+    }
+
     // Entry to be inserted into the map
     FeatureIDEntry entry = { values[2],
-                             static_cast<mageec::FeatureGroupID>(feat_id) };
+                             static_cast<mageec::FeatureSetID>(feat_id),
+                             static_cast<mageec::FeatureClass>(feat_class) };
 
     FileFeatureIDs &file_entry = file_to_features[values[0]];
     if (values[1] == "module") {
@@ -1541,7 +1559,12 @@ int main(int argc, const char *argv[]) {
     for (auto &trained_ml : trained_mls) {
       if (trained_ml.getUUID() == ml->getUUID()) {
         found_ml = true;
-        if (trained_ml.getMetric() == metric_str) {
+
+        // Check that the found machine learner is trained for the desired
+        // metric and class of features.
+        // TODO: Only module features can be handled here
+        if (trained_ml.getMetric() == metric_str &&
+            trained_ml.getFeatureClass() == mageec::FeatureClass::kModule) {
           chosen_ml = &trained_ml;
           break;
         }
@@ -1572,8 +1595,9 @@ int main(int argc, const char *argv[]) {
       // as the base set of flags. If a parameter value is not overridden by
       // mageec then this will form the 'native' decision.
       assert(file_feature_ids->second.module);
-      auto feature_group_id = file_feature_ids->second.module.get().id;
-      mageec::FeatureSet features = db->getFeatureGroupFeatures(feature_group_id);
+      auto feature_set_id = file_feature_ids->second.module.get().id;
+      mageec::FeatureSet features =
+          db->getFeatureSetFeatures(feature_set_id);
       assert(features.size() != 0);
 
       for (unsigned i = FlagParameterID::kFIRST_FLAG_PARAMETER;
@@ -1688,6 +1712,7 @@ int main(int argc, const char *argv[]) {
     auto module_entry = file_feature_ids->second.module.get();
     auto module_compilation = db->newCompilation(module_entry.name, "module",
                                                  module_entry.id,
+                                                 mageec::FeatureClass::kModule,
                                                  parameter_set_id->second,
                                                  file_commands[file],
                                                  nullptr);
@@ -1699,12 +1724,12 @@ int main(int argc, const char *argv[]) {
 
     // Generate a compilation id for each of the functions in the module.
     for (auto function_entry : file_feature_ids->second.functions) {
-      auto function_compilation = db->newCompilation(function_entry.name,
-                                                     "function",
-                                                     function_entry.id,
-                                                     parameter_set_id->second,
-                                                     file_commands[file],
-                                                     module_compilation);
+      auto function_compilation =
+          db->newCompilation(function_entry.name, "function",
+                             function_entry.id, mageec::FeatureClass::kFunction,
+                             parameter_set_id->second, file_commands[file],
+                             module_compilation);
+
       // TODO: Avoid static cast here
       tmp = static_cast<uint64_t>(function_compilation);
       out_file << file << ",function," << function_entry.name
