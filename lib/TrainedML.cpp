@@ -38,15 +38,17 @@
 
 namespace mageec {
 
-TrainedML::TrainedML(IMachineLearner &ml) : m_ml(ml), m_metric(), m_blob() {
+TrainedML::TrainedML(IMachineLearner &ml)
+    : m_ml(ml), m_feature_class(), m_metric(), m_blob() {
   assert(!ml.requiresTraining() &&
          "Machine learner requires training, so it must be initialized with "
          "a metric and blob");
 }
 
-TrainedML::TrainedML(IMachineLearner &ml, std::string metric,
+TrainedML::TrainedML(IMachineLearner &ml, FeatureClass feature_class,
+                     std::string metric,
                      const std::vector<uint8_t> blob)
-    : m_ml(ml), m_metric(metric), m_blob(blob) {
+    : m_ml(ml), m_feature_class(feature_class), m_metric(metric), m_blob(blob) {
   assert(ml.requiresTraining() && "Machine learner does not require training, "
                                   "where did the metric and blob come from?");
 }
@@ -54,6 +56,10 @@ TrainedML::TrainedML(IMachineLearner &ml, std::string metric,
 util::UUID TrainedML::getUUID(void) const { return m_ml.getUUID(); }
 
 std::string TrainedML::getName(void) const { return m_ml.getName(); }
+
+FeatureClass TrainedML::getFeatureClass(void) const {
+  return m_feature_class.get();
+}
 
 std::string TrainedML::getMetric(void) const {
   assert(m_ml.requiresTraining() && "Machine learner does not require "
@@ -80,9 +86,12 @@ TrainedML::makeDecision(const DecisionRequestBase &request,
 
 void TrainedML::print(std::ostream &os) const {
   os << std::string(getUUID()) << " " << getName();
-  if (m_metric) {
+
+  if (m_metric)
     os << " " << getMetric();
-  }
+  //if (m_feature_class)
+  //  os << " " << getFeatureClassName(getFeatureClass());
+
   os << "\n";
 }
 

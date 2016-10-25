@@ -64,10 +64,12 @@ public:
   /// \param ml  Handle to the interface of the machine learner. There must be
   /// an entry for this machine learner in the database for the provided
   /// metric.
+  /// \param feature_class  The class of features this machine learner has been
+  ///                       trained against
   /// \param metric  The metric this machine learner has been trained against
   /// \param blob  A blob of training data to be passed to the machine
   /// learner when making a decision
-  TrainedML(IMachineLearner &ml, std::string metric,
+  TrainedML(IMachineLearner &ml, FeatureClass feature_class, std::string metric,
             const std::vector<uint8_t> blob);
 
   /// \brief Get the unique identifier for the underlying machine learner
@@ -75,6 +77,9 @@ public:
 
   /// \brief Get the name of the underlying machine learner interface
   std::string getName(void) const;
+
+  /// \brief Get the class of features that this machine learner trained against
+  FeatureClass getFeatureClass(void) const;
 
   /// \brief Get the metric which this machine learner was trained against
   std::string getMetric(void) const;
@@ -118,6 +123,9 @@ public:
 private:
   /// Interface to the underlying machine learner.
   IMachineLearner &m_ml;
+
+  /// Class of features this machine learner is trained for
+  const util::Option<FeatureClass> m_feature_class;
 
   /// Metric which this machine learner is trained for.
   const util::Option<std::string> m_metric;

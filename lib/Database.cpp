@@ -70,13 +70,6 @@ static const char *const create_feature_set_feature_table =
     "FOREIGN KEY(feature_id) REFERENCES FeatureType(feature_id)"
     ")";
 
-static const char *const create_feature_group_set_table =
-    "CREATE TABLE FeatureGroupSet("
-    "feature_group_id INTEGER NOT NULL, "
-    "feature_set_id   INTEGER NOT NULL, "
-    "UNIQUE(feature_group_id, feature_set_id)"
-    ")";
-
 // database parameter table creation strings
 static const char *const create_parameter_type_table =
     "CREATE TABLE ParameterType("
@@ -96,9 +89,10 @@ static const char *const create_parameter_set_parameter_table =
 // compilation table creation strings
 static const char *const create_compilation_table =
     "CREATE TABLE Compilation("
-    "compilation_id   INTEGER PRIMARY KEY, "
-    "feature_group_id INTEGER NOT NULL, "
-    "parameter_set_id INTEGER"
+    "compilation_id    INTEGER PRIMARY KEY, "
+    "feature_set_id    INTEGER NOT NULL, " 
+    "feature_class_id  INTEGER NOT NULL, "
+    "parameter_set_id  INTEGER"
     ")";
 
 // result table creation strings
@@ -114,14 +108,15 @@ static const char *const create_result_table =
 // machine learner table creation strings
 static const char *const create_machine_learner_table =
     "CREATE TABLE MachineLearner("
-    "ml_id   BLOB, "
-    "metric  TEXT, "
-    "ml_blob BLOB NOT NULL, "
-    "UNIQUE(ml_id, metric)"
+    "ml_id             BLOB, "
+    "feature_class_id  INTEGER NOT NULL, "
+    "metric            TEXT, "
+    "ml_blob           BLOB NOT NULL, "
+    "UNIQUE(ml_id, metric, feature_class_id)"
     ")";
 
 // debug table creation
-static const char *const create_program_unit_debug_table =
+static const char *const create_compilation_debug_table =
     "CREATE TABLE CompilationDebug("
     "compilation_id INTEGER PRIMARY KEY, "
     "name           TEXT NOT NULL, "
@@ -253,7 +248,6 @@ void Database::init_db(sqlite3 &db) {
   // Create tables to hold features
   SQLQuery(db, create_feature_type_table).exec().assertDone();
   SQLQuery(db, create_feature_set_feature_table).exec().assertDone();
-  SQLQuery(db, create_feature_group_set_table).exec().assertDone();
 
   // Tables to hold parameters
   SQLQuery(db, create_parameter_type_table).exec().assertDone();
@@ -269,7 +263,7 @@ void Database::init_db(sqlite3 &db) {
   SQLQuery(db, create_machine_learner_table).exec().assertDone();
 
   // Debug tables
-  SQLQuery(db, create_program_unit_debug_table).exec().assertDone();
+  SQLQuery(db, create_compilation_debug_table).exec().assertDone();
   SQLQuery(db, create_feature_debug_table).exec().assertDone();
   SQLQuery(db, create_parameter_debug_table).exec().assertDone();
 
@@ -320,7 +314,7 @@ std::vector<TrainedML> Database::getTrainedMachineLearners(void) {
 
   SQLQuery query =
       SQLQueryBuilder(*m_db)
-      << "SELECT metric, ml_blob FROM MachineLearner "
+      << "SELECT feature_class_id, metric, ml_blob FROM MachineLearner "
          "WHERE ml_id = " << SQLType::kBlob;
 
   for (auto I : m_mls) {
@@ -332,17 +326,17 @@ std::vector<TrainedML> Database::getTrainedMachineLearners(void) {
 
     auto res = query.exec();
     res.assertDone();
-    if (res.numColumns() == 2) {
-      std::string metric = res.getText(0);
-      std::vector<uint8_t> ml_blob = res.getBlob(1);
+    if (res.numColumns() == 3) {
+      FeatureClass feature_class = static_cast<FeatureClass>(res.getInteger(0));
+      std::string metric = res.getText(1);
+      std::vector<uint8_t> ml_blob = res.getBlob(2);
 
-      TrainedML trained_ml(ml, metric, ml_blob);
+      TrainedML trained_ml(ml, feature_class, metric, ml_blob);
       trained_mls.push_back(trained_ml);
     } else {
       assert(res.numColumns() == 0);
     }
   }
-
   return trained_mls;
 }
 
@@ -359,16 +353,10 @@ void Database::garbageCollect() {
              "(SELECT DISTINCT compilation_id FROM Result)");
   gc_compilations.exec().assertDone();
 
-  MAGEEC_DEBUG("Deleting unused feature groups")
-  SQLQuery gc_feature_groups(*m_db,
-      "DELETE FROM FeatureGroupSet WHERE feature_group_id NOT IN "
-             "(SELECT DISTINCT feature_group_id FROM Compilation)");
-  gc_feature_groups.exec().assertDone();
-
   MAGEEC_DEBUG("Deleting unused features")
   SQLQuery gc_features(*m_db,
       "DELETE FROM FeatureSetFeature WHERE feature_set_id NOT IN "
-             "(SELECT DISTINCT feature_set_id FROM FeatureGroupSet)");
+             "(SELECT DISTINCT feature_set_id FROM Compilation)");
   gc_features.exec().assertDone();
 
   MAGEEC_DEBUG("Deleting unused parameters")
@@ -489,70 +477,6 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
   return feature_set_id;
 }
 
-FeatureGroupID Database::newFeatureGroup(std::set<FeatureSetID> group) {
-  SQLQuery get_feature_sets =
-      SQLQueryBuilder(*m_db)
-      << "SELECT feature_set_id FROM FeatureGroupSet "
-         "WHERE feature_group_id = " << SQLType::kInteger;
-
-  SQLQuery insert_into_feature_group =
-      SQLQueryBuilder(*m_db)
-      << "INSERT INTO FeatureGroupSet(feature_group_id, feature_set_id) "
-         "VALUES (" << SQLType::kInteger << ", " << SQLType::kInteger << ")";
-
-  // Hash the feature ids in the group to produce the group id.
-  std::vector<uint8_t> blob;
-  for (auto I : group) {
-    util::write64LE(blob, static_cast<mageec::ID>(I));
-  }
-  mageec::ID tmp_id =
-      util::crc64(blob.data(), static_cast<unsigned>(blob.size()));
-  FeatureGroupID group_id = static_cast<FeatureGroupID>(tmp_id);
-
-  // Whole operation in a single transaction
-  SQLTransaction transaction(m_db);
-
-  // Check for a feature group with this id in the database.
-  // If there is, but the feature set ids don't match, then keep trying the
-  // next consecutive id until either a matching group is found, or none is.
-  bool group_id_found = false;
-  while (!group_id_found) {
-    // Check for an already existing group
-    get_feature_sets.clearAllBindings();
-    get_feature_sets << static_cast<int64_t>(group_id);
-
-    auto group_iter = get_feature_sets.exec();
-    if (!group_iter.done()) {
-      // Group already exists. Extract the group to compare against the one we
-      // hashed.
-      std::set<FeatureSetID> db_group;
-      for (; !group_iter.done(); group_iter = group_iter.next()) {
-        FeatureSetID feat_set_id =
-            static_cast<FeatureSetID>(group_iter.getInteger(0));
-        db_group.insert(feat_set_id);
-      }
-      if ((db_group.size() != group.size()) ||
-          !std::equal(group.begin(), group.end(), db_group.begin())) {
-        mageec::ID tmp = static_cast<mageec::ID>(group_id);
-        group_id = static_cast<FeatureGroupID>(tmp + 1);
-      } else {
-        group_id_found = true;
-      }
-    } else {
-      // Add all of the feature sets to the group
-      for (auto I : group) {
-        insert_into_feature_group.clearAllBindings();
-        insert_into_feature_group << static_cast<int64_t>(group_id)
-                                  << static_cast<int64_t>(I);
-        insert_into_feature_group.exec().assertDone();
-      }
-      group_id_found = true;
-    }
-  }
-  transaction.commit();
-  return group_id;
-}
-
 FeatureSet Database::getFeatureSetFeatures(FeatureSetID feature_set) {
   // Get all of the features in a feature set
   SQLQuery select_features =
@@ -569,47 +493,6 @@ FeatureSet Database::getFeatureSetFeatures(FeatureSetID feature_set) {
   // Retrieve the features
   FeatureSet features;
   select_features << static_cast<int64_t>(feature_set);
-  for (auto feature_iter = select_features.exec(); !feature_iter.done();
-       feature_iter = feature_iter.next()) {
-    assert(feature_iter.numColumns() == 3);
-
-    unsigned feature_id =
-        static_cast<unsigned>(feature_iter.getInteger(0));
-    FeatureType feature_type =
-        static_cast<FeatureType>(feature_iter.getInteger(1));
-    auto feature_blob = feature_iter.getBlob(2);
-
-    // TODO: Also retrieve feature names
-    switch (feature_type) {
-    case FeatureType::kBool:
-      features.add(BoolFeature::fromBlob(feature_id, feature_blob, {}));
-      break;
-    case FeatureType::kInt:
-      features.add(IntFeature::fromBlob(feature_id, feature_blob, {}));
-      break;
-    }
-  }
-  transaction.commit();
-  return features;
-}
-
-FeatureSet Database::getFeatureGroupFeatures(FeatureGroupID feature_group) {
-  // Get all of the features in a feature group
-  SQLQuery select_features =
-      SQLQueryBuilder(*m_db)
-      << "SELECT FeatureSetFeature.feature_id, FeatureType.feature_type, "
-                "FeatureSetFeature.value "
-         "FROM FeatureType, FeatureSetFeature, FeatureGroupSet "
-         "WHERE FeatureType.feature_id = FeatureSetFeature.feature_id "
-           "AND FeatureSetFeature.feature_set_id = FeatureGroupSet.feature_set_id "
-           "AND FeatureGroupSet.feature_group_id = " << SQLType::kInteger;
-
-  // Perform in a single transaction
-  SQLTransaction transaction(m_db);
-
-  // Retrieve the features
-  FeatureSet features;
-  select_features << static_cast<int64_t>(feature_group);
   for (auto feature_iter = select_features.exec(); !feature_iter.done();
        feature_iter = feature_iter.next()) {
     assert(feature_iter.numColumns() == 3);
@@ -680,14 +563,17 @@ ParameterSet Database::getParameters(ParameterSetID param_set) {
 //===----------------------- Compiler interface ---------------------------===//
 
 CompilationID Database::newCompilation(std::string name, std::string type,
-                                       FeatureGroupID features,
+                                       FeatureSetID features,
+                                       FeatureClass features_class,
                                        ParameterSetID parameters,
                                        util::Option<std::string> command,
                                        util::Option<CompilationID> parent) {
   SQLQuery insert_into_compilation =
       SQLQueryBuilder(*m_db)
-      << "INSERT INTO Compilation(feature_group_id, parameter_set_id) "
-         "VALUES (" << SQLType::kInteger << ", " << SQLType::kInteger << ")";
+      << "INSERT INTO Compilation(feature_set_id, feature_class_id, "
+                                 "parameter_set_id) "
+         "VALUES (" << SQLType::kInteger << ", " << SQLType::kInteger << ", "
+                    << SQLType::kInteger << ")";
 
   SQLQuery insert_compilation_debug =
       SQLQueryBuilder(*m_db)
@@ -704,6 +590,7 @@ CompilationID Database::newCompilation(std::string name, std::string type,
 
   // Add the compilation
   insert_into_compilation << static_cast<int64_t>(features)
+                          << static_cast<int64_t>(features_class)
                           << static_cast<int64_t>(parameters);
   insert_into_compilation.exec().assertDone();
 
@@ -832,12 +719,12 @@ void Database::addResults(std::set<InputResult> results) {
 
 //===----------------------- Training interface ---------------------------===//
 
-void Database::trainMachineLearner(util::UUID ml, std::string metric) {
+void Database::trainMachineLearner(util::UUID ml, FeatureClass feature_class,
+                                   std::string metric) {
   // Get all of the feature types and parameter types, even if some of them
   // don't occur for this metric. These will all be distinct.
   SQLQuery select_feature_types(
       *m_db, "SELECT feature_id, feature_type FROM FeatureType");
-
   SQLQuery select_parameter_types(
       *m_db, "SELECT parameter_id, parameter_type FROM ParameterType");
 
@@ -853,9 +740,10 @@ void Database::trainMachineLearner(util::UUID ml, std::string metric) {
   // This will fail if there is already training data
   SQLQuery insert_blob =
       SQLQueryBuilder(*m_db)
-      << "INSERT OR REPLACE INTO MachineLearner(ml_id, metric, ml_blob) "
-         "VALUES (" << SQLType::kBlob << ", " << SQLType::kText << ", "
-                    << SQLType::kBlob << ")";
+      << "INSERT OR REPLACE INTO MachineLearner(ml_id, feature_class_id, "
+                                               "metric, ml_blob) "
+         "VALUES (" << SQLType::kBlob << ", " << SQLType::kInteger << ", "
+                    << SQLType::kText << ", " << SQLType::kBlob << ")";
 
   // Get the machine learner interface
   auto res = m_mls.find(ml);
@@ -905,7 +793,7 @@ void Database::trainMachineLearner(util::UUID ml, std::string metric) {
   transaction.commit();
 
   // Iterator to select each set of results in turn
-  ResultIterator results(*this, *m_db, metric);
+  ResultIterator results(*this, *m_db, feature_class, metric);
 
   // Retrieve the blob and then insert it into the database
   auto blob = i_ml.train(feature_descs, parameter_descs, pass_names,
@@ -916,32 +804,35 @@ void Database::trainMachineLearner(util::UUID ml, std::string metric) {
 
   insert_blob << std::vector<uint8_t>(std::begin(ml.data()),
                                       std::end(ml.data()))
-              << metric << blob;
+              << static_cast<int64_t>(feature_class) << metric << blob;
   insert_blob.exec().assertDone();
 }
 
 //===------------------------ Result Iterator -----------------------------===//
 
 ResultIterator::ResultIterator(Database &db, sqlite3 &raw_db,
+                               FeatureClass feature_class,
                                std::string metric)
-    : m_db(&db), m_metric(metric) {
+    : m_db(&db) {
   // Get each compilation and its accompanying results
   SQLQueryBuilder select_compilation_result =
       SQLQueryBuilder(raw_db)
-      << "SELECT Compilation.feature_group_id, Compilation.parameter_set_id, "
+      << "SELECT Compilation.feature_set_id, Compilation.parameter_set_id, "
                 "Result.result "
          "FROM Compilation, Result "
          "WHERE Compilation.compilation_id = Result.compilation_id "
+           "AND Compilation.feature_class_id = " << SQLType::kInteger << " "
            "AND Result.metric = " << SQLType::kText << " "
          "ORDER BY Compilation.compilation_id";
   m_query.reset(new SQLQuery(select_compilation_result));
-  *m_query << metric;
+  *m_query << static_cast<int64_t>(feature_class);
+  *m_query << metric;;
 
   m_result_iter.reset(new SQLQueryIterator(m_query->exec()));
 }
 
 ResultIterator::ResultIterator(ResultIterator &&other)
-    : m_db(other.m_db), m_metric(other.m_metric),
+    : m_db(other.m_db),
       m_query(std::move(other.m_query)),
       m_result_iter(std::move(other.m_result_iter)) {
   other.m_db = nullptr;
@@ -949,7 +840,6 @@ ResultIterator::ResultIterator(ResultIterator &&other)
 
 ResultIterator &ResultIterator::operator=(ResultIterator &&other) {
   m_db = other.m_db;
-  m_metric = other.m_metric;
   m_query = std::move(other.m_query);
   m_result_iter = std::move(other.m_result_iter);
 
@@ -966,9 +856,8 @@ util::Option<Result> ResultIterator::operator*() {
   FeatureSet features;
   ParameterSet parameters;
 
-  auto feature_group =
-      static_cast<FeatureGroupID>(m_result_iter->getInteger(0));
-  features = m_db->getFeatureGroupFeatures(feature_group);
+  auto feature_set = static_cast<FeatureSetID>(m_result_iter->getInteger(0));
+  features = m_db->getFeatureSetFeatures(feature_set);
   assert(features.size() != 0);
 
   if (!m_result_iter->isNull(1)) {

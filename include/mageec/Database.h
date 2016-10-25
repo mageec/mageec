@@ -160,24 +160,11 @@ public:
   /// \return The identifier of the new feature set in the database
   FeatureSetID newFeatureSet(FeatureSet features);
 
-  /// \brief Create a new group of features from a number of feature sets
-  ///
-  /// \param group  The feature sets which form this feature group.
-  ///
-  /// \return The identifier of the feature group in the database
-  FeatureGroupID newFeatureGroup(std::set<FeatureSetID> group);
-
   /// \brief Retrieve the provided set of features
   ///
   /// \param feature_set_id  The id of the set of features to be extracted
   /// \return The corresponding features
   FeatureSet getFeatureSetFeatures(FeatureSetID feature_set_id);
-
-  /// \brief Retrieve the provided group of features in a single FeatureSet
-  ///
-  /// \param feature_group_id  The id of the group of features to be extracted
-  /// \return The features in that group in a single feature set
-  FeatureSet getFeatureGroupFeatures(FeatureGroupID feature_group_id);
 
   /// \brief Retrieve the provided set of parameters in a ParameterSet
   ///
@@ -191,7 +178,8 @@ public:
   ///
   /// \param name  The name of the program unit (debug)
   /// \param type  The type of the program unit (debug)
-  /// \param features  The group of features for the initial program unit
+  /// \param features  The set of features for the program unit
+  /// \param features_class  The class of the provided features
   /// \param parameters  Set of parameters which apply to the overall
   /// compilation
   /// \param command  The command used to compile the program unit
@@ -200,7 +188,8 @@ public:
   ///
   /// \return An identifier for the compilation of the program unit
   CompilationID newCompilation(std::string name, std::string type,
-                               FeatureGroupID features,
+                               FeatureSetID features,
+                               FeatureClass features_class,
                                ParameterSetID parameters,
                                util::Option<std::string> command,
                                util::Option<CompilationID> parent);
@@ -251,8 +240,10 @@ public:
   /// \param ml  Identifier of the machine learner in the database to train,
   /// this must be the UUID of a machine learner for which we have a
   /// corresponding interface.
+  /// \param feature_class  The class of features to train against
   /// \param metric  The metric to train against.
-  void trainMachineLearner(util::UUID ml, std::string metric);
+  void trainMachineLearner(util::UUID ml, FeatureClass feature_class,
+                           std::string metric);
 
 private:
   /// Handle to the underlying sqlite3 database
@@ -284,8 +275,10 @@ public:
   /// \brief Constructor an iterator to iterate through results in the database
   ///
   /// \param db  Database to retrieve results from
+  /// \param feature_class  Class of features that the result corresponds to
   /// \param metric  Metric of the results
-  ResultIterator(Database &db, sqlite3 &raw_db, std::string metric);
+  ResultIterator(Database &db, sqlite3 &raw_db, FeatureClass feature_class,
+                 std::string metric);
 
   ResultIterator() = delete;
   ResultIterator(const ResultIterator &other) = delete;
@@ -298,7 +291,6 @@ public:
 
 private:
   Database *m_db;
-  std::string m_metric;
   std::unique_ptr<SQLQuery> m_query;
   std::unique_ptr<SQLQueryIterator> m_result_iter;
 };

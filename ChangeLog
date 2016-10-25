@@ -1,5 +1,42 @@
 2016-10-25  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/Database.h (Database::newFeatureGroup)
+	(Database::getFeatureGroupFeatures): Remove functions.
+	(Database::newCompilation): Add features_class parameter.
+	(Database::trainMachineLearner): Add feature_class parameter.
+	(ResultIterator::ResultIterator): Likewise.
+	(ResultIterator::m_metric): Remove unused member.
+	* include/mageec/TrainedML.h (TrainedML::TrainedML): Add
+	feature_class parameter.
+	(TrainedML::getFeatureClass): Add method.
+	(TrainedML::m_feature_class): Add private member.
+	* include/mageec/Types.h (FeatureGroupID): Remove enumeration.
+	(FeatureClass): Add enumeration.
+	* lib/Database.cpp (create_feature_group_set_table): Remove global.
+	(create_compilation_table): Update sql to add feature_class_id column.
+	(create_machine_learner_table): Likewise.
+	(create_program_unit_debug_table): Rename to
+	create_compilation_debug_table.
+	(Database::init_db): Remove create_feature_group_set_table query.
+	(Database::getTrainedMachineLearners): Retrieve feature_class_id
+	in sql query, use when creating new TrainedMLs.
+	(Database::garbageCollect): Remove deletion of unused feature groups.
+	(Database::newFeatureGrouo): Remove function.
+	(Database::getFeatureGroupFeatures): Likewise.
+	(Database::newCompilation Database::trainMachineLearners):
+	Add feature_class parameter.
+	(Database::trainMachineLearner): Add feature_class_id to sql query
+	adding a new MachineLearner.
+	(ResultIterator::ResultIterator): Add feature_class parameter.
+	(ResultIterator::m_metric): Remove member.
+	* lib/Driver.cpp (trainDatabase): Also train against each feature
+	class.
+	* lib/TrainedML.cpp (TrainedML::m_feature_class): Add private member.
+	(TrainedML::TrainedML): Add feature_class parameter.
+	(TrainedML::getFeatureClass): Added function.
+
+2016-10-25  Edward Jones  <ed.jones@embecosm.com>
+
 	* CMakeLists.txt: Remove FileML.cpp from MLs to build
 	* include/mageec/ML/FileML.h: Deleted file.
 	* lib/Driver.cpp: Remove creation of FileML machine learner.

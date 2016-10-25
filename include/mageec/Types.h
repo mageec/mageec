@@ -37,7 +37,6 @@ typedef uint64_t ID;
 
 enum class CompilationID    : ID {};
 enum class FeatureSetID     : ID {};
-enum class FeatureGroupID   : ID {};
 enum class ParameterSetID   : ID {};
 enum class ParameterGroupID : ID {};
 
@@ -47,6 +46,17 @@ enum class MetadataField : unsigned {
 };
 
 enum class FeatureType : TypeID { kBool, kInt };
+
+enum class FeatureClass : TypeID {
+  kFIRST_FEATURE_CLASS,
+
+  // Features corresponding to a module
+  kModule = kFIRST_FEATURE_CLASS,
+  // Features for a function
+  kFunction,
+
+  kLAST_FEATURE_CLASS = kFunction,
+};
 
 enum class ParameterType : TypeID { kBool, kRange, kPassSeq };
 
