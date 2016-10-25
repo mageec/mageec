@@ -1,3 +1,8 @@
+2016-10-25  Edward Jones  <ed.jones@embecosm.com>
+
+	* lib/ML/C5.cpp (C5Driver::train): Resize vectors for classifier
+	trees to be included.
+
 2016-09-23  Edward Jones  <ed.jones@embecosm.com>
 
 	* include/mageec/Database.h (Database::garbageCollect): Add function.

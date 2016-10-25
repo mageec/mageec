@@ -616,7 +616,7 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
       std::streampos tree_size = tree_file.tellg();
 
       std::vector<uint8_t> tree_blob;
-      tree_blob.reserve(static_cast<size_t>(tree_size));
+      tree_blob.resize(static_cast<size_t>(tree_size));
 
       tree_file.seekg(0, tree_file.beg);
       tree_file.read(reinterpret_cast<char *>(tree_blob.data()), tree_size);
@@ -759,7 +759,7 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
       std::streampos tree_size = tree_file.tellg();
 
       std::vector<uint8_t> tree_blob;
-      tree_blob.reserve(static_cast<size_t>(tree_size));
+      tree_blob.resize(static_cast<size_t>(tree_size));
 
       tree_file.seekg(0, tree_file.beg);
       tree_file.read(reinterpret_cast<char *>(tree_blob.data()), tree_size);
