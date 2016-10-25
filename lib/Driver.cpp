@@ -26,7 +26,6 @@
 #include "mageec/Database.h"
 #include "mageec/Framework.h"
 #include "mageec/ML/C5.h"
-#include "mageec/ML/FileML.h"
 #include "mageec/Util.h"
 
 #include <fstream>
@@ -514,11 +513,6 @@ int main(int argc, const char *argv[]) {
   MAGEEC_DEBUG("Registering C5.0 machine learner interface");
   std::unique_ptr<IMachineLearner> c5_ml(new C5Driver());
   framework.registerMachineLearner(std::move(c5_ml));
-
-  // FileML
-  MAGEEC_DEBUG("Registering FileML machine learner interface");
-  std::unique_ptr<IMachineLearner> file_ml(new FileML());
-  framework.registerMachineLearner(std::move(file_ml));
 
   // Get the UUIDs of the machine learners provided on the command line
   std::set<util::UUID> mls;

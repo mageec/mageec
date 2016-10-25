@@ -1,5 +1,12 @@
 2016-10-25  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Remove FileML.cpp from MLs to build
+	* include/mageec/ML/FileML.h: Deleted file.
+	* lib/Driver.cpp: Remove creation of FileML machine learner.
+	* lib/ML/FileML.cpp: Deleted file.
+
+2016-10-25  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/ML/C5.cpp (C5Driver::train): Resize vectors for classifier
 	trees to be included.
 
