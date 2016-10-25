@@ -79,6 +79,7 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include <algorithm>
 
 
 
@@ -143,7 +144,7 @@ std::unique_ptr<FunctionFeatures> extractFunctionFeatures(void) {
     features->bb_phi_header_nodes.push_back(0);
 
     for (auto gsi = gsi_start_bb(bb); !gsi_end_p(gsi); gsi_next(&gsi)) {
-      gimple stmt = gsi_stmt(gsi);
+      gimple *stmt = gsi_stmt(gsi);
       in_phi_header = true;
 
       features->bb_instructions[bb_index]++;

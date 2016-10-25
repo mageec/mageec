@@ -1,3 +1,7 @@
+2016-10-25  Edward Jones  <ed.jones@embecosm.com>
+
+	* FeatureExtract.cpp: Fix minor incompatibilites with gcc.
+
 2016-09-19  Edward Jones  <ed.jones@embecosm.com>
 
 	* Plugin.cpp: FeatureGroupID entries in the output file are
