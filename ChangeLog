@@ -1,3 +1,7 @@
+2016-10-26  Edward Jones  <ed.jones@embecosm.com>
+
+	* lib/Database.cpp: Fix increment of feature_class when training.
+
 2016-10-25  Edward Jones  <ed.jones@embecosm.com>
 
 	* include/mageec/Database.h (Database::newFeatureGroup)

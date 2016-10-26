@@ -259,9 +259,9 @@ static bool trainDatabase(Framework &framework, const std::string &db_path,
       MAGEEC_DEBUG("Training for metric: " << metric);
       for (auto feature_class = FeatureClass::kFIRST_FEATURE_CLASS;
            feature_class <= FeatureClass::kLAST_FEATURE_CLASS; /*empty*/) {
+        db->trainMachineLearner(ml, feature_class, metric);
         feature_class =
             static_cast<FeatureClass>(static_cast<TypeID>(feature_class) + 1);
-        db->trainMachineLearner(ml, feature_class, metric);
       }
     }
   }
