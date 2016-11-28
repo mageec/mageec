@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.0.2)
 
 add_library(c5_machine_learner
   attwinnow.c
+  c50.c
+  c50main.c
   classify.c
   confmat.c
   construct.c
@@ -20,7 +22,6 @@ add_library(c5_machine_learner
   modelfiles.c
   prune.c
   p-thresh.c
-  rc50.c
   redefine.c
   rsample.c
   rulebasedmodels.c
@@ -30,7 +31,6 @@ add_library(c5_machine_learner
   sort.c
   strbuf.c
   subset.c
-  top.c
   trees.c
   update.c
   utility.c

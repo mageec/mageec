@@ -1,11 +1,10 @@
-#include <R.h>
-#include <Rinternals.h>
-#include <R_ext/Rdynload.h>
-
 #include "rulebasedmodels.h"
 #include "rsample.h"
 #include "strbuf.h"
 #include "redefine.h"
+
+#include <string.h>
+#include <malloc.h>
 
 extern void c50main();
 extern void sample(double *outputv);
@@ -64,7 +63,7 @@ static void c50(char **namesv,
 
     // Register this strbuf using the name "undefined.names"
 	if (rbm_register(sb_names, "undefined.names", 0) < 0) {
-		error("undefined.names already exists");
+    fprintf(stderr, "undefined.names already exists");
 	}
 
     // Create a strbuf using *datav and register it as "undefined.data"
@@ -72,7 +71,7 @@ static void c50(char **namesv,
     // XXX why is sb_datav copied? was that part of my debugging?
     // XXX or is this the cause of the leak?
 	if (rbm_register(strbuf_copy(sb_datav), "undefined.data", 0) < 0) {
-		error("undefined data already exists");
+		fprintf(stderr, "undefined data already exists");
 	}
 
     // Create a strbuf using *costv and register it as "undefined.costs"
@@ -81,7 +80,7 @@ static void c50(char **namesv,
         STRBUF *sb_costv = strbuf_create_full(*costv, strlen(*costv));
         // XXX should sb_costv be copied?
 	    if (rbm_register(sb_costv, "undefined.costs", 0) < 0) {
-		    error("undefined.cost already exists");
+		    fprintf(stderr, "undefined.cost already exists");
 	    }
     } else {
         // Rprintf("no cost matrix to register\n");
@@ -104,7 +103,7 @@ static void c50(char **namesv,
             STRBUF *treebuf = rbm_lookup("undefined.tree");
             if (treebuf != NULL) {
                 char *treeString = strbuf_getall(treebuf);
-                char *treeObj = R_alloc(strlen(treeString) + 1, 1);
+                char *treeObj = calloc(strlen(treeString) + 1, 1);
                 strcpy(treeObj, treeString);
 
                 // I think the previous value of *treev will be garbage collected
@@ -118,7 +117,7 @@ static void c50(char **namesv,
             STRBUF *rulesbuf = rbm_lookup("undefined.rules");
             if (rulesbuf != NULL) {
                 char *rulesString = strbuf_getall(rulesbuf);
-                char *rulesObj = R_alloc(strlen(rulesString) + 1, 1);
+                char *rulesObj = calloc(strlen(rulesString) + 1, 1);
                 strcpy(rulesObj, rulesString);
 
                 // I think the previous value of *rulesv will be garbage collected
@@ -129,12 +128,12 @@ static void c50(char **namesv,
             }
         }
     } else {
-        Rprintf("c50 code called exit with value %d\n", val - JMP_OFFSET);
+        printf("c50 code called exit with value %d\n", val - JMP_OFFSET);
     }
 
     // Close file object "Of", and return its contents via argument outputv
     char *outputString = closeOf();
-    char *output = R_alloc(strlen(outputString) + 1, 1);
+    char *output = calloc(strlen(outputString) + 1, 1);
     strcpy(output, outputString);
     *outputv = output;
 
@@ -172,29 +171,29 @@ static void predictions(char **casev,
 
     STRBUF *sb_cases = strbuf_create_full(*casev, strlen(*casev));
 	if (rbm_register(sb_cases, "undefined.cases", 0) < 0) {
-		error("undefined.cases already exists");
+		fprintf(stderr, "undefined.cases already exists");
 	}
 
     STRBUF *sb_names = strbuf_create_full(*namesv, strlen(*namesv));
 	if (rbm_register(sb_names, "undefined.names", 0) < 0) {
-		error("undefined.names already exists");
+		fprintf(stderr, "undefined.names already exists");
 	}
 
     if (strlen(*treev)) {
 	STRBUF *sb_treev = strbuf_create_full(*treev, strlen(*treev));
 	/* XXX should sb_treev be copied? */
 	if (rbm_register(sb_treev, "undefined.tree", 0) < 0) {
-	    error("undefined.tree already exists");
+	    fprintf(stderr, "undefined.tree already exists");
 	}
     } else if (strlen(*rulesv))  {
 	STRBUF *sb_rulesv = strbuf_create_full(*rulesv, strlen(*rulesv));
 	/* XXX should sb_rulesv be copied? */
 	if (rbm_register(sb_rulesv, "undefined.rules", 0) < 0) {
-	    error("undefined.rules already exists");
+	    fprintf(stderr, "undefined.rules already exists");
 	}
 	setrules(1);
     } else {
-	error("either a tree or rules must be provided");
+	fprintf(stderr, "either a tree or rules must be provided");
     }
 
     // Create a strbuf using *costv and register it as "undefined.costs"
@@ -203,7 +202,7 @@ static void predictions(char **casev,
         STRBUF *sb_costv = strbuf_create_full(*costv, strlen(*costv));
         // XXX should sb_costv be copied?
 	    if (rbm_register(sb_costv, "undefined.costs", 0) < 0) {
-		    error("undefined.cost already exists");
+		    fprintf(stderr, "undefined.cost already exists");
 	    }
     } else {
         // Rprintf("no cost matrix to register\n");
@@ -220,12 +219,12 @@ static void predictions(char **casev,
 
         // Rprintf("predict finished\n\n");
     } else {
-        Rprintf("predict code called exit with value %d\n\n", val - JMP_OFFSET);
+        printf("predict code called exit with value %d\n\n", val - JMP_OFFSET);
     }
 
     // Close file object "Of", and return its contents via argument outputv
     char *outputString = closeOf();
-    char *output = R_alloc(strlen(outputString) + 1, 1);
+    char *output = calloc(strlen(outputString) + 1, 1);
     strcpy(output, outputString);
     *outputv = output;
 
@@ -233,61 +232,3 @@ static void predictions(char **casev,
     initglobals();
 }
 
-// Declare the type of each of the arguments to the c50 function
-static R_NativePrimitiveArgType c50_t[] = {
-    STRSXP,   // namesv
-    STRSXP,   // datav
-    STRSXP,   // costv
-    LGLSXP,   // subset
-    LGLSXP,   // rules
-    INTSXP,   // utility
-    INTSXP,   // trials
-    LGLSXP,   // winnow
-    REALSXP,  // sample
-    INTSXP,   // seed
-    INTSXP,   // noGlobalPruning
-    REALSXP,  // CF
-    INTSXP,   // minCases
-    LGLSXP,   // fuzzyThreshold
-    LGLSXP,   // early stopping    
-    STRSXP,   // treev
-    STRSXP,   // rulesv
-    STRSXP    // outputv
-};
-
-// Declare the type of each of the arguments to the predictions function
-static R_NativePrimitiveArgType predictions_t[] = {
-    STRSXP,   // casev
-    STRSXP,   // namesv
-    STRSXP,   // treev
-    STRSXP,   // rulesv
-    STRSXP,   // costv
-    INTSXP,   // predv
-    REALSXP,  // confidencev
-    INTSXP,   // trials
-    STRSXP    // outputv
-};
-
-// Declare the c50 and predictions functions
-static const R_CMethodDef cEntries[] = {
-    {"C50", (DL_FUNC) &c50, 18, c50_t},
-    {"predictions", (DL_FUNC) &predictions, 9, predictions_t},
-    {NULL, NULL, 0}
-};
-
-// Initialization function for this shared object
-void R_init_C50(DllInfo *dll)
-{
-    // Announce ourselves for testing
-    // Rprintf("R_init_C50 called\n");
-
-    // Register the functions "c50" and "predictions"
-    R_registerRoutines(dll, cEntries, NULL, NULL, NULL);
-
-    // This should help prevent people from accidentally accessing
-    // any of our global variables, or any functions that are not
-    // intended to be called from R.  Only the functions "c50"
-    // and "predictions" can be accessed, since they're the only ones
-    // we registered.
-    R_useDynamicSymbols(dll, FALSE);
-}
