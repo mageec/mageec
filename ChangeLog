@@ -1,5 +1,11 @@
 2016-11-28  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Add Types.cpp to build.
+	* lib/Types.cpp: Added file.
+	* lib/Util.cpp: Update to advance iterators when reading bytes.
+
+2016-11-28  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/ML/C5.cpp: Make decisions using the C5 library.
 
 2016-11-28  Edward Jones  <ed.jones@embecosm.com>

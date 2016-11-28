@@ -99,6 +99,7 @@ add_library (mageec_core
   lib/Framework.cpp
   lib/SQLQuery.cpp
   lib/TrainedML.cpp
+  lib/Types.cpp
   lib/Util.cpp
 )
 set_target_properties(mageec_core PROPERTIES OUTPUT_NAME mageec)

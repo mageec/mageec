@@ -46,6 +46,7 @@ unsigned read16LE(std::vector<uint8_t>::const_iterator &it) {
   unsigned res = 0;
   res |= static_cast<unsigned>(*it);
   res |= static_cast<unsigned>(*(it + 1)) << 8;
+  it += 2;
   return res;
 }
 
@@ -64,6 +65,7 @@ uint64_t read64LE(std::vector<uint8_t>::const_iterator &it) {
   res |= static_cast<uint64_t>(*(it + 5)) << 40;
   res |= static_cast<uint64_t>(*(it + 6)) << 48;
   res |= static_cast<uint64_t>(*(it + 7)) << 56;
+  it += 8;
   return res;
 }
 
