@@ -32,11 +32,45 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <map>
 #include <fstream>
 #include <set>
 #include <string>
+#include <sstream>
 #include <vector>
+
+// Training and prediction interfaces to the C5.0 machine learner library
+extern "C" {
+  void c50(char **namesv,
+           char **datav,
+           char **costv,
+           int *subset,
+           int *rules,
+           int *utility,
+           int *trials,
+           int *winnow,
+           double *sample,
+           int *seed,
+           int *noGlobalPruning,
+           double *CF,
+           int *minCases,
+           int *fuzzyThreshold,
+           int *earlyStopping,
+           char **treev,
+           char **rulesv,
+           char **outputv);
+
+  void predictions(char **casev,
+                   char **namesv,
+                   char **treev,
+                   char **rulesv,
+                   char **costv,
+                   int *predv,
+			             double *confidencev,
+			             int *trials,
+                   char **outputv);
+};
 
 namespace mageec {
 namespace {
@@ -297,46 +331,46 @@ C5Driver::makeDecision(const DecisionRequestBase &request,
     // Output names file (columns for classifier) for this parameter
     // FIXME: This is copied from the 'train' code and should be factored out
     // TODO: Platform independent temporary file
-    std::ofstream name_file("/tmp/parameter_" + std::to_string(param_id) +
+    std::ofstream names_data("/tmp/parameter_" + std::to_string(param_id) +
                                 ".names",
                             std::ofstream::binary);
 
     // Output the target parameter first
     // TODO: Comment containing parameter description
-    name_file << "parameter_" << std::to_string(param_id) << ".\n";
+    names_data << "parameter_" << std::to_string(param_id) << ".\n";
 
     // Output columns for all of the features which we have seen in the
     // training set.
     // TODO: Add comment containing feature description
     for (auto feat : context->feature_descs) {
-      name_file << "feature_" << std::to_string(feat.id) << ": ";
+      names_data << "feature_" << std::to_string(feat.id) << ": ";
 
       switch (feat.type) {
       case FeatureType::kBool:
-        name_file << "t, f.";
+        names_data << "t, f.";
         break;
       case FeatureType::kInt:
-        name_file << "continuous.";
+        names_data << "continuous.";
         break;
       }
-      name_file << '\n';
+      names_data << '\n';
     }
-    name_file << '\n';
+    names_data << '\n';
 
     // Output a column for the target parameter
-    name_file << "parameter_" << std::to_string(param_id) << ": ";
+    names_data << "parameter_" << std::to_string(param_id) << ": ";
     switch (param_type) {
     case ParameterType::kBool:
-      name_file << "t, f.";
+      names_data << "t, f.";
       break;
     case ParameterType::kRange:
-      name_file << "continuous.";
+      names_data << "continuous.";
       break;
     default:
       break;
     }
-    name_file << '\n';
-    name_file.close();
+    names_data << '\n';
+    names_data.close();
 
     // Output cases files (.cases), containing the feature set
     std::ofstream cases_file("/tmp/parameter_" + std::to_string(param_id) +
@@ -468,55 +502,49 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
     curr_param++;
 
     // Output names file (columns for classifier) for this parameter
-    // TODO: Platform independent temporary file
-    MAGEEC_DEBUG("Building .names file");
-    std::ofstream name_file("/tmp/parameter_" + std::to_string(param.id) +
-                                ".names",
-                            std::ofstream::binary);
+    MAGEEC_DEBUG("Building .names file data");
+    std::ostringstream names_data;
 
     // Output the target parameter first
     // TODO: Comment containing parameter description
-    name_file << "parameter_" << param.id << ".\n";
+    names_data << "parameter_" << param.id << ".\n";
 
     // Output columns for all of the features which we have seen in the
     // training set.
     // TODO: Add comment containing feature description
     for (auto feat : feature_descs) {
-      name_file << "feature_" << feat.id << ": ";
+      names_data << "feature_" << feat.id << ": ";
 
       switch (feat.type) {
       case FeatureType::kBool:
-        name_file << "t, f.";
+        names_data << "t, f.";
         break;
       case FeatureType::kInt:
-        name_file << "continuous.";
+        names_data << "continuous.";
         break;
       }
-      name_file << '\n';
+      names_data << '\n';
     }
-    name_file << '\n';
+    names_data << '\n';
 
     // Output a column for the target parameter
-    name_file << "parameter_" << param.id << ": ";
+    names_data << "parameter_" << param.id << ": ";
     switch (param.type) {
     case ParameterType::kBool:
-      name_file << "t, f.";
+      names_data << "t, f.";
       break;
     case ParameterType::kRange:
-      name_file << "continuous.";
+      names_data << "continuous.";
       break;
     default:
       break;
     }
-    name_file << '\n';
-    name_file.close();
+    names_data << '\n';
 
-    // For the current parameter, output a data (.data) file containing the
-    // training data.
-    MAGEEC_DEBUG("Building .data file");
-    std::ofstream data_file("/tmp/parameter_" + std::to_string(param.id) +
-                                ".data",
-                            std::ofstream::binary);
+    // For the current parameter, generate the values in the .data file
+    // containing all of the training data
+    MAGEEC_DEBUG("Building .data file data");
+    std::ostringstream data_data;
 
     for (auto res : result_map) {
       ParameterSet parameters = res.second.getParameters();
@@ -552,19 +580,19 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
           switch (feat.type) {
           case FeatureType::kBool: {
             bool value = static_cast<BoolFeature *>(f)->getValue();
-            data_file << (value ? "t" : "f");
+            data_data << (value ? "t" : "f");
             break;
           }
           case FeatureType::kInt: {
             int64_t value = static_cast<IntFeature *>(f)->getValue();
-            data_file << value;
+            data_data << value;
             break;
           }
           }
-          data_file << ",";
+          data_data << ",";
         } else {
           // No value for this feature for this result.
-          data_file << "?,";
+          data_data << "?,";
         }
       }
       // Output the parameter value last.
@@ -573,61 +601,76 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
       switch (param.type) {
       case ParameterType::kBool: {
         bool value = static_cast<BoolParameter *>(p)->getValue();
-        data_file << (value ? "t" : "f");
+        data_data << (value ? "t" : "f");
         break;
       }
       case ParameterType::kRange: {
         int64_t value = static_cast<RangeParameter *>(p)->getValue();
-        data_file << value;
+        data_data << value;
         break;
       }
       default:
         break;
       }
-      data_file << "\n";
+      data_data << "\n";
     }
-    data_file.close();
 
     // Now we have .names and .data files, run the classifier over them to
     // generate a tree
-    // TODO: Running command on windows?
-    std::string command_str("c5.0 -f /tmp/parameter_" +
-                            std::to_string(param.id));
-    MAGEEC_DEBUG("Running the C5.0 classifier: " << command_str);
+    MAGEEC_DEBUG("Running the C5.0 classifier for parameter "
+                 << std::to_string(param.id));
 
-    FILE *fpipe = popen(command_str.c_str(), "r");
-    if (!fpipe) {
-      assert(0 && "Process spawn failed!");
-    }
+    // input files as buffers
+    std::string names_str = names_data.str();
+    std::string data_str = data_data.str();
 
-    // Read until we get EOF
-    std::array<uint8_t, 1024> tree_str;
-    while (!feof(fpipe)) {
-      fgets(reinterpret_cast<char *>(tree_str.data()), 1024, fpipe);
-    }
+    char *namesv = (char*)malloc(names_str.size() + 1);
+    strcpy(namesv, names_str.c_str());
+    char *datav = (char*)malloc(data_str.size() + 1);
+    strcpy(datav, data_str.c_str());
+    char *costv = (char*)malloc(1); costv[0] = '\0';
+    // default parameters for C5.0
+    int subset = 1;
+    int rules = 0;
+    int utility = 0;
+    int trials = 1;
+    int winnow = 0;
+    double sample = 0.0;
+    int seed = 0xbeef;
+    int noGlobalPruning = 0;
+    double CF = 0.25;
+    int minCases = 2;
+    int fuzzyThreshold = 0;
+    int earlyStopping = 1;
+    // output parameters
+    char *treev = nullptr;
+    char *rulesv = nullptr;
+    char *outputv = nullptr;
 
-    // Read in the generated tree to be stored in the machine learner blob
-    MAGEEC_DEBUG("Reading the generate .tree file");
-    std::ifstream tree_file("/tmp/parameter_" + std::to_string(param.id) +
-                                ".tree",
-                            std::ifstream::binary);
-    if (tree_file) {
-      tree_file.seekg(0, tree_file.end);
-      std::streampos tree_size = tree_file.tellg();
+    c50(&namesv, &datav, &costv, &subset, &rules, &utility, &trials,
+        &winnow, &sample, &seed, &noGlobalPruning, &CF, &minCases,
+        &fuzzyThreshold, &earlyStopping, &treev, &rulesv, &outputv);
 
-      std::vector<uint8_t> tree_blob;
-      tree_blob.resize(static_cast<size_t>(tree_size));
+    // free memory for all of the unused parameters
+    free(namesv);
+    free(datav);
+    if (rulesv != nullptr)
+      free(rulesv);
+    if (outputv != nullptr)
+      free(outputv);
 
-      tree_file.seekg(0, tree_file.beg);
-      tree_file.read(reinterpret_cast<char *>(tree_blob.data()), tree_size);
+    // Retrieve the tree
+    assert(treev != nullptr);
+    std::vector<uint8_t> tree_blob;
+    tree_blob.resize(strlen(treev));
+    for (unsigned i = 0; i < strlen(treev); ++i)
+      tree_blob.data()[i] = treev[i];
+    // free the memory for the tree buffer
+    free(treev);
 
-      // save the tree for the current parameter
-      context->parameter_classifier_trees.insert(
-          std::make_pair(param.id, tree_blob));
-    } else {
-      MAGEEC_WARN("Could not read .tree file from C5 machine learner");
-    }
-    tree_file.close();
+    // save the tree for the current parameter
+    context->parameter_classifier_trees.insert(
+        std::make_pair(param.id, tree_blob));
   }
 
   MAGEEC_DEBUG("Training passes");
@@ -637,42 +680,39 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
     MAGEEC_DEBUG("Training for pass '" << pass << "'");
 
     // Output names file (columns for classifier) for this pass
-    // TODO: Platform independent temporary file
-    MAGEEC_DEBUG("Building .names file");
-    std::ofstream name_file("/tmp/pass_" + pass + ".names",
-                            std::ofstream::binary);
+    MAGEEC_DEBUG("Building .names file data");
+    std::ostringstream names_data;
 
     // Output the target pass first
     // TODO: Comment containing pass description
-    name_file << "pass_" << pass << ".\n";
+    names_data << "pass_" << pass << ".\n";
 
     // Output columns for all of the features which we have seen in the
     // training set.
     // TODO: Add comment containing feature description
     for (auto feat : feature_descs) {
-      name_file << "feature_" << feat.id << ": ";
+      names_data << "feature_" << feat.id << ": ";
 
       switch (feat.type) {
       case FeatureType::kBool:
-        name_file << "t, f.";
+        names_data << "t, f.";
         break;
       case FeatureType::kInt:
-        name_file << "continuous.";
+        names_data << "continuous.";
         break;
       }
-      name_file << '\n';
+      names_data << '\n';
     }
-    name_file << '\n';
+    names_data << '\n';
 
     // Output a column for the target pass
-    name_file << "pass_" << pass << ": t, f.\n";
-    name_file.close();
+    names_data << "pass_" << pass << ": t, f.\n";
 
-    // For the current pass, output a data (.data) file containing the
-    // training data.
-    MAGEEC_DEBUG("Building .data file");
-    std::ofstream data_file("/tmp/pass_" + pass + ".data",
-                            std::ofstream::binary);
+    // For the current pass, generate the values in the .data file
+    // containing all of the training data
+    MAGEEC_DEBUG("Building .data file data");
+    std::ostringstream data_data;
+
     for (auto res : result_map) {
       FeatureSet features = res.second.getFeatures();
       ParameterSet parameters = res.second.getParameters();
@@ -707,19 +747,19 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
           switch (feat.type) {
           case FeatureType::kBool: {
             bool value = static_cast<BoolFeature *>(f)->getValue();
-            data_file << (value ? "t" : "f");
+            data_data << (value ? "t" : "f");
             break;
           }
           case FeatureType::kInt: {
             int64_t value = static_cast<IntFeature *>(f)->getValue();
-            data_file << value;
+            data_data << value;
             break;
           }
           }
-          data_file << ",";
+          data_data << ",";
         } else {
           // No value for this feature for this result.
-          data_file << "?,";
+          data_data << "?,";
         }
       }
       // Output whether the pass was run or not last.
@@ -730,44 +770,65 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
           break;
         }
       }
-      data_file << (run_pass ? "t" : "f");
-      data_file << "\n";
+      data_data << (run_pass ? "t" : "f");
+      data_data << "\n";
     }
 
     // Now we have .names and .data files, run the classifier over them to
     // generate a tree
-    // TODO: Running command on windows?
-    MAGEEC_DEBUG("Running the C5.0 classifier");
-    std::string command_str("c5.0 -f /tmp/pass_" + pass);
-    FILE *fpipe = popen(command_str.c_str(), "r");
-    if (!fpipe) {
-      assert(0 && "Process spawn failed!");
-    }
+    MAGEEC_DEBUG("Running the C5.0 classifier for pass " << pass);
 
-    // Read until we get EOF
-    std::array<uint8_t, 1024> tree_str;
-    while (!feof(fpipe)) {
-      fgets(reinterpret_cast<char *>(tree_str.data()), 1024, fpipe);
-    }
+    // input files as buffers
+    std::string names_str = names_data.str();
+    std::string data_str = data_data.str();
 
-    // Read in the generated tree to be stored in the machine learner blob
-    MAGEEC_DEBUG("Reading the generated .tree file");
-    std::ifstream tree_file("/tmp/pass_" + pass + ".tree",
-                            std::ifstream::binary);
-    if (tree_file) {
-      tree_file.seekg(0, tree_file.end);
-      std::streampos tree_size = tree_file.tellg();
+    char *namesv = (char*)malloc(names_str.size() + 1);
+    strcpy(namesv, names_str.c_str());
+    char *datav = (char*)malloc(data_str.size() + 1);
+    strcpy(datav, data_str.c_str());
+    char *costv = (char*)malloc(1); costv[0] = '\0';
+    // default parameters for C5.0
+    int subset = 1;
+    int rules = 0;
+    int utility = 0;
+    int trials = 1;
+    int winnow = 0;
+    double sample = 0.0;
+    int seed = 0xbeef;
+    int noGlobalPruning = 0;
+    double CF = 0.25;
+    int minCases = 2;
+    int fuzzyThreshold = 0;
+    int earlyStopping = 1;
+    // output parameters
+    char *treev = nullptr;
+    char *rulesv = nullptr;
+    char *outputv = nullptr;
 
-      std::vector<uint8_t> tree_blob;
-      tree_blob.resize(static_cast<size_t>(tree_size));
+    c50(&namesv, &datav, &costv, &subset, &rules, &utility, &trials,
+        &winnow, &sample, &seed, &noGlobalPruning, &CF, &minCases,
+        &fuzzyThreshold, &earlyStopping, &treev, &rulesv, &outputv);
 
-      tree_file.seekg(0, tree_file.beg);
-      tree_file.read(reinterpret_cast<char *>(tree_blob.data()), tree_size);
+    // free memory for all of the unused parameters
+    free(namesv);
+    free(datav);
+    if (rulesv != nullptr)
+      free(rulesv);
+    if (outputv != nullptr)
+      free(outputv);
 
-      // save the tree for the current parameter
-      context->pass_classifier_trees.insert(std::make_pair(pass, tree_blob));
-    }
-    tree_file.close();
+    // Retrieve the tree
+    assert(treev != nullptr);
+    std::vector<uint8_t> tree_blob;
+    tree_blob.resize(strlen(treev));
+    for (unsigned i = 0; i < strlen(treev); ++i)
+      tree_blob.data()[i] = treev[i];
+    // free the memory for the tree buffer
+    free(treev);
+
+    // save the tree for the current parameter
+    context->pass_classifier_trees.insert(
+        std::make_pair(pass, tree_blob));
   }
   MAGEEC_DEBUG("Training finished");
 

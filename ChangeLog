@@ -1,5 +1,15 @@
 2016-11-28  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Link against the C5 library. Always build C5.0
+	* lib/ML/C5.cpp: Refactor to use C5 library.
+	* lib/ML/C5/c50.c: Update to build against MAGEEC.
+	* lib/ML/C5/redefine.c: Likewise.
+	* lib/ML/C5/rsample.c: Likewise.
+	* lib/ML/C5/rulebasedmodels.c: Likewise.
+	* lib/ML/C5/transform.h: Likewise.
+
+2016-11-28  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/ML/C5/CMakeLists.txt: Update to reflect renaming of files.
 	* lib/ML/C5/top.c: Rename to c50.c, remove R dependencies.
 	* lib/ML/C5/rc50.c: Rename to c50main.c, remove R depedencies.

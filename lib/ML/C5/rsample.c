@@ -58,7 +58,6 @@
 #include "extern.h"
 
 extern void FreeGlobals();
-extern void Rprintf(const char *, ...);
 extern void SetTrials (int *internal ,int user);
 
 /*************************************************************************/
@@ -104,7 +103,7 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
 	CheckFile(".rules", false);
 	SetTrials(&TRIALS ,*trials);
 	RuleSet = AllocZero(TRIALS+1, CRuleSet);
-        // Rprintf("TRIALS: %4d\n", TRIALS);
+        // printf("TRIALS: %4d\n", TRIALS);
 	ForEach(Trial, 0, TRIALS-1)
 	{
 	    RuleSet[Trial] = GetRules(".rules");
@@ -272,7 +271,7 @@ void ShowRules(int Spaces)
 {
     int	p, pLast, a, b, First;
 
-    Rprintf("%*s", Spaces, "");
+    printf("%*s", Spaces, "");
 
     p = 0;
     ForEach(Trial, 0, TRIALS-1)
@@ -294,9 +293,9 @@ void ShowRules(int Spaces)
 		}
 	    }
 
-	    if ( TRIALS > 1 ) Rprintf("%d/", Trial);
+	    if ( TRIALS > 1 ) printf("%d/", Trial);
 
-	    Rprintf("%d ", RulesUsed[First]);
+	    printf("%d ", RulesUsed[First]);
 
 	    RulesUsed[First] = 0;
 	}
@@ -316,11 +315,11 @@ void SetTrials (int *internal ,int user) {
      TRIALS to the internal value, which is the largest value 
      possible. */
 
-    // Rprintf("internal TRIALS value = %d\n user trials value = %d\n", *internal, user);
+    // printf("internal TRIALS value = %d\n user trials value = %d\n", *internal, user);
     if (user > 0 && user <= *internal) {
 	*internal = user;
-	// Rprintf("using user-specified trials value");
+	// printf("using user-specified trials value");
     } else {
-	// Rprintf("using internal trials value");
+	// printf("using internal trials value");
     }
 }

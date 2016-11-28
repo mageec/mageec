@@ -18,8 +18,6 @@ option (MAGEEC_WITH_GCC_FEATURE_EXTRACT_PLUGIN
         "Build with the GCC feature extraction plugin" True)
 option (MAGEEC_WITH_GCC_DRIVER
         "Build with the GCC driver" True)
-option (MAGEEC_WITH_C5
-        "Built the C5 classifier as well as MAGEEC" True)
 
 # Search path to find gcc plugin headers.
 option (GCC_PLUGIN_INCLUDE_DIR
@@ -107,10 +105,11 @@ set_target_properties(mageec_core PROPERTIES OUTPUT_NAME mageec)
 target_link_libraries(mageec_core sqlite3)
 
 # Machine learners incorporated into MAGEEC
+add_subdirectory(lib/ML/C5)
 set (ML_SOURCES "lib/ML/C5.cpp")
 
 add_library (mageec_ml ${ML_SOURCES})
-target_link_libraries(mageec_ml mageec_core)
+target_link_libraries(mageec_ml mageec_core c5_machine_learner)
 
 # Standalone tool executable
 add_executable (mageec_driver lib/Driver.cpp)
@@ -144,7 +143,3 @@ if (EXISTS ${PROJECT_SOURCE_DIR}/tools/gcc_driver AND MAGEEC_WITH_GCC_DRIVER)
   add_subdirectory(tools/gcc_driver)
 endif()
 
-# Standalone C5 classifier
-if (MAGEEC_WITH_C5)
-  add_subdirectory (lib/ML/C5)
-endif ()

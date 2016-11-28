@@ -13,9 +13,6 @@ extern FILE *Uf;
 /* Used to implement rbm_exit */
 jmp_buf rbm_buf;
 
-/* Don't want to include R.h, which has conflicts with cubist headers */
-extern void Rprintf(const char *, ...);
-
 /*
  * Reset all global variables to their initial value
  */
