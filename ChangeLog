@@ -1,5 +1,9 @@
 2016-11-28  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/ML/C5.cpp: Correctly read the prediction from C5.0
+
+2016-11-28  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/ML/C5.cpp: Place a comma after all cases in the .cases file.
 
 2016-11-28  Edward Jones  <ed.jones@embecosm.com>

@@ -429,11 +429,11 @@ C5Driver::makeDecision(const DecisionRequestBase &request,
   // default parameters for C5.0
   int trials = 1;
   // output parameters
-  int predv;
+  int *predv = (int*)malloc(1);
   double confidencev;
   char *outputv = nullptr;
 
-  predictions(&casev, &namesv, &treev, &rulesv, &costv, &predv, &confidencev,
+  predictions(&casev, &namesv, &treev, &rulesv, &costv, predv, &confidencev,
               &trials, &outputv);
 
   // free memory for the inputs, and unused outputs
@@ -446,7 +446,8 @@ C5Driver::makeDecision(const DecisionRequestBase &request,
     free(outputv);
 
   // The result was written back to predv
-  int predict_res = predv;
+  int predict_res = predv[0];
+  free(predv);
 
   // Get the value of the returned decision
   // FIXME: Call out to the C5.0 classifier
@@ -455,7 +456,13 @@ C5Driver::makeDecision(const DecisionRequestBase &request,
     const auto *bool_request =
         static_cast<const BoolDecisionRequest *>(&request);
     assert(bool_request->getDecisionType() == DecisionType::kBool);
-    return std::unique_ptr<BoolDecision>(new BoolDecision(predict_res));
+
+    // The result is actually the index into the class 't,f', with the index
+    // starting from 1
+    assert(predict_res == 1 || predict_res == 2);
+    bool bool_res = (predict_res == 1) ? true : false;
+
+    return std::unique_ptr<BoolDecision>(new BoolDecision(bool_res));
   }
   case DecisionRequestType::kRange: {
     const auto *range_request =
