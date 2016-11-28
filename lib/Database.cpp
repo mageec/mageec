@@ -325,16 +325,19 @@ std::vector<TrainedML> Database::getTrainedMachineLearners(void) {
     query << std::vector<uint8_t>(uuid.data().begin(), uuid.data().end());
 
     auto res = query.exec();
-    res.assertDone();
-    if (res.numColumns() == 3) {
-      FeatureClass feature_class = static_cast<FeatureClass>(res.getInteger(0));
-      std::string metric = res.getText(1);
-      std::vector<uint8_t> ml_blob = res.getBlob(2);
+    while (!res.done()) {
+      if (res.numColumns() == 3) {
+        FeatureClass feature_class =
+            static_cast<FeatureClass>(res.getInteger(0));
+        std::string metric = res.getText(1);
+        std::vector<uint8_t> ml_blob = res.getBlob(2);
 
-      TrainedML trained_ml(ml, feature_class, metric, ml_blob);
-      trained_mls.push_back(trained_ml);
-    } else {
-      assert(res.numColumns() == 0);
+        TrainedML trained_ml(ml, feature_class, metric, ml_blob);
+        trained_mls.push_back(trained_ml);
+      } else {
+        assert(res.numColumns() == 0);
+      }
+      res = res.next();
     }
   }
   return trained_mls;
