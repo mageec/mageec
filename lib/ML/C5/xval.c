@@ -31,9 +31,11 @@
 /*									 */
 /*************************************************************************/
 
-#include "defns.i"
-#include "extern.i"
+#include "defns.h"
+#include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
 
 DataRec	*Blocked=Nil;
 float	**Result=Nil;	/* Result[f][0] = tree/ruleset size

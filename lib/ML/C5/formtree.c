@@ -32,9 +32,11 @@
 /*************************************************************************/
 
 
-#include "defns.i"
-#include "extern.i"
+#include "defns.h"
+#include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
 
 Boolean		MultiVal,	/* all atts have many values */
 		Subsample;	/* use subsampling */
@@ -117,7 +119,7 @@ void InitialiseTreeData()
     }
 
     ClassFreq = AllocZero(MaxClass+1, double);
-    ClassSum  = Alloc(MaxClass+1, float);
+    ClassSum  = Alloc(MaxClass+1, double);
 
     if ( BOOST )
     {
@@ -753,9 +755,9 @@ Attribute FindBestAtt(CaseCount Cases)
 		    SUBSET ? Subsets[Att] : MaxAttVal[Att] );
 
 	    if ( Val > BestVal ||
-		 Val > 0.999 * BestVal &&
-		 ( NBr < BestNBr ||
-		   NBr == BestNBr && Gain[Att] > Gain[BestAtt] ) )
+		 ( Val > 0.999 * BestVal &&
+		   ( NBr < BestNBr ||
+		     ( NBr == BestNBr && Gain[Att] > Gain[BestAtt] ) ) ) )
 	    {
 		BestAtt = Att;
 		BestVal = Val;

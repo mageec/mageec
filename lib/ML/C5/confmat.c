@@ -31,9 +31,11 @@
 /*								  	 */
 /*************************************************************************/
 
-#include "defns.i"
-#include "extern.i"
+#include "defns.h"
+#include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
 
 void PrintConfusionMatrix(CaseNo *ConfusionMat)
 /*   --------------------  */
@@ -167,6 +169,7 @@ void PrintUsageInfo(CaseNo *Usage)
     Attribute	Att, Best;
     float	Tests;
     Boolean	First=true;
+    double      varUsage;
 
     Tests = Max(1, MaxCase+1);
 
@@ -179,7 +182,10 @@ void PrintUsageInfo(CaseNo *Usage)
 	    if ( Usage[Att] > Usage[Best] ) Best = Att;
 	}
 
-	if ( ! Best || Usage[Best] < 0.01 * Tests ) break;
+	/* MK edit; lower the bar for printing attribute usage */
+	/* so that there is more consistency between which predictors */
+	/* were used in the tree and shown in the table */
+	if ( ! Best || Usage[Best] < 0.00001 * Tests ) break; 
 
 	if ( First )
 	{
@@ -187,9 +193,32 @@ void PrintUsageInfo(CaseNo *Usage)
 	    First = false;
 	}
 
-	fprintf(Of, "\t%7d%%  %s\n",
-	    (int) ((100 * Usage[Best]) / Tests + 0.5), AttName[Best]);
+	/* MK edit; print a percentage with 2 decimal places for */
+	/* higher resolution on the numbers */
+	/* Also, I eliminated adding 0.5 to everything below. There
+	/* is likely some really good reason to do this, but I think 
+	/* the above line with Tests = Max(1, MaxCase+1); should
+	/* eliminate the chances of divide by zero. We'll see! */
 
+	varUsage = (100 * Usage[Best]) / Tests;
+        if(varUsage < 100)
+        {
+	  if(varUsage >= 10)
+	    {
+	      fprintf(Of, "\t %3.2f%%\t%s\n",
+		      varUsage, AttName[Best]);
+	    } 
+	  else
+	    {
+	      fprintf(Of, "\t  %3.2f%%\t%s\n",
+		      varUsage, AttName[Best]);
+	    }
+        } 
+        else 
+       { 
+          fprintf(Of, "\t%3.2f%%\t%s\n",
+	 	 varUsage, AttName[Best]);
+        }
 	Usage[Best] = 0;
     }
 }

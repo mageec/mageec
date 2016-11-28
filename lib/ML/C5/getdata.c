@@ -32,14 +32,39 @@
 /*************************************************************************/
 
 
-#include "defns.i"
-#include "extern.i"
+#include "defns.h"
+#include "extern.h"
 
+#include <stdint.h>
+
+#include "transform.h"
+#include "redefine.h"
 
 #define Inc 2048
 
+#ifdef WIN32
+static double
+drand48()
+{
+    double dval;
+
+    do {
+        dval = ((double) rand()) / ((double) RAND_MAX);
+    } while (dval < 0.0 || dval >= 1.0);
+
+    return dval;
+}
+#else
+double drand48(void);
+#endif
+
 Boolean SuppressErrorMessages=false;
-#define XError(a,b,c)	if (! SuppressErrorMessages) Error(a,b,c)
+#define XError(a,b,c)	\
+    if (MODE == m_build) { \
+	if (! SuppressErrorMessages) Error((a),(b),(c)); \
+    } else { \
+	Error((a),(b),(c)); \
+    }
 
 CaseNo	SampleFrom;		/* file count for sampling */
 
@@ -260,7 +285,7 @@ DataRec GetDataRec(FILE *Df, Boolean Train)
 			{
 			    /*  Add value to list  */
 
-			    if ( MaxAttVal[Att] >= (long) AttValName[Att][0] )
+			    if ( MaxAttVal[Att] >= (long) (intptr_t) AttValName[Att][0] )
 			    {
 				XError(TOOMANYVALS, AttName[Att],
 					 (char *) AttValName[Att][0] - 1);
@@ -390,6 +415,207 @@ DataRec GetDataRec(FILE *Df, Boolean Train)
     }
 }
 
+DataRec PredictGetDataRec(FILE *Df, Boolean Train)
+/*      ----------  */
+{
+    Attribute	Att;
+    char	Name[1000], *EndName;
+    int		Dv;
+    DataRec	Dummy, DVec;
+    ContValue	Cv;
+    Boolean	FirstValue=true;
+
+
+    if ( ReadName(Df, Name, 1000, '\00') )
+    {
+	Dummy = AllocZero(MaxAtt+2, AttValue);
+	DVec = &Dummy[1];
+	ForEach(Att, 1, MaxAtt)
+	{
+	    if ( AttDef[Att] )
+	    {
+		DVec[Att] = EvaluateDef(AttDef[Att], DVec);
+
+		if ( Continuous(Att) )
+		{
+		    CheckValue(DVec, Att);
+		}
+
+		if ( SomeMiss )
+		{
+		    SomeMiss[Att] |= Unknown(DVec, Att);
+		    SomeNA[Att]   |= NotApplic(DVec, Att);
+		}
+
+		continue;
+	    }
+
+	    /*  Get the attribute value if don't already have it  */
+
+	    if ( ! FirstValue && ! ReadName(Df, Name, 1000, '\00') )
+	    {
+		XError(HITEOF, AttName[Att], "");
+		PredictFreeLastCase(DVec);
+		return Nil;
+	    }
+	    FirstValue = false;
+
+	    if ( Exclude(Att) )
+	    {
+		if ( Att == LabelAtt )
+		{
+		    /*  Record the value as a string  */
+
+		    SVal(DVec,Att) = StoreIVal(Name);
+		}
+	    }
+	    else
+	    if ( ! strcmp(Name, "?") )
+	    {
+		/*  Set marker to indicate missing value  */
+
+		DVal(DVec, Att) = UNKNOWN;
+		if ( SomeMiss ) SomeMiss[Att] = true;
+	    }
+	    else
+	    if ( Att != ClassAtt && ! strcmp(Name, "N/A") )
+	    {
+		/*  Set marker to indicate not applicable  */
+
+		DVal(DVec, Att) = NA;
+		if ( SomeNA ) SomeNA[Att] = true;
+	    }
+	    else
+	    if ( Discrete(Att) )
+	    {
+		/*  Discrete attribute  */
+
+		Dv = Which(Name, AttValName[Att], 1, MaxAttVal[Att]);
+		if ( ! Dv )
+		{
+		    if ( StatBit(Att, DISCRETE) )
+		    {
+			if ( Train )
+			{
+			    /*  Add value to list  */
+
+			    if ( MaxAttVal[Att] >= (long) (intptr_t) AttValName[Att][0] )
+			    {
+				XError(TOOMANYVALS, AttName[Att],
+					 (char *) AttValName[Att][0] - 1);
+				Dv = MaxAttVal[Att];
+			    }
+			    else
+			    {
+				Dv = ++MaxAttVal[Att];
+				AttValName[Att][Dv]   = strdup(Name);
+				AttValName[Att][Dv+1] = "<other>"; /* no free */
+			    }
+			}
+			else
+			{
+			    /*  Set value to "<other>"  */
+
+			    Dv = MaxAttVal[Att] + 1;
+			}
+		    }
+		    else
+		    {
+			XError(BADATTVAL, AttName[Att], Name);
+			Dv = UNKNOWN;
+		    }
+		}
+		DVal(DVec, Att) = Dv;
+	    }
+	    else
+	    {
+		/*  Continuous value  */
+
+		if ( TStampVal(Att) )
+		{
+		    CVal(DVec, Att) = Cv = TStampToMins(Name);
+		    if ( Cv >= 1E9 )	/* long time in future */
+		    {
+			XError(BADTSTMP, AttName[Att], Name);
+			DVal(DVec, Att) = UNKNOWN;
+		    }
+		}
+		else
+		if ( DateVal(Att) )
+		{
+		    CVal(DVec, Att) = Cv = DateToDay(Name);
+		    if ( Cv < 1 )
+		    {
+			XError(BADDATE, AttName[Att], Name);
+			DVal(DVec, Att) = UNKNOWN;
+		    }
+		}
+		else
+		if ( TimeVal(Att) )
+		{
+		    CVal(DVec, Att) = Cv = TimeToSecs(Name);
+		    if ( Cv < 0 )
+		    {
+			XError(BADTIME, AttName[Att], Name);
+			DVal(DVec, Att) = UNKNOWN;
+		    }
+		}
+		else
+		{
+		    CVal(DVec, Att) = strtod(Name, &EndName);
+		    if ( EndName == Name || *EndName != '\0' )
+		    {
+			XError(BADATTVAL, AttName[Att], Name);
+			DVal(DVec, Att) = UNKNOWN;
+		    }
+		}
+
+		CheckValue(DVec, Att);
+	    }
+	}
+
+	if ( ClassAtt )
+	{
+	    if ( Discrete(ClassAtt) )
+	    {
+		Class(DVec) = XDVal(DVec, ClassAtt);
+	    }
+	    else
+	    if ( Unknown(DVec, ClassAtt) || NotApplic(DVec, ClassAtt) )
+	    {
+		Class(DVec) = 0;
+	    }
+	    else
+	    {
+		/*  Find appropriate segment using class thresholds  */
+
+		Cv = CVal(DVec, ClassAtt);
+
+		for ( Dv = 1 ; Dv < MaxClass && Cv > ClassThresh[Dv] ; Dv++ )
+		    ;
+
+		Class(DVec) = Dv;
+	    }
+	}
+	else
+	{
+	    if ( ! ReadName(Df, Name, 1000, '\00') )
+	    {
+		XError(HITEOF, Fn, "");
+		PredictFreeLastCase(DVec);
+		return Nil;
+	    }
+
+	    Class(DVec) = Dv = Which(Name, ClassName, 1, MaxClass);
+	}
+
+	return DVec;
+    }
+    else
+    {
+	return Nil;
+    }
+}
 
 
 /*************************************************************************/

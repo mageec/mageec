@@ -32,9 +32,11 @@
 /*************************************************************************/
 
 
-#include "defns.i"
-#include "extern.i"
+#include "defns.h"
+#include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
 
 void GetMCosts(FILE *Cf)
 /*   ---------  */
@@ -135,4 +137,60 @@ void GetMCosts(FILE *Cf)
     MINITEMS *= Min(WeightMul[1], WeightMul[2]);
 
     Free(ClassFreq);					ClassFreq = Nil;
+}
+
+void PredictGetMCosts(FILE *Cf)
+/*   ---------  */
+{
+    ClassNo	Pred, Real, p, r;
+    char	Name[1000];
+    float	Val;
+
+    LineNo = 0;
+
+    /*  Read entries from cost file  */
+
+    while ( ReadName(Cf, Name, 1000, ':') )
+    {
+	if ( ! (Pred = Which(Name, ClassName, 1, MaxClass)) )
+	{
+	    Error(BADCOSTCLASS, Name, "");
+	}
+
+	if ( ! ReadName(Cf, Name, 1000, ':') ||
+	     ! (Real = Which(Name, ClassName, 1, MaxClass)) )
+	{
+	    Error(BADCOSTCLASS, Name, "");
+	}
+
+	if ( ! ReadName(Cf, Name, 1000, ':') ||
+	     sscanf(Name, "%f", &Val) != 1 || Val < 0 )
+	{
+	    Error(BADCOST, "", "");
+	    Val = 1;
+	}
+
+	if ( Pred > 0 && Real > 0 && Pred != Real && Val != 1 )
+	{
+	    /*  Have a non-trivial cost entry  */
+
+	    if ( ! MCost )
+	    {
+		/*  Set up cost matrices  */
+
+		MCost = Alloc(MaxClass+1, float *);
+		ForEach(p, 1, MaxClass)
+		{
+		    MCost[p] = Alloc(MaxClass+1, float);
+		    ForEach(r, 1, MaxClass)
+		    {
+			MCost[p][r] = ( p == r ? 0.0 : 1.0 );
+		    }
+		}
+	    }
+
+	    MCost[Pred][Real] = Val;
+	}
+    }
+    fclose(Cf);
 }

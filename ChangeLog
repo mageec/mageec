@@ -1,3 +1,54 @@
+2016-11-28  Edward Jones  <ed.jones@embecosm.com>
+
+	*	lib/ML/C5/CMakeLists.txt: Updated to reflect new C5.0 source files.
+  *	lib/ML/C5/Makevars.in: Added file.
+  *	lib/ML/C5/attwinnow.c: Updated to new C5.0 implementation.
+  * lib/ML/C5/classify.c: Likewise.
+  * lib/ML/C5/confmat.c: Likewise.
+  * lib/ML/C5/construct.c: Likewise.
+  * lib/ML/C5/contin.c: Likewise.
+  * lib/ML/C5/defns.i: Renamed to defns.h.
+  * lib/ML/C5/discr.c: Updated to new C5.0 implementation.
+  * lib/ML/C5/extern.i: Renamed to extern.h.
+  * lib/ML/C5/formrules.c: Updated to new C5.0 implementation.
+  * lib/ML/C5/formtree.c: Likewise.
+  * lib/ML/C5/getdata.c: Likewise.
+  * lib/ML/C5/getnames.c: Likewise.
+  * lib/ML/C5/global.c: Likewise.
+  * lib/ML/C5/hash.c: Added file.
+  * lib/ML/C5/hash.h: Likewise.
+  * lib/ML/C5/hooks.c: Likewise.
+  * lib/ML/C5/implicitatt.c: Updated to new C5.0 implementation.
+  * lib/ML/C5/info.c: Likewise.
+  * lib/ML/C5/mcost.c: Likewise.
+  * lib/ML/C5/modelfiles.c: Likewise.
+  * lib/ML/C5/p-thresh.c: Likewise.
+  * lib/ML/C5/prune.c: Likewise.
+  * lib/ML/C5/c50.c: Renamed to rc50.c.
+  * lib/ML/C5/redefine.c: Added file.
+  * lib/ML/C5/redefine.h: Likewise.
+  * lib/ML/C5/report.c: Removed file.
+  * lib/ML/C5/rsample.c: Added file.
+  * lib/ML/C5/rsample.h: Likewise.
+  * lib/ML/C5/rulebasedmodels.c: Likewise.
+  * lib/ML/C5/rulebasedmodels.h: Likewise.
+  * lib/ML/C5/rules.c: Updated to new C5.0 implementation.
+  * lib/ML/C5/ruletree.c: Likewise.
+  * lib/ML/C5/siftrules.c: Likewise.
+  * lib/ML/C5/sort.c: Likewise.
+  * lib/ML/C5/strbuf.c: Added file.
+  * lib/ML/C5/strbuf.h: Likewise.
+  * lib/ML/C5/subset.c: Updated to new C5.0 implementation.
+  * lib/ML/C5/text.i: Renamed to text.h
+  * lib/ML/C5/top.c: Added file.
+  * lib/ML/C5/transform.h: Likewise.
+  * lib/ML/C5/trees.c: Updated to new C5.0 implementation.
+  * lib/ML/C5/undefined.xsum: Removed file.
+  * lib/ML/C5/update.c: Updated to new C5.0 implementation
+  * lib/ML/C5/utility.c: Likeiwse.
+  * lib/ML/C5/xval: Removed file.
+  * lib/ML/C5/xval.c: Updated to new C5.0 implementation.
+
 2016-10-26  Edward Jones  <ed.jones@embecosm.com>
 
 	* lib/Database.cpp: Fix increment of feature_class when training.

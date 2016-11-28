@@ -31,9 +31,11 @@
 /*************************************************************************/
 
 
-#include "defns.i"
-#include "extern.i"
+#include "defns.h"
+#include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
 
 	/* Local data used by MarkActive and RuleClassify.
 	   Note: Active is never deallocated, just grows as required */
@@ -42,6 +44,11 @@ RuleNo	*Active=Nil,	/* rules that fire while classifying case */
 	NActive,	/* number ditto */
 	ActiveSpace=0;	/* space allocated */
 
+
+void classifyfreeglobals(void) {
+    FreeUnlessNil(Active);				Active = Nil;
+							ActiveSpace = 0;
+}
 
 
 /*************************************************************************/
@@ -66,6 +73,35 @@ ClassNo TreeClassify(DataRec Case, Tree DecisionTree)
     return SelectClass(1, (Boolean)(MCost != Nil));
 }
 
+ClassNo PredictTreeClassify(DataRec Case, Tree DecisionTree)
+/*      ------------  */
+{
+    ClassNo	c, C;
+    double	Prior;
+
+    /*  Save total leaf count in ClassSum[0]  */
+
+    ForEach(c, 0, MaxClass)
+    {
+	ClassSum[c] = 0;
+    }
+
+    PredictFindLeaf(Case, DecisionTree, Nil, 1.0);
+
+    C = SelectClassGen(DecisionTree->Leaf, (Boolean)(MCost != Nil), ClassSum);
+
+    /*  Set all confidence values in ClassSum  */
+
+    ForEach(c, 1, MaxClass)
+    {
+	Prior = DecisionTree->ClassDist[c] / DecisionTree->Cases;
+	ClassSum[c] =
+	    (ClassSum[0] * ClassSum[c] + Prior) / (ClassSum[0] + 1);
+    }
+    Confidence = ClassSum[C];
+
+    return C;
+}
 
 
 /*************************************************************************/
@@ -190,6 +226,115 @@ void FindLeaf(DataRec Case, Tree T, Tree PT, float Fraction)
     }
 }
 
+void PredictFindLeaf(DataRec Case, Tree T, Tree PT, float Fraction)
+/*   --------  */
+{
+    FindLeafGen(Case, T, PT, Fraction, ClassSum);
+}
+
+void FindLeafGen(DataRec Case, Tree T, Tree PT, float Fraction, double *Prob)
+/*   -----------  */
+{
+    DiscrValue	v, Dv;
+    ClassNo	c;
+    double	NewFrac, BrWt[4];
+
+
+    switch ( T->NodeType )
+    {
+	case 0:  /* leaf */
+
+	  FindLeafGenLeafUpdate:
+
+	    /*  Use parent node if effectively no cases at this node  */
+
+	    if ( T->Cases < Epsilon )
+	    {
+		T = PT;
+	    }
+
+	    /*  Update from all classes  */
+
+	    ForEach(c, 1, MaxClass)
+	    {
+		Prob[c] += Fraction * T->ClassDist[c] / T->Cases;
+	    }
+
+	    Prob[0] += Fraction * T->Cases;
+
+	    return;
+
+	case BrDiscr:  /* test of discrete attribute */
+
+	    Dv = DVal(Case, T->Tested);	/* > MaxAttVal if unknown */
+
+	    if ( Dv <= T->Forks )	/*  Make sure not new discrete value  */
+	    {
+		FindLeafGen(Case, T->Branch[Dv], T, Fraction, Prob);
+	    }
+	    else
+	    {
+		PredictFollowAllBranches(Case, T, Fraction, Prob);
+	    }
+
+	    return;
+
+	case BrThresh:  /* test of continuous attribute */
+
+	    if ( Unknown(Case, T->Tested) )
+	    {
+		PredictFollowAllBranches(Case, T, Fraction, Prob);
+	    }
+	    else
+	    if ( NotApplic(Case, T->Tested) )
+	    {
+		FindLeafGen(Case, T->Branch[1], T, Fraction, Prob);
+	    }
+	    else
+	    {
+		/*  Find weights for <= and > branches, interpolating if
+		    erobabilistic thresholds are used  */
+
+		BrWt[2] = PredictInterpolate(T, CVal(Case, T->Tested));
+		BrWt[3] = 1 - BrWt[2];
+
+		ForEach(v, 2, 3)
+		{
+		    if ( (NewFrac = Fraction * BrWt[v]) >= 1E-6 )
+		    {
+			FindLeafGen(Case, T->Branch[v], T, NewFrac, Prob);
+		    }
+		}
+	    }
+
+	    return;
+
+	case BrSubset:  /* subset test on discrete attribute  */
+
+	    Dv = DVal(Case, T->Tested);	/* > MaxAttVal if unknown */
+
+	    if ( Dv <= MaxAttVal[T->Tested] )
+	    {
+		ForEach(v, 1, T->Forks)
+		{
+		    if ( In(Dv, T->Subset[v]) )
+		    {
+			FindLeafGen(Case, T->Branch[v], T, Fraction, Prob);
+
+			return;
+		    }
+		}
+
+		/* Value not found in any subset -- treat as leaf  */
+
+		goto FindLeafGenLeafUpdate;
+	    }
+	    else
+	    {
+		PredictFollowAllBranches(Case, T, Fraction, Prob);
+	    }
+    }
+}
 
 
 /*************************************************************************/
@@ -215,6 +360,21 @@ void FollowAllBranches(DataRec Case, Tree T, float Fraction)
     }
 }
 
+void PredictFollowAllBranches(DataRec Case, Tree T, float Fraction, double *Prob)
+/*   -----------------  */
+{
+    DiscrValue	v;
+
+    ForEach(v, 1, T->Forks)
+    {
+	if ( T->Branch[v]->Cases > Epsilon )
+	{
+	    FindLeafGen(Case, T->Branch[v], T,
+			(Fraction * T->Branch[v]->Cases) / T->Cases,
+			Prob);
+	}
+    }
+}
 
 
 /*************************************************************************/
@@ -326,6 +486,103 @@ ClassNo RuleClassify(DataRec Case, CRuleSet RS)
     return Best;
 }
 
+ClassNo PredictRuleClassify(DataRec Case, CRuleSet RS)
+/*      ------------  */
+{
+    ClassNo	c, Best;
+    double	TotWeight=0, TotVote=0;
+    int		a;
+    CRule	R;
+    RuleNo	r;
+
+    ForEach(c, 0, MaxClass)
+    {
+	ClassSum[c] = 0;
+	MostSpec[c] = Nil;
+    }
+
+    /*  Find active rules  */
+
+    NActive = 0;
+
+    if ( RS->RT )
+    {
+	MarkActive(RS->RT, Case);
+    }
+    else
+    {
+	ForEach(r, 1, RS->SNRules)
+	{
+	    R = RS->SRule[r];
+
+	    if ( Matches(R, Case) )
+	    {
+		Active[NActive++] = r;
+	    }
+	}
+    }
+
+    if ( RULESUSED )
+    {
+	RulesUsed[NRulesUsed++] = NActive;
+	ForEach(a, 0, NActive-1)
+	{
+	    RulesUsed[NRulesUsed++] = Active[a];
+	}
+    }
+
+    /*  Vote active rules  */
+
+    ForEach(a, 0, NActive-1)
+    {
+	r = Active[a];
+	R = RS->SRule[r];
+
+	ClassSum[R->Rhs] += R->Vote;
+	TotVote		 += R->Vote;
+	TotWeight        += 1000.0;
+
+	/*  Check whether this is the most specific rule for this class;
+	    resolve ties in favor of rule with higher vote  */
+
+	if ( ! MostSpec[R->Rhs] ||
+	     R->Cover < MostSpec[R->Rhs]->Cover ||
+	     ( R->Cover == MostSpec[R->Rhs]->Cover &&
+	       R->Vote > MostSpec[R->Rhs]->Vote ) )
+	{
+	    MostSpec[R->Rhs] = R;
+	}
+    }
+
+    /*  Check for default  */
+
+    if ( ! TotWeight )	/* no applicable rules */
+    {
+	Confidence = 0.5;
+	return RS->SDefault;
+    }
+
+    Best = SelectClassGen(RS->SDefault, false, ClassSum);
+
+    /*  Set Confidence to the maximum of the most specific applicable
+	rule for class Best or the scaled ClassSum[Best] value  */
+
+    Confidence = Max(MostSpec[Best]->Vote / 1000.0, ClassSum[Best] / TotWeight);
+
+    /*  Set all confidence values in ClassSum  */
+
+    ClassSum[Best] = Confidence;
+    ForEach(c, 1, MaxClass)
+    {
+	if ( c != Best && ClassSum[c] > 0 )
+	{
+	    ClassSum[c] =
+		Min(ClassSum[c] / TotWeight, MostSpec[c]->Vote / 1000.0);
+	}
+    }
+
+    return Best;
+}
 
 
 /*************************************************************************/
@@ -579,6 +836,41 @@ ClassNo BoostClassify(DataRec Case, int MaxTrial)
     return SelectClass(Default, false);
 }
 
+ClassNo PredictBoostClassify(DataRec Case, int MaxTrial)
+/*	-------------  */
+{
+    ClassNo	c, Best;
+    int		t;
+    double	Total=0;
+
+    ForEach(c, 1, MaxClass)
+    {
+	Vote[c] = 0;
+    }
+
+    ForEach(t, 0, MaxTrial)
+    {
+	Best = ( RULES ? PredictRuleClassify(Case, RuleSet[t]) :
+			 PredictTreeClassify(Case, Pruned[t]) );
+
+	Vote[Best] += Confidence;
+	Total += Confidence;
+
+    }
+
+    /*  Copy votes into ClassSum  */
+
+    ForEach(c, 1, MaxClass)
+    {
+	ClassSum[c] = Vote[c] / Total;
+    }
+
+    Best = SelectClassGen(Default, false, ClassSum);
+
+    Confidence = ClassSum[Best];
+
+    return Best;
+}
 
 
 /*************************************************************************/
@@ -593,7 +885,7 @@ ClassNo SelectClass(ClassNo Default, Boolean UseCosts)
 /*      -----------  */
 {
     ClassNo	c, cc, BestClass;
-    float	ExpCost, BestCost=1E38, TotCost=0;
+    double	ExpCost, BestCost=1E38, TotCost=0;
 
     BestClass = Default;
 
@@ -632,6 +924,45 @@ ClassNo SelectClass(ClassNo Default, Boolean UseCosts)
     return BestClass;
 }
 
+ClassNo PredictSelectClass(ClassNo Default, Boolean UseCosts)
+/*      -----------  */
+{
+    return SelectClassGen(Default, UseCosts, ClassSum);
+}
+
+ClassNo SelectClassGen(ClassNo Default, Boolean UseCosts, double *Prob)
+/*      --------------  */
+{
+    ClassNo	c, BestClass;
+    double	ExpCost, BestCost=1E10;
+
+    BestClass = Default;
+
+    if ( UseCosts )
+    {
+	ForEach(c, 1, MaxClass)
+	{
+	    if ( ! Prob[c] ) continue;
+
+	    ExpCost = MisclassCost(Prob, c);
+
+	    if ( ExpCost < BestCost )
+	    {
+		BestClass = c;
+		BestCost  = ExpCost;
+	    }
+	}
+    }
+    else
+    {
+	ForEach(c, 1, MaxClass)
+	{
+	    if ( Prob[c] > Prob[BestClass] ) BestClass = c;
+	}
+    }
+
+    return BestClass;
+}
 
 
 /*************************************************************************/
@@ -648,6 +979,16 @@ ClassNo Classify(DataRec Case)
     return ( TRIALS > 1 ? BoostClassify(Case, TRIALS-1) :
 	     RULES ?	  RuleClassify(Case, RuleSet[0]) :
 			  TreeClassify(Case, Pruned[0]) );
+}
+
+ClassNo PredictClassify(DataRec Case)
+/*      --------  */
+{
+    NRulesUsed = 0;
+
+    return ( TRIALS > 1 ? PredictBoostClassify(Case, TRIALS-1) :
+	     RULES ?	  PredictRuleClassify(Case, RuleSet[0]) :
+			  PredictTreeClassify(Case, Pruned[0]) );
 }
 
 
@@ -671,6 +1012,22 @@ float Interpolate(Tree T, ContValue Val)
 		0.5 - 0.5 * (Val - T->Mid) / (T->Upper - T->Mid + 1E-6) );
 }
 
+/*************************************************************************/
+/*								   	 */
+/*	Interpolate a single value between Lower, Cut and Upper		 */
+/*								   	 */
+/*************************************************************************/
+
+
+float PredictInterpolate(Tree T, ContValue Val)
+/*    -----------  */
+{
+    return ( Val <= T->Lower ? 1.0 :
+	     Val >= T->Upper ? 0.0 :
+	     Val <= T->Cut ?
+		1 - 0.5 * (Val - T->Lower) / (T->Cut - T->Lower + 1E-10) :
+		0.5 * (Val - T->Upper) / (T->Cut - T->Upper + 1E-10) );
+}
 
 
 /*************************************************************************/
@@ -697,4 +1054,29 @@ void FreeClassifier(int Trial)
     {
 	FreeRules(RuleSet[Trial]);			RuleSet[Trial] = Nil;
     }
+}
+
+/*************************************************************************/
+/*								   	 */
+/*	Find total misclassification cost of choosing class C		 */
+/*	for cases in LocalFreq[]					 */
+/*								   	 */
+/*************************************************************************/
+
+
+double MisclassCost(double *LocalFreq, ClassNo C)
+/*     ------------  */
+{
+    double	ExpCost=0;
+    ClassNo	c;
+
+    ForEach(c, 1, MaxClass)
+    {
+	if ( c != C )
+	{
+	    ExpCost += LocalFreq[c] * MCost[C][c];
+	}
+    }
+
+    return ExpCost;
 }

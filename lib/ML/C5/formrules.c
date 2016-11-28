@@ -39,8 +39,11 @@
 /*************************************************************************/
 
 
-#include "defns.i"
-#include "extern.i"
+#include "defns.h"
+#include "extern.h"
+
+#include "transform.h"
+#include "redefine.h"
 
 double		*Errors=Nil,		/* [Condition] */
 		*Total=Nil;		/* [Condition] */

@@ -23,7 +23,6 @@
 /*************************************************************************/
 
 
-
 extern	int		VERBOSITY,
 			TRIALS,
 			FOLDS,
@@ -34,10 +33,14 @@ extern	Boolean		SUBSET,
 			BOOST,
 			PROBTHRESH,
 			RULES,
+                        EARLYSTOPPING,
 			XVAL,
 			NOCOSTS,
 			WINNOW,
 			GLOBAL;
+
+/* Added for sample.c */
+extern  Boolean         RULESUSED;
 
 extern	CaseCount	MINITEMS,
 			LEAFRATIO;
@@ -118,8 +121,9 @@ extern double		*ClassFreq,
 
 extern	float		*Gain,
 			*Info,
-			*EstMaxGR,
-			*ClassSum;
+			*EstMaxGR;
+
+double			*ClassSum;
 
 extern	ContValue	*Bar;
 
@@ -137,6 +141,10 @@ extern	CRule		*Rule;
 
 extern	RuleNo		NRules,
 			RuleSpace;
+
+/* Added for sample.c */
+extern  RuleNo          *RulesUsed,
+			NRulesUsed;
 
 extern	CRuleSet	 *RuleSet;
 
@@ -167,4 +175,5 @@ extern	FILE		*TRf;
 extern	char		Fn[500];
 
 extern	FILE  		*Of;
+extern enum mode {m_build ,m_predict} MODE;
 

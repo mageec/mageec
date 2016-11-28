@@ -32,168 +32,33 @@
 /*************************************************************************/
 
 
-#include "defns.i"
-#include "extern.i"
+#include "defns.h"
+#include "extern.h"
 #include <signal.h>
 
 #include <sys/unistd.h>
 #include <sys/time.h>
-#include <sys/resource.h>
 
-#define SetFOpt(V)	V = strtod(OptArg, &EndPtr);\
-			if ( ! EndPtr || *EndPtr != '\00' ) break;\
-			ArgOK = true
-#define SetIOpt(V)	V = strtol(OptArg, &EndPtr, 10);\
-			if ( ! EndPtr || *EndPtr != '\00' ) break;\
-			ArgOK = true
+#include "transform.h"
+#include "redefine.h"
 
-
-int main(int Argc, char *Argv[])
-/*  ----  */
+int c50main()
+/*  -------  */
 {
-    int			o;
-    extern String	OptArg, Option;
-    char		*EndPtr;
-    Boolean		FirstTime=true, ArgOK;
     double		StartTime;
     FILE		*F;
     CaseNo		SaveMaxCase;
     Attribute		Att;
 
-    struct rlimit RL;
-
-    /*  Make sure there is a largish runtime stack  */
-
-    getrlimit(RLIMIT_STACK, &RL);
-
-    RL.rlim_cur = Max(RL.rlim_cur, 20 * 1024 * 1024);
-
-    if ( RL.rlim_max > 0 )	/* -1 if unlimited */
-    {
-	RL.rlim_cur = Min(RL.rlim_max, RL.rlim_cur);
-    }
-
-    setrlimit(RLIMIT_STACK, &RL);
-
-
-    /*  Check for output to be saved to a file  */
-
-    if ( Argc > 2 && ! strcmp(Argv[Argc-2], "-o") )
-    {
-	Of = fopen(Argv[Argc-1], "w");
-	Argc -= 2;
-    }
-
-    if ( ! Of )
-    {
-	Of = stdout;
-    }
-
-    KRInit = time(0) & 07777;
-
+    /* The original C code set the seed here in main(). The c50
+     function in top.c calls setglobals(), which sets the seed.
+     If KRInit is created here, it will over-write the value
+     specificed in R     
+     */
+    
+    //KRInit = time(0) & 07777;
+    
     PrintHeader("");
-
-    /*  Process options  */
-
-    while ( (o = ProcessOption(Argc, Argv, "f+bpv+t+sm+c+S+I+ru+egX+wh")) )
-    {
-	if ( FirstTime )
-	{
-	    fprintf(Of, T_OptHeader);
-	    FirstTime = false;
-	}
-
-	ArgOK = false;
-
-	switch (o)
-	{
-	case 'f':   FileStem = OptArg;
-		    fprintf(Of, T_OptApplication, FileStem);
-		    ArgOK = true;
-		    break;
-	case 'b':   BOOST = true;
-		    fprintf(Of, T_OptBoost);
-		    if ( TRIALS == 1 ) TRIALS = 10;
-		    ArgOK = true;
-		    break;
-	case 'p':   PROBTHRESH = true;
-		    fprintf(Of, T_OptProbThresh);
-		    ArgOK = true;
-		    break;
-#ifdef VerbOpt
-	case 'v':   SetIOpt(VERBOSITY);
-		    fprintf(Of, "\tVerbosity level %d\n", VERBOSITY);
-		    ArgOK = true;
-		    break;
-#endif
-	case 't':   SetIOpt(TRIALS);
-		    fprintf(Of, T_OptTrials, TRIALS);
-		    Check(TRIALS, 3, 1000);
-		    BOOST = true;
-		    break;
-	case 's':   SUBSET = true;
-		    fprintf(Of, T_OptSubsets);
-		    ArgOK = true;
-		    break;
-	case 'm':   SetFOpt(MINITEMS);
-		    fprintf(Of, T_OptMinCases, MINITEMS);
-		    Check(MINITEMS, 1, 1000000);
-		    break;
-	case 'c':   SetFOpt(CF);
-		    fprintf(Of, T_OptCF, CF);
-		    Check(CF, 0, 100);
-		    CF /= 100;
-		    break;
-	case 'r':   RULES = true;
-		    fprintf(Of, T_OptRules);
-		    ArgOK = true;
-		    break;
-	case 'S':   SetFOpt(SAMPLE);
-		    fprintf(Of, T_OptSampling, SAMPLE);
-		    Check(SAMPLE, 0.1, 99.9);
-		    SAMPLE /= 100;
-		    break;
-	case 'I':   SetIOpt(KRInit);
-		    fprintf(Of, T_OptSeed, KRInit);
-		    KRInit = KRInit & 07777;
-		    break;
-	case 'u':   SetIOpt(UTILITY);
-		    fprintf(Of, T_OptUtility, UTILITY);
-		    Check(UTILITY, 2, 10000);
-		    RULES = true;
-		    break;
-	case 'e':   NOCOSTS = true;
-		    fprintf(Of, T_OptNoCosts);
-		    ArgOK = true;
-		    break;
-	case 'w':   WINNOW = true;
-		    fprintf(Of, T_OptWinnow);
-		    ArgOK = true;
-		    break;
-	case 'g':   GLOBAL = false;
-		    fprintf(Of, T_OptNoGlobal);
-		    ArgOK = true;
-		    break;
-	case 'X':   SetIOpt(FOLDS);
-		    fprintf(Of, T_OptXval, FOLDS);
-		    Check(FOLDS, 2, 1000);
-		    XVAL = true;
-		    break;
-	}
-
-	if ( ! ArgOK )
-	{
-	    if ( o != 'h' )
-	    {
-		fprintf(Of, T_UnregnizedOpt,
-			    Option,
-			    ( ! OptArg || OptArg == Option+2 ? "" : OptArg ));
-		fprintf(Of, T_SummaryOpts);
-	    }
-	    fprintf(Of, T_ListOpts);
-	    Goodbye(1);
-	}
-    }
 
     if ( UTILITY && BOOST )
     {

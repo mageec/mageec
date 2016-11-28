@@ -49,7 +49,7 @@
 #include <limits.h>
 #include <float.h>
 
-#include "text.i"
+#include "text.h"
 
 
 
@@ -209,6 +209,9 @@
 #define	 SAMEATT	29
 #define	 MODELFILE	30
 #define	 CWTATTERR	31
+#define	 OLDFORMAT	32
+#define	 BADTRIALS	33
+#define	 BADOPTION	34
 
 #define	 READDATA	 1
 #define	 WINNOWATTS	 2
@@ -223,6 +226,7 @@
 #define	 ALLOCTABLES	11
 #define	 RESULTS	12
 #define	 READXDATA	13
+
 
 
 /*************************************************************************/
@@ -502,6 +506,8 @@ AttValue    EvaluateDef(Definition D, DataRec Case);
 
 void	    GetData(FILE *Df, Boolean Train, Boolean AllowUnknownClass);
 DataRec	    GetDataRec(FILE *Df, Boolean Train);
+DataRec	    PredictGetDataRec(FILE *Df, Boolean Train);
+DataRec	    PredictGetDataRec(FILE *Df, Boolean Train);
 CaseNo	    CountData(FILE *Df);
 int	    StoreIVal(String s);
 void	    FreeData(void);
@@ -510,6 +516,7 @@ void	    CheckValue(DataRec Case, Attribute Att);
 	/* mcost.c */
 
 void	    GetMCosts(FILE *f);
+void	    PredictGetMCosts(FILE *Cf);
 
 	/* attwinnow.c */
 
@@ -601,9 +608,14 @@ void	    FindBounds(Tree T, CaseNo Fp, CaseNo Lp);
 
 	/* classify.c */
 
+void	    classifyfreeglobals(void);
 ClassNo	    TreeClassify(DataRec Case, Tree DecisionTree);
+ClassNo	    PredictTreeClassify(DataRec Case, Tree DecisionTree);
 void	    FollowAllBranches(DataRec Case, Tree T, float Fraction);
+void	    PredictFollowAllBranches(DataRec Case, Tree T, float Fraction,
+		double *Prob);
 ClassNo	    RuleClassify(DataRec Case, CRuleSet RS);
+ClassNo	    PredictRuleClassify(DataRec Case, CRuleSet RS);
 int	    FindOutcome(DataRec Case, Condition OneCond);
 Boolean	    Matches(CRule R, DataRec Case);
 void	    CheckActiveSpace(int N);
@@ -612,13 +624,20 @@ void	    SortActive(void);
 void	    CheckUtilityBand(int *u, RuleNo r, ClassNo Actual, ClassNo Default);
 ClassNo	    BoostClassify(DataRec Case, int MaxTrial);
 ClassNo	    SelectClass(ClassNo Default, Boolean UseCosts);
+ClassNo	    SelectClassGen(ClassNo Default, Boolean UseCosts, double *Prob);
 ClassNo	    Classify(DataRec Case);
+ClassNo	    PredictClassify(DataRec Case);
 float	    Interpolate(Tree T, ContValue Val);
+float	    PredictInterpolate(Tree T, ContValue Val);
 
 	/* special case for dual-purpose routines  */
 
 void	    FindLeaf(DataRec Case, Tree T, Tree PT, float Wt);
+void	    FindLeafGen(DataRec Case, Tree T, Tree PT, float Fraction,
+		double *Prob);
+void	    PredictFindLeaf(DataRec Case, Tree T, Tree PT, float Fraction);
 Boolean	    Satisfies(DataRec Case, Condition OneCond);
+double	    MisclassCost(double *LocalFreq, ClassNo C);
 
 	/* sort.c */
 
@@ -648,6 +667,7 @@ Tree	    CopyTree(Tree T);
 
 void	    PrintHeader(String Title);
 char	    ProcessOption(int Argc, char **Argv, char *Str);
+char	    PredictProcessOption(int Argc, char *Argv[], char *Options);
 void	    *Pmalloc(size_t Bytes);
 void	    *Prealloc(void *Present, size_t Bytes);
 void	    *Pcalloc(size_t Number, unsigned int Size);
@@ -655,6 +675,7 @@ void	    FreeVector(void **V, int First, int Last);
 DataRec	    NewCase(void);
 void	    FreeCases(void);
 void	    FreeLastCase(DataRec Case);
+void	    PredictFreeLastCase(DataRec DVec);
 double	    KRandom(void);
 void	    ResetKR(int KRInit);
 void	    Error(int ErrNo, String S1, String S2);
@@ -672,6 +693,7 @@ int	    TStampToMins(String TS);
 void	    Check(float Val, float Low, float High);
 void	    CValToStr(ContValue CV, Attribute Att, String DS);
 double	    rint(double v);
+void	    FreeGlobals();
 void	    Cleanup(void);
 #ifdef UTF8
 int	    UTF8CharWidth(unsigned char *U);
@@ -750,15 +772,19 @@ void	    FreeRuleTree(RuleTree RT);
 
 	/* modelfiles.c */
 
+void	    modelfilesinit (void);
+void	    modelfilesfreeglobals(void);
 void	    CheckFile(String Extension, Boolean Write);
 void	    WriteFilePrefix(String Extension);
 void	    ReadFilePrefix(String Extension);
+void	    PredictReadFilePrefix(String Extension);
 void	    SaveDiscreteNames(void);
 void	    SaveTree(Tree T, String Extension);
 void	    OutTree(Tree T);
 void	    SaveRules(CRuleSet RS, String Extension);
 void	    AsciiOut(String Pre, String S);
 void	    ReadHeader(void);
+void	    PredictReadHeader();
 Tree	    GetTree(String Extension);
 Tree	    InTree(void);
 CRuleSet    GetRules(String Extension);
@@ -782,6 +808,4 @@ void	    Prepare(void);
 void	    Shuffle(int *Vec);
 void	    Summary(void);
 float	    SE(float sum, float sumsq, int no);
-
-
 

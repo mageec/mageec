@@ -50,8 +50,11 @@
 /*************************************************************************/
 
 
-#include "defns.i"
-#include "extern.i"
+#include "defns.h"
+#include "extern.h"
+
+#include "transform.h"
+#include "redefine.h"
 
 /*************************************************************************/
 /*									 */
@@ -71,6 +74,7 @@ void ConstructClassifiers()
     Boolean	NoStructure, CheckExcl;
     float	*BVote;
 
+    
     /*  Clean up after possible interrupt  */
 
     FreeUnlessNil(Wrong);
@@ -266,16 +270,18 @@ void ConstructClassifiers()
 
 	/*  Special termination conditions  */
 
-	if ( ErrWt < 0.1 )
+	if ( ErrWt < 0.1 && EARLYSTOPPING)
 	{
 	    TRIALS = Trial + 1;
 	    fprintf(Of, TX_Reduced1(TRIALS), TRIALS);
+            // Rptintf("termination 1\n");
 	}
 	else
-	if ( Trial && NoStructure || ErrWt / Cases >= 0.49 )
+	if ( ( ( Trial && NoStructure ) || ErrWt / Cases >= 0.49) && EARLYSTOPPING)
 	{
 	    TRIALS = ( Trial ? Trial : 1 );
 	    fprintf(Of, TX_Reduced2(TRIALS), TRIALS);
+            // Rptintf("termination 2\n");
 	}
 	else
 	{
@@ -344,7 +350,7 @@ void ConstructClassifiers()
 
     /*  Decide whether boosting should be abandoned  */
 
-    if ( BOOST && TRIALS <= 2 )
+    if ( EARLYSTOPPING && BOOST && TRIALS <= 2 )
     {
 	fprintf(Of, T_Abandoned);
 	TRIALS = 1;

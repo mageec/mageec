@@ -32,10 +32,13 @@
 /*************************************************************************/
 
 
-#include "defns.i"
-#include "extern.i"
+#include "defns.h"
+#include "extern.h"
 #include <ctype.h>
+#include <stdint.h>
 
+#include "transform.h"
+#include "redefine.h"
 
 char	*Buff;			/* buffer for input characters */
 int	BuffSize, BN;		/* size and index of next character */
@@ -117,7 +120,7 @@ void ImplicitAtt(FILE *Nf)
 	if ( DN == 1 && DefOp(AttDef[MaxAtt][0]) == OP_ATT &&
 	     strcmp(AttName[MaxAtt], "case weight") )
 	{
-	    Error(SAMEATT, AttName[ (long) DefSVal(AttDef[MaxAtt][0]) ], Nil);
+	    Error(SAMEATT, AttName[ (long) (intptr_t) DefSVal(AttDef[MaxAtt][0]) ], Nil);
 	}
 
 	if ( TStack[0].Type == 'B' )
@@ -448,7 +451,7 @@ Boolean Atom()
     {
 	BN += strlen(AttName[Att]);
 
-	Dump(OP_ATT, 0, (String) (long) Att, Fi);
+	Dump(OP_ATT, 0, (String) (intptr_t) Att, Fi);
     }
     else
     if ( isdigit(Buff[BN]) )
@@ -776,7 +779,7 @@ Boolean UpdateTStack(char OpCode, ContValue F, String S, int Fi)
     switch ( OpCode )
     {
 	case OP_ATT:
-		TStack[TSN].Type = ( Continuous((long) S) ? 'N' : 'S' );
+		TStack[TSN].Type = ( Continuous((long) (intptr_t) S) ? 'N' : 'S' );
 		break;
 
 	case OP_NUM:
@@ -903,7 +906,7 @@ AttValue EvaluateDef(Definition D, DataRec Case)
 	switch ( DefOp((DElt = D[DN])) )
 	{
 	    case OP_ATT:
-		    Att = (long) DefSVal(DElt);
+		    Att = (Attribute) (intptr_t) DefSVal(DElt);
 
 		    if ( Continuous(Att) )
 		    {
