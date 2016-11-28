@@ -34,7 +34,6 @@
 #include <cstdint>
 #include <cstring>
 #include <map>
-#include <fstream>
 #include <set>
 #include <string>
 #include <sstream>
@@ -287,136 +286,166 @@ C5Driver::makeDecision(const DecisionRequestBase &request,
 
   // Find the appropriate classifier tree for the provided decision request
   DecisionRequestType request_type = request.getType();
-  switch (request_type) {
-  case DecisionRequestType::kBool:
-  case DecisionRequestType::kRange: {
-    unsigned param_id;
-    ParameterType param_type;
 
-    // The ID is the identifier of the tunable parameter
-    if (request_type == DecisionRequestType::kBool) {
-      const auto *bool_request =
-          static_cast<const BoolDecisionRequest *>(&request);
-      param_id = bool_request->getID();
+  assert((request_type == DecisionRequestType::kBool ||
+          request_type == DecisionRequestType::kRange) &&
+         "Unhandled decision request type");
 
-      assert(bool_request->getDecisionType() == DecisionType::kBool);
-      param_type = ParameterType::kBool;
-    } else if (request_type == DecisionRequestType::kRange) {
-      const auto *range_request =
-          static_cast<const RangeDecisionRequest *>(&request);
-      param_id = range_request->getID();
+  unsigned param_id;
+  ParameterType param_type;
 
-      assert(range_request->getDecisionType() == DecisionType::kRange);
-      param_type = ParameterType::kRange;
-    } else {
-      assert(0 && "Unreachable");
-    }
+  // The ID is the identifier of the tunable parameter
+  if (request_type == DecisionRequestType::kBool) {
+    const auto *bool_request =
+        static_cast<const BoolDecisionRequest *>(&request);
+    param_id = bool_request->getID();
 
-    // Check if we have a classifier tree for this parameter.
-    const auto res = context->parameter_classifier_trees.find(param_id);
-    if (res == context->parameter_classifier_trees.cend()) {
-      return std::unique_ptr<DecisionBase>(new NativeDecision());
-    }
+    assert(bool_request->getDecisionType() == DecisionType::kBool);
+    param_type = ParameterType::kBool;
+  } else if (request_type == DecisionRequestType::kRange) {
+    const auto *range_request =
+        static_cast<const RangeDecisionRequest *>(&request);
+    param_id = range_request->getID();
 
-    // Output the classifier tree to a file (.tree)
-    const std::vector<uint8_t> &classifier_tree = res->second;
-    std::ofstream tree_file("/tmp/parameter_" + std::to_string(param_id) +
-                                ".tree",
-                            std::ofstream::binary);
-    for (auto c : classifier_tree) {
-      tree_file << c;
-    }
-    tree_file.close();
+    assert(range_request->getDecisionType() == DecisionType::kRange);
+    param_type = ParameterType::kRange;
+  } else {
+    assert(0 && "Unreachable");
+  }
 
-    // Output names file (columns for classifier) for this parameter
-    // FIXME: This is copied from the 'train' code and should be factored out
-    // TODO: Platform independent temporary file
-    std::ofstream names_data("/tmp/parameter_" + std::to_string(param_id) +
-                                ".names",
-                            std::ofstream::binary);
+  // Check if we have a classifier tree for this parameter.
+  const auto res = context->parameter_classifier_trees.find(param_id);
+  if (res == context->parameter_classifier_trees.cend()) {
+    return std::unique_ptr<DecisionBase>(new NativeDecision());
+  }
 
-    // Output the target parameter first
-    // TODO: Comment containing parameter description
-    names_data << "parameter_" << std::to_string(param_id) << ".\n";
+  // Output the classifier tree to a buffer
+  const std::vector<uint8_t> &tree_blob = res->second;
+  std::ostringstream tree_data;
+  for (auto c : tree_blob) {
+    tree_data << c;
+  }
 
-    // Output columns for all of the features which we have seen in the
-    // training set.
-    // TODO: Add comment containing feature description
-    for (auto feat : context->feature_descs) {
-      names_data << "feature_" << std::to_string(feat.id) << ": ";
+  // Output names data (columns for classifier) for this parameter
+  // FIXME: This is copied from the 'train' code and should be factored out
+  // TODO: Platform independent temporary file
+  std::ostringstream names_data;
+    
+  // Output the target parameter first
+  // TODO: Comment containing parameter description
+  names_data << "parameter_" << std::to_string(param_id) << ".\n";
 
-      switch (feat.type) {
-      case FeatureType::kBool:
-        names_data << "t, f.";
-        break;
-      case FeatureType::kInt:
-        names_data << "continuous.";
-        break;
-      }
-      names_data << '\n';
-    }
-    names_data << '\n';
+  // Output columns for all of the features which we have seen in the
+  // training set.
+  // TODO: Add comment containing feature description
+  for (auto feat : context->feature_descs) {
+    names_data << "feature_" << std::to_string(feat.id) << ": ";
 
-    // Output a column for the target parameter
-    names_data << "parameter_" << std::to_string(param_id) << ": ";
-    switch (param_type) {
-    case ParameterType::kBool:
+    switch (feat.type) {
+    case FeatureType::kBool:
       names_data << "t, f.";
       break;
-    case ParameterType::kRange:
+    case FeatureType::kInt:
       names_data << "continuous.";
-      break;
-    default:
       break;
     }
     names_data << '\n';
-    names_data.close();
+  }
+  names_data << '\n';
 
-    // Output cases files (.cases), containing the feature set
-    std::ofstream cases_file("/tmp/parameter_" + std::to_string(param_id) +
-                             ".cases");
-
-    for (auto feat : context->feature_descs) {
-      // Feature values are output in the order they appear in the feature
-      // description map (ascending order of feature id)
-
-      // FIXME: Avoid the dumb linear search here
-      FeatureBase *f = nullptr;
-      for (std::shared_ptr<FeatureBase> it : features) {
-        if (it->getID() == feat.id) {
-          f = it.get();
-        }
-      }
-
-      if (f) {
-        // There is a value for this feature in the feature set, output it
-        assert(f->getType() == feat.type);
-
-        switch (feat.type) {
-        case FeatureType::kBool: {
-          bool value = static_cast<BoolFeature *>(f)->getValue();
-          cases_file << (value ? "t" : "f");
-          break;
-        }
-        case FeatureType::kInt: {
-          int64_t value = static_cast<IntFeature *>(f)->getValue();
-          cases_file << value;
-          break;
-        }
-        }
-      } else {
-        // No value for this feature in the feature set
-        cases_file << "?,";
-      }
-    }
-    // Finally, add the 'unknown' for our target parameter
-    cases_file << "?" << '\n';
-    cases_file.close();
+  // Output a column for the target parameter
+  names_data << "parameter_" << std::to_string(param_id) << ": ";
+  switch (param_type) {
+  case ParameterType::kBool:
+    names_data << "t, f.";
+    break;
+  case ParameterType::kRange:
+    names_data << "continuous.";
+    break;
+  default:
     break;
   }
-  default:
-    assert(0 && "Unhandled DecisionRequest type!");
+  names_data << '\n';
+
+  // Output cases file (.cases) data, containing the feature set
+  std::ostringstream cases_data;
+
+  for (auto feat : context->feature_descs) {
+    // Feature values are output in the order they appear in the feature
+    // description map (ascending order of feature id)
+
+    // FIXME: Avoid the dumb linear search here
+    FeatureBase *f = nullptr;
+    for (std::shared_ptr<FeatureBase> it : features) {
+      if (it->getID() == feat.id) {
+        f = it.get();
+      }
+    }
+
+    if (f) {
+      // There is a value for this feature in the feature set, output it
+      assert(f->getType() == feat.type);
+
+      switch (feat.type) {
+      case FeatureType::kBool: {
+        bool value = static_cast<BoolFeature *>(f)->getValue();
+        cases_data << (value ? "t" : "f");
+        break;
+      }
+      case FeatureType::kInt: {
+        int64_t value = static_cast<IntFeature *>(f)->getValue();
+        cases_data << value;
+        break;
+      }
+      }
+    } else {
+      // No value for this feature in the feature set
+      cases_data << "?,";
+    }
   }
+  // Finally, add the 'unknown' for our target parameter
+  cases_data << "?" << '\n';
+
+  // Now we have a .tree, .names and .cases data, run the classifier over them
+  // to make a prediction
+  // TODO: Useful debug here
+  MAGEEC_DEBUG("Running the C5.0 classifier for decision");
+
+  // input files as buffers
+  std::string cases_str = cases_data.str();
+  std::string names_str = names_data.str();
+  std::string tree_str = tree_data.str();
+
+  char *casev = (char*)malloc(cases_str.size() + 1);
+  strcpy(casev, cases_str.c_str());
+  char *namesv = (char*)malloc(names_str.size() + 1);
+  strcpy(namesv, names_str.c_str());
+  char *treev = (char*)malloc(tree_str.size() + 1);
+  strcpy(treev, tree_str.c_str());
+
+  char *rulesv = (char*)malloc(1); rulesv[0] = '\0';
+  char *costv = (char*)malloc(1); costv[0] = '\0';
+  // default parameters for C5.0
+  int trials = 1;
+  // output parameters
+  int predv;
+  double confidencev;
+  char *outputv = nullptr;
+
+  predictions(&casev, &namesv, &treev, &rulesv, &costv, &predv, &confidencev,
+              &trials, &outputv);
+
+  // free memory for the inputs, and unused outputs
+  free(casev);
+  free(namesv);
+  free(treev);
+  free(rulesv);
+  free(costv);
+  if (outputv != nullptr)
+    free(outputv);
+
+  // The result was written back to predv
+  int predict_res = predv;
 
   // Get the value of the returned decision
   // FIXME: Call out to the C5.0 classifier
@@ -425,13 +454,13 @@ C5Driver::makeDecision(const DecisionRequestBase &request,
     const auto *bool_request =
         static_cast<const BoolDecisionRequest *>(&request);
     assert(bool_request->getDecisionType() == DecisionType::kBool);
-    return std::unique_ptr<BoolDecision>(new BoolDecision(true));
+    return std::unique_ptr<BoolDecision>(new BoolDecision(predict_res));
   }
   case DecisionRequestType::kRange: {
     const auto *range_request =
         static_cast<const RangeDecisionRequest *>(&request);
     assert(range_request->getDecisionType() == DecisionType::kRange);
-    return std::unique_ptr<RangeDecision>(new RangeDecision(0xdeadbeef));
+    return std::unique_ptr<RangeDecision>(new RangeDecision(predict_res));
   }
   default:
     assert(0 && "Unhandled DecisionRequest type!");

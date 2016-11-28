@@ -1,5 +1,9 @@
 2016-11-28  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/ML/C5.cpp: Make decisions using the C5 library.
+
+2016-11-28  Edward Jones  <ed.jones@embecosm.com>
+
 	* CMakeLists.txt: Link against the C5 library. Always build C5.0
 	* lib/ML/C5.cpp: Refactor to use C5 library.
 	* lib/ML/C5/c50.c: Update to build against MAGEEC.
