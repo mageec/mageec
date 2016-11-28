@@ -1,3 +1,9 @@
+2016-11-28  Edward Jones  <ed.jones@embecosm.com>
+
+	* Driver.cpp: Comment out -fsection-anchors and
+	-ftree-coalesce-inlined-vars flags.
+	* Parameters.h: Likewise.
+
 2016-10-25  Edward Jones  <ed.jones@embecosm.com>
 
 	* Driver.cpp (loadFeatureIDs): Handle additional feature_class

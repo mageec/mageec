@@ -113,7 +113,7 @@ enum : unsigned {
   kSchedStalledInsnsDep,           // -fsched-stalled-insns-dep
   kScheduleInsns,                  // -fschedule-insns
   kScheduleInsns2,                 // -fschedule-insns2
-  kSectionAnchors,                 // -fsection-anchors
+  //kSectionAnchors,                 // -fsection-anchors
   kSelSchedPipelining,             // -fsel-sched-pipelining
   kSelSchedPipeliningOuterLoops,   // -fsel-sched-pipelining-outer-loops
   kSelSchedReschedulePipelined,    // -fsel-sched-reschedule-pipelined
@@ -129,7 +129,7 @@ enum : unsigned {
   kTreeBuiltinCallDCE,             // -ftree-builtin-call-dce
   kTreeCCP,                        // -ftree-ccp
   kTreeCH,                         // -ftree-ch
-  kTreeCoalesceInlinedVars,        // -ftree-coalesce-inlined-vars
+  //kTreeCoalesceInlinedVars,        // -ftree-coalesce-inlined-vars
   kTreeCoalesceVars,               // -ftree-coalesce-vars
   kTreeCopyProp,                   // -ftree-copy-prop
   kTreeCopyRename,                 // -ftree-copyrename
