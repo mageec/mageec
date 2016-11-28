@@ -398,6 +398,7 @@ C5Driver::makeDecision(const DecisionRequestBase &request,
         break;
       }
       }
+      cases_data << ",";
     } else {
       // No value for this feature in the feature set
       cases_data << "?,";
