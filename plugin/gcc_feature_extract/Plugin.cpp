@@ -34,45 +34,23 @@
 #include "mageec/Util.h"
 #include "Plugin.h"
 
+// Version of GCC that the plugin will be used with
 #ifndef BUILDING_GCC_VERSION
   #include "bversion.h"
   #define GCC_VERSION BUILDING_GCC_VERSION
 #endif
-#if (BUILDING_GCC_VERSION < 4009)
+
+#if (GCC_VERSION >= 4005) && (GCC_VERSION < 4009)
   #include "gcc-plugin.h"
-  #include "tree-pass.h"
-  #include "gimple.h"
-  #include "function.h"
-  #include "toplev.h"
-#else
-  #include "gcc-plugin.h"
-  #include "config.h"
-  #include "system.h"
   #include "coretypes.h"
-  #include "tm.h"
-  #include "tree.h"
-  #include "stringpool.h"
-  #include "toplev.h"
-  #include "basic-block.h"
-#if (BUILDING_GCC_VERSION < 5001)
-  #include "pointer-set.h"
-#endif // (BUILDING_GCC_VERSION < 5001)
-  #include "hash-table.h"
-  #include "vec.h"
-  #include "ggc.h"
-  #include "basic-block.h"
-  #include "tree-ssa-alias.h"
-  #include "internal-fn.h"
-  #include "gimple-fold.h"
-  #include "tree-eh.h"
-  #include "gimple-expr.h"
-  #include "is-a.h"
-  #include "gimple.h"
-  #include "gimple-iterator.h"
-  #include "tree.h"
   #include "tree-pass.h"
-  #include "intl.h"
-  #include "diagnostic.h"
+  // For 4.5 and 4.6 there is an error in tree.h because a structure has
+  // thread_local as a member and this conflicts with c++11
+  #include "gimple.h"
+#elif (GCC_VERSION >= 4009)
+  #include "gcc-plugin.h"
+  #include "basic-block.h"
+  #include "tree-pass.h"
   #include "context.h"
 #endif
 
@@ -370,63 +348,64 @@ int plugin_init(struct plugin_name_args *plugin_info,
 //===------------------ Feature Extractor pass definition -----------------===//
 
 
-#if (GCC_VERSION < 4009)
-static struct gimple_opt_pass feature_extract_pass = {{
-    GIMPLE_PASS,
-    "feature-extractor",  // name
-    OPTGROUP_NONE,        // optinfo_flags
-    NULL,                 // gate
-    featureExtract,       // execute
-    NULL,                 // sub
-    NULL,                 // next
-    0,                    // static_pass_number
-    TV_NONE,              // tv_id
-    PROP_ssa,             // properties_required
-    0,                    // properties_provided
-    0,                    // properties_destroyed
-    0,                    // todo_flags_start
-    0                     // todo_flags_finish
-}};
-#elif(GCC_VERSION >= 4009)
-namespace {
-const pass_data pass_data_feature_extract = {
-    GIMPLE_PASS,          // type
-    "feature-extractor",  // name
-    OPTGROUP_NONE,        // optinfo_flags
-#if (GCC_VERSION < 5001)
-    false,                // has_gate
-    true,                 // has_execute
-#endif // (GCC_VERSION < 5001)
-    TV_NONE,              // tv_id
-    PROP_ssa,             // properties_required
-    0,                    // properties_provided
-    0,                    // properties_destroyed
-    0,                    // todo_flags_start
-    0,                    // todo_flags_finish
-};
+#if (GCC_VERSION >= 4005) && (GCC_VERSION < 4009)
+  static struct gimple_opt_pass feature_extract_pass = {{
+      GIMPLE_PASS,
+      "feature-extractor",  // name
+      #if (GCC_VERSION >= 4008)
+        OPTGROUP_NONE,        // optinfo_flags
+      #endif
+      NULL,                  // gate
+      featureExtractExecute, // execute
+      NULL,                  // sub
+      NULL,                  // next
+      0,                     // static_pass_number
+      TV_NONE,               // tv_id
+      PROP_ssa,              // properties_required
+      0,                     // properties_provided
+      0,                     // properties_destroyed
+      0,                     // todo_flags_start
+      0                      // todo_flags_finish
+  }};
+#elif (GCC_VERSION >= 4009)
+  namespace {
+  const pass_data pass_data_feature_extract = {
+      GIMPLE_PASS,          // type
+      "feature-extractor",  // name
+      OPTGROUP_NONE,        // optinfo_flags
+      #if (GCC_VERSION < 5001)
+        false,              // has_gate
+        true,               // has_execute
+      #endif
+      TV_NONE,              // tv_id
+      PROP_ssa,             // properties_required
+      0,                    // properties_provided
+      0,                    // properties_destroyed
+      0,                    // todo_flags_start
+      0,                    // todo_flags_finish
+  };
 
-class FeatureExtractPass : public gimple_opt_pass {
-public:
-  FeatureExtractPass(gcc::context *context)
-      : gimple_opt_pass(pass_data_feature_extract, context)
-  {}
+  class FeatureExtractPass : public gimple_opt_pass {
+  public:
+    FeatureExtractPass(gcc::context *context)
+        : gimple_opt_pass(pass_data_feature_extract, context)
+    {}
 
-// opt_pass methods
-#if (GCC_VERSION < 5001)
-  bool gate() override { return true; }
-  unsigned execute() override { return featureExtractExecute(); }
-#else
-  bool gate(function *) override { return true; }
-  unsigned execute(function *) override { return featureExtractExecute(); }
+  #if (GCC_VERSION < 5001)
+    bool gate() override { return true; }
+    unsigned execute() override { return featureExtractExecute(); }
+  #elif (GCC_VERSION >= 5001)
+    bool gate(function *) override { return true; }
+    unsigned execute(function *) override { return featureExtractExecute(); }
+  #endif
+  };
+  } // end of anonymous namespace
+
+  /// \brief Create a new feature extractor pass
+  static gimple_opt_pass *createFeatureExtractPass(gcc::context *context) {
+    return new FeatureExtractPass(context);
+  }
 #endif
-};
-} // end of anonymous namespace
-
-/// \brief Create a new feature extractor pass
-static gimple_opt_pass *createFeatureExtractPass(gcc::context *context) {
-  return new FeatureExtractPass(context);
-}
-#endif // (GCC_VERSION < 4009)
 
 
 /// \brief Register the feature extractor pass in the pass list
@@ -435,9 +414,9 @@ static gimple_opt_pass *createFeatureExtractPass(gcc::context *context) {
 void registerFeatureExtractPass(void) {
   struct register_pass_info pass;
 
-#if (GCC_VERSION < 4009)
+#if (GCC_VERSION >= 4005) && (GCC_VERSION < 4009)
   pass.pass = &feature_extract_pass.pass;
-#else
+#elif (GCC_VERSION >= 4009)
   pass.pass = createFeatureExtractPass(g);
 #endif
   pass.reference_pass_name = "ssa";

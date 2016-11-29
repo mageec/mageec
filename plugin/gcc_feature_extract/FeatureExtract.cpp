@@ -33,54 +33,36 @@
 #undef PACKAGE_STRING                                                           
 #undef PACKAGE_TARNAME                                                          
 #undef PACKAGE_VERSION                                                          
-                                                                                
+
+// Version of GCC that the plugin will be used with
 #ifndef BUILDING_GCC_VERSION
   #include "bversion.h"
   #define GCC_VERSION BUILDING_GCC_VERSION
 #endif
-#if (BUILDING_GCC_VERSION < 4009)
+
+#if (GCC_VERSION >= 4005) && (GCC_VERSION < 4009)
   #include "gcc-plugin.h"
-  #include "tree-pass.h"
-  #include "gimple.h"
-  #include "function.h"
-  #include "toplev.h"
-#else
-  #include "gcc-plugin.h"
-  #include "config.h"
-  #include "system.h"
   #include "coretypes.h"
-  #include "tm.h"
+  // For 4.5, 4.6 and 4.7 there is an error in tree.h because a structure has
+  // thread_local as a member and this conflicts with c++11
+  #include "gimple.h"
+#elif (GCC_VERSION >= 4009)
+  #include "gcc-plugin.h"
   #include "tree.h"
-  #include "stringpool.h"
-  #include "toplev.h"
-  #include "basic-block.h"
-#if (BUILDING_GCC_VERSION < 5001)
-  #include "pointer-set.h"
-#endif // (BUILDING_GCC_VERSION < 5001)
-  #include "hash-table.h"
-  #include "vec.h"
-  #include "ggc.h"
   #include "basic-block.h"
   #include "tree-ssa-alias.h"
   #include "internal-fn.h"
-  #include "gimple-fold.h"
   #include "tree-eh.h"
   #include "gimple-expr.h"
   #include "is-a.h"
   #include "gimple.h"
   #include "gimple-iterator.h"
-  #include "tree.h"
-  #include "tree-pass.h"
-  #include "intl.h"
-  #include "diagnostic.h"
-  #include "context.h"
 #endif
 
 #include <memory>
 #include <set>
 #include <vector>
 #include <algorithm>
-
 
 
 //===----------------------------------------------------------------------===//
@@ -104,9 +86,9 @@ std::unique_ptr<FunctionFeatures> extractFunctionFeatures(void) {
   basic_block bb;
   bool in_phi_header = false;
 
-#if (GCC_VERSION < 4009)
+#if (GCC_VERSION >= 4005) && (GCC_VERSION < 4009)
   FOR_EACH_BB(bb)
-#else
+#elif (GCC_VERSION >= 4009)
   FOR_ALL_BB_FN(bb, cfun)
 #endif
   {
@@ -144,7 +126,12 @@ std::unique_ptr<FunctionFeatures> extractFunctionFeatures(void) {
     features->bb_phi_header_nodes.push_back(0);
 
     for (auto gsi = gsi_start_bb(bb); !gsi_end_p(gsi); gsi_next(&gsi)) {
-      gimple *stmt = gsi_stmt(gsi);
+      #if (GCC_VERSION >= 4005) && (GCC_VERSION < 6001)
+        gimple stmt = gsi_stmt(gsi);
+      #elif (GCC_VERSION >= 6001)
+        gimple *stmt = gsi_stmt(gsi);
+      #endif
+
       in_phi_header = true;
 
       features->bb_instructions[bb_index]++;

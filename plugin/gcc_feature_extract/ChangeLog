@@ -1,3 +1,8 @@
+2016-11-29  Edward Jones  <ed.jones@embecosm.com>
+
+	* FeatureExtract.cpp: Fix to work with all GCC versions >=4.8.0
+	* Plugin.cpp: Likewise.
+
 2016-10-25  Edward Jones  <ed.jones@embecosm.com>
 
 	* Features.h: No longer used distinct identifiers in the
