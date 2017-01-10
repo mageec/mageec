@@ -6,7 +6,8 @@ import random
 import re
 import subprocess
 import sys
-import mageec_common
+
+import mageec
 
 mageec_feature_extract_plugin='libgcc_feature_extract.so'
 mageec_gcc_wrapper='mageec-gcc'
@@ -149,27 +150,6 @@ gcc_flags = [
 ]
 
 
-def feature_extract(benchmark_src, build_dir, install_dir, build_system,
-                    cc, cflags, database_path, plugin_path, features_path):
-    assert(os.path.exists(benchmark_src))
-    assert(os.path.exists(build_dir))
-    assert(os.path.exists(install_dir))
-    assert(os.path.exists(database_path))
-    assert(os.path.exists(plugin_path))
-
-    plugin_flags = '-fplugin=' + plugin_path
-    plugin_flags += ' -fplugin-arg-libgcc_feature_extract-debug'
-    plugin_flags += ' -fplugin-arg-libgcc_feature_extract-database=' + database_path
-    plugin_flags += ' -fplugin-arg-libgcc_feature_extract-out=' + features_path
-
-    mageec_common.build(src_dir=benchmark_src,
-                        build_dir=build_dir,
-                        install_dir=install_dir,
-                        build_system=build_system,
-                        cc=cc,
-                        cflags=plugin_flags + ' ' + cflags)
-
-
 def generate_configurations(flags, num_configs, generator):
     configs = []
     if generator == 'random':
@@ -244,22 +224,22 @@ def main():
     print ('-- Checking that mageec database exists')
     if not os.path.exists(database_path):
         print ('-- Could not find database ' + database_path)
-        sys.exit(1)
+        return -1
 
     print ('-- Checking that benchmark source exists')
     if not os.path.exists(benchmark_src):
         print ('-- Could not find benchmark source in ' + benchmark_src)
-        sys.exit(1)
+        return -1
 
     print ('-- Checking for mageec-gcc wrapper')
-    if not mageec_common.is_command_on_path(mageec_gcc_wrapper):
+    if not mageec.is_command_on_path(mageec_gcc_wrapper):
         print ('-- mageec-gcc is not available on the PATH')
-        sys.exit(1)
+        return -1
 
     print ('-- Checking for mageec feature extractor in ' + mageec_library_path)
     if not os.path.exists(plugin_path):
         print ('-- Could not find ' + mageec_feature_extract_plugin + ' in ' + mageec_library_path)
-        sys.exit(1)
+        return -1
 
     print ('-- Retrieving gcc version for ' + cc)
     try:
@@ -267,7 +247,7 @@ def main():
         version_str = pipe.communicate()[0].decode()
     except subprocess.CalledProcessError:
         print ('-- Could not retrieve gcc version for ' + cc)
-        sys.exit(1)
+        return -1
     match = re.search('\s*([0-9]+)\.([0-9]+)\.([0-9]+)\s*', version_str)
     if match:
         gcc_major = match.group(1)
@@ -276,7 +256,7 @@ def main():
         gcc_version = gcc_major + '.' + gcc_minor + '.' + gcc_patch
     else:
         print ('-- Could not extract gcc version for ' + cc)
-        sys.exit(1)
+        return -1
     print ('-- Underlying gcc version ' + gcc_version)
 
     # Generate flag configurations appropriate to the version of gcc
@@ -288,7 +268,7 @@ def main():
         flags = gcc_flags
     else:
         print ('-- Unsupported gcc version ' + gcc_version)
-        sys.exit(1)
+        return -1
     configs = generate_configurations(flags=flags, num_configs=num_configs,
                                       generator=config_generator)
 
@@ -301,15 +281,19 @@ def main():
     if not os.path.exists(feature_extract_install_dir):
         os.makedirs(feature_extract_install_dir)
 
-    feature_extract(benchmark_src=benchmark_src,
-                    build_dir=feature_extract_build_dir,
-                    install_dir=feature_extract_install_dir,
-                    build_system=build_system,
-                    cc=cc,
-                    cflags=cflags,
-                    database_path=database_path,
-                    plugin_path=plugin_path,
-                    features_path=features_path)
+    res = mageec.feature_extract(src_dir=benchmark_src,
+                                 build_dir=feature_extract_build_dir,
+                                 install_dir=feature_extract_install_dir,
+                                 build_system=build_system,
+                                 cc=cc,
+                                 cflags=cflags,
+                                 database_path=database_path,
+                                 gcc_plugin_path=plugin_path,
+                                 debug=True,
+                                 out_path=features_path)
+    if not res:
+        print ('-- Feature extraction failed, quitting...')
+        return -1
 
     # build the benchmark for every configuration
     # Here, a wrapper around gcc is used which records each compilation in the
@@ -334,12 +318,15 @@ def main():
         wrapper_cflags += ' -fmageec-out=' + compilations_path
         cflags = wrapper_cflags + ' ' + cflags + ' ' + config
 
-        mageec_common.build(src_dir=benchmark_src,
-                            build_dir=run_build_dir, 
-                            install_dir=run_install_dir,
-                            build_system=build_system,
-                            cc=mageec_gcc_wrapper,
-                            cflags=cflags)
+        res = mageec.build(src_dir=benchmark_src,
+                           build_dir=run_build_dir, 
+                           install_dir=run_install_dir,
+                           build_system=build_system,
+                           cc=mageec_gcc_wrapper,
+                           cflags=cflags)
+        # just ignore failed builds
+        if not res:
+            print ('-- Build failed, but continuing anyway')
 
 
 if __name__ == '__main__':

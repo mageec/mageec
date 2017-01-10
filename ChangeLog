@@ -1,5 +1,13 @@
 2017-01-10  Edward Jones  <ed.jones@embecosm.com>
 
+	* script/feature_extract.py: Added file.
+	* script/generate-build.py: Remove feature_extract function.
+	* script/mageec_common.py: Renamed to mageec.py.
+	* script/mageec.py: Renamed from mageec_common.py, added
+	feature_extract function from generate-build.py
+
+2017-01-10  Edward Jones  <ed.jones@embecosm.com>
+
 	* script/generate-build.py: Factor out code into mageec_common.py
 	* script/mageec_common.py: Added file.
 
