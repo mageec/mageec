@@ -1023,10 +1023,6 @@ struct FeatureIDEntry {
   bool operator<(const FeatureIDEntry &other) const {
     if (name < other.name)
       return true;
-    if (id < other.id)
-      return true;
-    if (feature_class < other.feature_class)
-      return true;
     return false;
   }
 };
@@ -1087,15 +1083,23 @@ loadFeatureIDs(std::string features_path) {
     FileFeatureIDs &file_entry = file_to_features[values[0]];
     if (values[1] == "module") {
       if (file_entry.module) {
-        MAGEEC_WARN("Multiple module feature entries for module: "
-            << entry.name);
+        FeatureIDEntry old_entry = file_entry.module.get();
+        if (old_entry.id != entry.id
+            || old_entry.feature_class != entry.feature_class) {
+          MAGEEC_WARN("Multiple entries for module: " << entry.name
+                      << " with different feature sets");
+        }
       }
       file_entry.module = entry;
     } else {
       assert(values[1] == "function");
       if (file_entry.functions.count(entry)) {
-        MAGEEC_WARN("Multiple function feature entries for function: "
-            << entry.name);
+        FeatureIDEntry old_entry = *file_entry.functions.find(entry);
+        if (old_entry.id != entry.id
+            || old_entry.feature_class != entry.feature_class) {
+          MAGEEC_WARN("Multiple entries for function: " << entry.name
+                      << " with different feature sets");
+        }
       }
       file_entry.functions.insert(entry);
     }

@@ -1,5 +1,11 @@
 2017-01-10  Edward Jones  <ed.jones@embecosm.com>
 
+	* Driver.cpp: Compare feature file entries on the name of the
+	program unit. Relax an overly aggressive warning to remove
+	false positives.
+
+2017-01-10  Edward Jones  <ed.jones@embecosm.com>
+
 	* Driver.cpp: Use strings instead of UUIDs as identifiers.
 
 2016-11-28  Edward Jones  <ed.jones@embecosm.com>
