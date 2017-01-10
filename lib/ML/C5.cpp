@@ -269,10 +269,6 @@ std::vector<uint8_t> C5Context::toBlob() {
   return blob;
 }
 
-// UUID for the C5 Driver
-const util::UUID C5Driver::uuid =
-    util::UUID::parse("ccf7593c-78d9-429a-b544-2a7339d4325e").get();
-
 C5Driver::C5Driver() : IMachineLearner() {}
 
 C5Driver::~C5Driver() {}

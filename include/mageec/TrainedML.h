@@ -72,9 +72,6 @@ public:
   TrainedML(IMachineLearner &ml, FeatureClass feature_class, std::string metric,
             const std::vector<uint8_t> blob);
 
-  /// \brief Get the unique identifier for the underlying machine learner
-  util::UUID getUUID(void) const;
-
   /// \brief Get the name of the underlying machine learner interface
   std::string getName(void) const;
 

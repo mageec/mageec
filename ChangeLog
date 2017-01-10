@@ -1,3 +1,17 @@
+2017-01-10  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Database.h: Remove use of UUID, use strings instead.
+	* include/mageec/Framework.h: Likewise.
+	* include/mageec/ML.h: Likewise.
+	* include/mageec/ML/C5.h: Likewise.
+	* include/mageec/TrainedML.h: Likewise.
+	* include/mageec/Util.h: Likewise.
+	* lib/Database.cpp: Likewise.
+	* lib/Driver.cpp: Likewise.
+	* lib/Framework.cpp: Likewise.
+	* lib/ML/C5.cpp: Likewise.
+	* lib/TrainedML.cpp: Likewise.
+
 2016-11-28  Edward Jones  <ed.jones@embecosm.com>
 
 	* lib/ML/C5.cpp: Correctly read the prediction from C5.0

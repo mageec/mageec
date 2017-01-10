@@ -55,13 +55,13 @@ void Framework::setDebug(bool with_debug) const { util::setDebug(with_debug); }
 
 util::Version Framework::getVersion(void) const { return Framework::version; }
 
-util::Option<util::UUID> Framework::loadMachineLearner(std::string path) {
+std::string Framework::loadMachineLearner(std::string path) {
   (void)path;
-  return nullptr;
+  return std::string();
 }
 
 bool Framework::registerMachineLearner(std::unique_ptr<IMachineLearner> ml) {
-  util::UUID ml_id = ml->getUUID();
+  std::string ml_id = ml->getName();
   auto res = m_mls.emplace(std::make_pair(ml_id, ml.release()));
   assert(res.second);
 
@@ -84,8 +84,8 @@ std::unique_ptr<Database> Framework::getDatabase(std::string db_path,
   return db;
 }
 
-bool Framework::hasMachineLearner(util::UUID uuid) const {
-  const auto it = m_mls.find(uuid);
+bool Framework::hasMachineLearner(std::string ml) const {
+  const auto it = m_mls.find(ml);
   return (it != m_mls.cend());
 }
 
@@ -101,8 +101,7 @@ void Framework::print(std::ostream &os) const {
   os << "Version: " << std::string(Framework::version) << "\n";
   os << "Machine learner interfaces:\n";
   for (auto &it : m_mls) {
-    os << std::string(it.second->getUUID()) << " "
-       << it.second->getName() << "\n";
+    os << it.second->getName() << "\n";
   }
 }
 

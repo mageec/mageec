@@ -53,8 +53,6 @@ TrainedML::TrainedML(IMachineLearner &ml, FeatureClass feature_class,
                                   "where did the metric and blob come from?");
 }
 
-util::UUID TrainedML::getUUID(void) const { return m_ml.getUUID(); }
-
 std::string TrainedML::getName(void) const { return m_ml.getName(); }
 
 FeatureClass TrainedML::getFeatureClass(void) const {
@@ -85,7 +83,7 @@ TrainedML::makeDecision(const DecisionRequestBase &request,
 }
 
 void TrainedML::print(std::ostream &os) const {
-  os << std::string(getUUID()) << " " << getName();
+  os << getName();
 
   if (m_metric)
     os << " " << getMetric();

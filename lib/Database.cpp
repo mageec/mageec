@@ -147,7 +147,7 @@ static const char *const create_parameter_debug_table =
 
 std::unique_ptr<Database>
 Database::createDatabase(std::string db_path,
-                         std::map<util::UUID, IMachineLearner *> mls) {
+                         std::map<std::string, IMachineLearner *> mls) {
   // Fail if the file already exists
   std::ifstream f(db_path.c_str());
   if (f.good()) {
@@ -169,7 +169,7 @@ Database::createDatabase(std::string db_path,
 
 std::unique_ptr<Database>
 Database::loadDatabase(std::string db_path,
-                       std::map<util::UUID, IMachineLearner *> mls) {
+                       std::map<std::string, IMachineLearner *> mls) {
   // Fail if the file does not already exist
   std::ifstream f(db_path.c_str());
   if (!f.good()) {
@@ -191,7 +191,7 @@ Database::loadDatabase(std::string db_path,
 
 std::unique_ptr<Database>
 Database::getDatabase(std::string db_path,
-                      std::map<util::UUID, IMachineLearner *> mls) {
+                      std::map<std::string, IMachineLearner *> mls) {
   // First try and load the database, if that fails try and create it
   std::unique_ptr<Database> db;
   MAGEEC_DEBUG("Loading database '" << db_path << "'");
@@ -206,7 +206,7 @@ Database::getDatabase(std::string db_path,
   return db;
 }
 
-Database::Database(sqlite3 &db, std::map<util::UUID, IMachineLearner *> mls,
+Database::Database(sqlite3 &db, std::map<std::string, IMachineLearner *> mls,
                    bool create)
     : m_db(&db), m_mls(mls) {
   // Set a busy timeout for all database transactions
@@ -315,14 +315,14 @@ std::vector<TrainedML> Database::getTrainedMachineLearners(void) {
   SQLQuery query =
       SQLQueryBuilder(*m_db)
       << "SELECT feature_class_id, metric, ml_blob FROM MachineLearner "
-         "WHERE ml_id = " << SQLType::kBlob;
+         "WHERE ml_id = " << SQLType::kText;
 
   for (auto I : m_mls) {
-    const util::UUID uuid = I.first;
+    const std::string ml_name = I.first;
     IMachineLearner &ml = *I.second;
 
     query.clearAllBindings();
-    query << std::vector<uint8_t>(uuid.data().begin(), uuid.data().end());
+    query << ml_name;
 
     auto res = query.exec();
     while (!res.done()) {
@@ -722,7 +722,7 @@ void Database::addResults(std::set<InputResult> results) {
 
 //===----------------------- Training interface ---------------------------===//
 
-void Database::trainMachineLearner(util::UUID ml, FeatureClass feature_class,
+void Database::trainMachineLearner(std::string ml, FeatureClass feature_class,
                                    std::string metric) {
   // Get all of the feature types and parameter types, even if some of them
   // don't occur for this metric. These will all be distinct.
@@ -805,9 +805,7 @@ void Database::trainMachineLearner(util::UUID ml, FeatureClass feature_class,
   // FIXME: Handle case where the blob is empty. (causes a failure when
   // running the database query).
 
-  insert_blob << std::vector<uint8_t>(std::begin(ml.data()),
-                                      std::end(ml.data()))
-              << static_cast<int64_t>(feature_class) << metric << blob;
+  insert_blob << ml << static_cast<int64_t>(feature_class) << metric << blob;
   insert_blob.exec().assertDone();
 }
 

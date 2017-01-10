@@ -45,26 +45,15 @@ class DecisionRequestBase;
 ///
 /// \brief Machine learner which drives an external C5.0 classifier
 class C5Driver : public IMachineLearner {
-private:
-  /// Version 4 UUID
-  ///
-  /// This identifies both the machine learner and its version. If a
-  /// breaking change is made to the machine learner then a new UUID should
-  /// be generated in order to avoid conflicts.
-  static const util::UUID uuid;
-
 public:
   C5Driver();
   ~C5Driver() override;
-
-  /// \brief Get the unique identifier for this machine learner
-  util::UUID getUUID(void) const override { return uuid; }
 
   /// \brief Get the name of the machine learner
   ///
   /// Note that this is a driver in case a C5.0 classifier is later included
   /// with MAGEEC.
-  std::string getName(void) const override { return "C5.0 Driver"; }
+  std::string getName(void) const override { return "c50"; }
 
   bool requiresTraining(void) const override { return true; }
 

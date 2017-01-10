@@ -45,9 +45,6 @@ class IMachineLearner {
 public:
   virtual ~IMachineLearner(void) = 0;
 
-  /// \brief Get the unique identifier for this machine learner
-  virtual util::UUID getUUID(void) const = 0;
-
   /// \brief Get the name of this machine learner as a string
   virtual std::string getName(void) const = 0;
 

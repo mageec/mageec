@@ -65,7 +65,7 @@ public:
   /// \return The database if it could be loaded, nullptr otherwise.
   static std::unique_ptr<Database>
   loadDatabase(std::string db_path,
-               std::map<util::UUID, IMachineLearner *> mls);
+               std::map<std::string, IMachineLearner *> mls);
 
   /// \brief Create a database from the provided path
   ///
@@ -77,7 +77,7 @@ public:
   /// \return The database if it could be created, nullptr otherwise.
   static std::unique_ptr<Database>
   createDatabase(std::string db_path,
-                 std::map<util::UUID, IMachineLearner *> mls);
+                 std::map<std::string, IMachineLearner *> mls);
 
   /// \brief Load or create a database from the provided path
   ///
@@ -91,7 +91,7 @@ public:
   /// \return The database if it could be created or loaded, nullptr
   /// otherwise.
   static std::unique_ptr<Database>
-  getDatabase(std::string db_path, std::map<util::UUID, IMachineLearner *> mls);
+  getDatabase(std::string db_path, std::map<std::string, IMachineLearner *> mls);
 
 private:
   /// \brief Construct a database from the provided database path.
@@ -103,7 +103,7 @@ private:
   /// \param mls  Map of the machine learner interfaces available to the
   /// database.
   /// \param create  True if the database should be constructed.
-  Database(sqlite3 &db, std::map<util::UUID, IMachineLearner *> mls,
+  Database(sqlite3 &db, std::map<std::string, IMachineLearner *> mls,
            bool create);
 
 public:
@@ -238,19 +238,19 @@ public:
   /// database for the target metric.
   ///
   /// \param ml  Identifier of the machine learner in the database to train,
-  /// this must be the UUID of a machine learner for which we have a
-  /// corresponding interface.
+  /// this must be the string identifier of a machine learner for which we have
+  /// a corresponding interface.
   /// \param feature_class  The class of features to train against
   /// \param metric  The metric to train against.
-  void trainMachineLearner(util::UUID ml, FeatureClass feature_class,
+  void trainMachineLearner(std::string ml, FeatureClass feature_class,
                            std::string metric);
 
 private:
   /// Handle to the underlying sqlite3 database
   sqlite3 *m_db;
 
-  /// Mapping of machine learner uuids to machine learners
-  std::map<util::UUID, IMachineLearner *> m_mls;
+  /// Mapping of machine learner string identifiers to machine learners
+  std::map<std::string, IMachineLearner *> m_mls;
 
   /// \brief Initialize a new empty database
   ///

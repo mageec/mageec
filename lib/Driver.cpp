@@ -88,7 +88,7 @@ static void printHelp()
 "  --version               Print the version of the MAGEEC framework\n"
 "  --debug                 Enable debug output in the framework\n"
 "  --database-version      Print the version of the provided database\n"
-"  --ml <arg>              UUID or shared object identifying a machine\n"
+"  --ml <arg>              string or shared object identifying a machine\n"
 "                          learner interface to be used\n"
 "  --print-ml-interfaces   Print the interfaces registered with the MAGEEC\n"
 "                          framework, and therefore usable for training and\n"
@@ -113,47 +113,37 @@ static void printHelp()
 /// \param ml_strs  A list of strings from the command line to be parsed
 /// and loaded into the framework.
 ///
-/// \return A list of UUIDs of loaded machine learners, which may be empty
+/// \return A list of names of loaded machine learners, which may be empty
 /// if none were successfully loaded.
-static std::set<util::UUID>
-getMachineLearners(Framework &framework, const std::set<std::string> &ml_strs) {
+static std::set<std::string>
+getMachineLearners(Framework &framework, std::set<std::string> ml_strs) {
   // Load machine learners
-  std::set<util::UUID> mls;
-  for (const auto &str : ml_strs) {
+  std::set<std::string> mls;
+  for (auto str : ml_strs) {
     MAGEEC_DEBUG("Retrieving machine learner '" << str << "'");
-    util::Option<util::UUID> ml_uuid;
 
-    // Try and parse the argument as a UUID
-    ml_uuid = util::UUID::parse(str);
-    if (ml_uuid && !framework.hasMachineLearner(ml_uuid.get())) {
-      MAGEEC_WARN("UUID '" << str << "' is not a register machine learner "
-                                     "and will be ignored");
-      continue;
-    }
-    if (ml_uuid) {
-      MAGEEC_DEBUG("Found machine learner with UUID '" << str << "'");
-    }
-
-    // Not a UUID, try and load as a shared object
-    if (!ml_uuid) {
-      ml_uuid = framework.loadMachineLearner(str);
-      if (ml_uuid) {
-        MAGEEC_DEBUG("Loading machine learner from library '" << str << "'");
+    // Try and parse the argument as a string identifier of a machine learner
+    if (framework.hasMachineLearner(str)) {
+      MAGEEC_DEBUG("Found machine learner '" << str << "'");
+    } else {
+      // Not a string identifier, try and load as a shared object
+      str = framework.loadMachineLearner(str);
+      if (str != "") {
+        MAGEEC_DEBUG("Loading machine learner from library");
+      } else {
+        MAGEEC_WARN("Unable to load machine learner '" << str
+                    << "'. This machine learner will be ignored");
+        continue;
       }
     }
-    if (!ml_uuid) {
-      MAGEEC_WARN("Unable to load machine learner '"
-                  << str << "'. This machine learner will be ignored");
-      continue;
-    }
-    assert(ml_uuid);
+    assert(str != "");
 
-    // add uuid of ml to be trained.
-    mls.insert(ml_uuid.get());
+    // add the string identifier to the machine learners
+    mls.insert(str);
   }
   if (mls.empty()) {
     MAGEEC_ERR("No machine learners were successfully loaded");
-    return std::set<util::UUID>();
+    return std::set<std::string>();
   }
   MAGEEC_DEBUG("Retrieved " << mls.size() << " machine learners");
   return mls;
@@ -193,7 +183,6 @@ static bool printTrainedMLs(Framework &framework,
   // Print out the trained machine learners
   for (auto &ml : trained_mls) {
     util::out() << ml.getName() << '\n'
-                << static_cast<std::string>(ml.getUUID()) << '\n'
                 << ml.getMetric() << "\n\n";
   }
   return true;
@@ -204,8 +193,7 @@ static bool printTrainedMLs(Framework &framework,
 static void printMLInterfaces(Framework &framework) {
   std::set<IMachineLearner *> mls = framework.getMachineLearners();
   for (const auto *ml : mls) {
-    util::out() << ml->getName() << '\n'
-                << static_cast<std::string>(ml->getUUID()) << "\n\n";
+    util::out() << ml->getName() << '\n';
   }
 }
 
@@ -227,7 +215,7 @@ static bool createDatabase(Framework &framework, const std::string &db_path) {
 ///
 /// \return true on success, false if the database could not be trained.
 static bool trainDatabase(Framework &framework, const std::string &db_path,
-                          const std::set<util::UUID> mls,
+                          const std::set<std::string> mls,
                           const std::set<std::string> &metric_strs) {
   assert(metric_strs.size() > 0);
 
@@ -512,7 +500,7 @@ int main(int argc, const char *argv[]) {
   }
 
   // Initialize the framework, and register some built in machine learners
-  // so that they can be selected by UUID by the user.
+  // so that they can be selected by name by the user.
   Framework framework(with_debug);
 
   // C5 classifier
@@ -521,7 +509,7 @@ int main(int argc, const char *argv[]) {
   framework.registerMachineLearner(std::move(c5_ml));
 
   // Get the machine learners provided on the command line
-  std::set<util::UUID> mls;
+  std::set<std::string> mls;
   if (with_ml) {
     assert(ml_strs.size() != 0);
     mls = getMachineLearners(framework, ml_strs);

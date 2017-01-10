@@ -68,9 +68,9 @@ public:
   /// \brief Load a machine learner from a provided plugin
   ///
   /// \param ml_path  Path to the machine learner plugin
-  /// \return The UUID of the machine learner if it was loaded successfully,
-  /// an empty Option otherwise.
-  util::Option<util::UUID> loadMachineLearner(std::string ml_path);
+  /// \return The string identifier of the machine learner if it was loaded
+  /// successfully, an empty string otherwise.
+  std::string loadMachineLearner(std::string ml_path);
 
   /// \brief Register a machine learner usable by the mageec framework.
   ///
@@ -91,9 +91,9 @@ public:
   /// \param create  Dictates whether the database should be loaded or created
   std::unique_ptr<Database> getDatabase(std::string db_path, bool create) const;
 
-  /// \brief Check whether a machine learner with the specified uuid has be
+  /// \brief Check whether a machine learner with the specified name has be
   /// registered with the framework.
-  bool hasMachineLearner(util::UUID uuid) const;
+  bool hasMachineLearner(std::string ml) const;
 
   /// \brief Get the interfaces for all of the machine learners registered
   /// with the framework.
@@ -109,8 +109,8 @@ public:
 
 private:
   /// A map of machine learner interfaces registers with the framework, keyed
-  /// based on their uuids.
-  std::map<util::UUID, IMachineLearner *> m_mls;
+  /// based on their string identifiers.
+  std::map<std::string, IMachineLearner *> m_mls;
 };
 
 } // end of namespace MAGEEC
