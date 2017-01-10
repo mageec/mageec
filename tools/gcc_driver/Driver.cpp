@@ -1120,8 +1120,8 @@ static void printHelp() {
 "  -fmageec-database=<file>    Database to record to\n"
 "  -fmageec-features=<file>    File containing feature group identifiers\n"
 "  -fmageec-out=<file>         File to output compilation ids into\n"
-"  -fmageec-ml=<id>            UUID or shared object identifying the machine\n"
-"                              learner to be used\n"
+"  -fmageec-ml=<id>            string identifier or shared object identifying\n"
+"                              the machine learner to be used\n"
 "  -fmageec-metric=<name>      Metric to optimize for\n";
 }
 
@@ -1292,7 +1292,7 @@ int main(int argc, const char *argv[]) {
   }
 
   // Initialize the framework, and register some builtin machine learners so
-  // they can be selected by UUID by the user.
+  // they can be selected by name by the user.
   mageec::Framework framework(with_debug);
 
   // C5 classifier
@@ -1300,36 +1300,40 @@ int main(int argc, const char *argv[]) {
   std::unique_ptr<mageec::IMachineLearner> c5_ml(new mageec::C5Driver());
   framework.registerMachineLearner(std::move(c5_ml));
 
-  // Select the machine learner chosen by the user. If the user provided a
-  // UUID, this should be one of the builtin machine learners, otherwise if
-  // they provided a shared object, register it as a new machine learner.
+  // Select the machine learner chosen by the user. This may be the name of
+  // an already register machine learner, or a path to a shared object which
+  // needs to be loaded and registered.
   mageec::IMachineLearner *ml = nullptr;
   if (with_ml) {
     MAGEEC_DEBUG("Selecting machine learner: " << ml_str)
-    auto ml_uuid = mageec::util::UUID::parse(ml_str);
-    if (!ml_uuid) {
-      MAGEEC_DEBUG(ml_str << " not a UUID.. attempting to load as a plugin");
 
-      ml_uuid = framework.loadMachineLearner(ml_str);
-      if (!ml_uuid) {
-        MAGEEC_ERR("Could not load user machine learner plugin: " << ml_str);
-        return -1;
-      } else {
-        MAGEEC_DEBUG("Loaded machine learner plugin: " << ml_str);
-        return -1;
-      }
-    }
-    assert(ml_uuid);
-
-    for (auto *ml_interface : framework.getMachineLearners()) {
-      if (ml_interface->getUUID() == ml_uuid.get()) {
+    // Try to select the machine learner assuming that it has already been
+    // loaded
+    std::set<mageec::IMachineLearner *> mls = framework.getMachineLearners();
+    for (auto *ml_interface : mls) {
+      if (ml_interface->getName() == ml_str) {
         ml = ml_interface;
         break;
       }
     }
     if (!ml) {
-      MAGEEC_ERR("Could not select machine learner: " << ml_str);
-      return -1;
+      MAGEEC_DEBUG(ml_str << " not a registered machine learner... attempting "
+                   << "to load as a plugin");
+      auto ml_name = framework.loadMachineLearner(ml_str);
+      if (ml_name == "") {
+        MAGEEC_ERR("Could not load user machine learner" << ml_str);
+        return -1;
+      } else {
+        MAGEEC_DEBUG("Loaded machine learner plugin: " << ml_name);
+      }
+      std::set<mageec::IMachineLearner *> mls = framework.getMachineLearners();
+      for (auto *ml_interface : mls) {
+        if (ml_interface->getName() == ml_name) {
+          ml = ml_interface;
+          break;
+        }
+      }
+      assert(ml);
     }
   }
 
@@ -1557,7 +1561,7 @@ int main(int argc, const char *argv[]) {
 
     bool found_ml = false;
     for (auto &trained_ml : trained_mls) {
-      if (trained_ml.getUUID() == ml->getUUID()) {
+      if (trained_ml.getName() == ml->getName()) {
         found_ml = true;
 
         // Check that the found machine learner is trained for the desired

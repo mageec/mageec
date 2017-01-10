@@ -1,3 +1,7 @@
+2017-01-10  Edward Jones  <ed.jones@embecosm.com>
+
+	* Driver.cpp: Use strings instead of UUIDs as identifiers.
+
 2016-11-28  Edward Jones  <ed.jones@embecosm.com>
 
 	* Driver.cpp: Comment out -fsection-anchors and
