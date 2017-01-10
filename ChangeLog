@@ -1,5 +1,9 @@
 2017-01-10  Edward Jones  <ed.jones@embecosm.com>
 
+	* script/generate-build.py: Update to reflect changes to the framework.
+
+2017-01-10  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Database.h: Remove use of UUID, use strings instead.
 	* include/mageec/Framework.h: Likewise.
 	* include/mageec/ML.h: Likewise.

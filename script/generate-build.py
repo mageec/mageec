@@ -1,187 +1,421 @@
-#!/usr/bin/env python3
+#!/bin/env python3
 
 import argparse
 import os
-import shutil
+import random
+import re
 import subprocess
 import sys
 
-
-# UUID for the mageec FileML machine learner which is used to set the
-# configuration of the compiler.
-fileml_uuid = '8998d958-5d9c-4b6b-a90b-679d8722d63a' 
+mageec_feature_extract_plugin='libgcc_feature_extract.so'
+mageec_gcc_wrapper='mageec-gcc'
 
 
-def build_benchmark(gcc_plugin_path, benchmark_dir, config_path, db_path,
-                    out_dir):
-  # make paths absolute
-  gcc_plugin_path = os.path.abspath(gcc_plugin_path)
-  benchmark_dir   = os.path.abspath(benchmark_dir)
-  config_path     = os.path.abspath(config_path)
-  db_path         = os.path.abspath(db_path)
-  out_dir         = os.path.abspath(out_dir)
+gcc_flags = [
+    '-faggressive-loop-optimizations',
+    '-falign-functions',
+    '-falign-jumps',
+    '-falign-labels',
+    '-falign-loops',
+    '-fbranch-count-reg',
+    '-fbranch-target-load-optimize',
+    '-fbranch-target-load-optimize2',
+    '-fbtr-bb-exclusive',
+    '-fcaller-saves',
+    '-fcombine-stack-adjustments',
+    '-fcommon',
+    '-fcompare-elim',
+    '-fconserve-stack',
+    '-fcprop-registers',
+    '-fcrossjumping',
+    '-fcse-follow-jumps',
+    '-fdata-sections',
+    '-fdce',
+    '-fdefer-pop',
+    '-fdelete-null-pointer-checks',
+    '-fdevirtualize',
+    '-fdse',
+    '-fearly-inlining',
+    '-fexpensive-optimizations',
+    '-fforward-propagate',
+    '-fgcse',
+    '-fgcse-after-reload',
+    '-fgcse-las',
+    '-fgcse-lm',
+    '-fgcse-sm',
+    '-fguess-branch-probability',
+    '-fhoist-adjacent-loads',
+    '-fif-conversion',
+    '-fif-conversion2',
+    '-finline',
+    '-finline-atomics',
+    '-finline-functions',
+    '-finline-functions-called-once',
+    '-finline-small-functions', 
+    '-fipa-cp',
+    '-fipa-cp-clone',
+    '-fipa-profile',
+    '-fipa-pta',
+    '-fipa-pure-const',
+    '-fipa-reference',
+    '-fipa-sra',
+    '-fira-hoist-pressure',
+    '-fivopts',
+    '-fmerge-constants',
+    '-fmodulo-sched',
+    '-fmove-loop-invariants',
+    '-fomit-frame-pointer',
+    '-foptimize-sibling-calls',
+    '-foptimize-strlen',
+    '-fpeephole',
+    '-fpeephole2',
+    '-fpredictive-commoning',
+    '-fprefetch-loop-arrays',
+    '-fregmove',
+    '-frename-registers',
+    '-freorder-blocks',
+    '-freorder-functions',
+    '-frerun-cse-after-loop',
+    '-freschedule-modulo-scheduled-loops',
+    '-fsched-critical-path-heuristic',
+    '-fsched-dep-count-heuristic',
+    '-fsched-group-heuristic',
+    '-fsched-interblock',
+    '-fsched-last-insn-heuristic',
+    '-fsched-pressure',
+    '-fsched-rank-heuristic',
+    '-fsched-spec',
+    '-fsched-spec-insn-heuristic',
+    '-fsched-spec-load',
+    '-fsched-stalled-insns',
+    '-fsched-stalled-insns-dep',
+    '-fschedule-insns',
+    '-fschedule-insns2',
+    #'-fsection-anchors',   # may conflict with other flags
+    '-fsel-sched-pipelining',
+    '-fsel-sched-pipelining-outer-loops',
+    '-fsel-sched-reschedule-pipelined',
+    '-fselective-scheduling',
+    '-fselective-scheduling2',
+    '-fshrink-wrap',
+    '-fsplit-ivs-in-unroller',
+    '-fsplit-wide-types',
+    '-fstrict-aliasing',
+    '-fthread-jumps',
+    '-ftoplevel-reorder',
+    '-ftree-bit-ccp',
+    '-ftree-builtin-call-dce',
+    '-ftree-ccp',
+    '-ftree-ch',
+    #'-ftree-coalesce-inlined-vars', # there is no equivalent -fno for this flag
+    '-ftree-coalesce-vars',
+    '-ftree-copy-prop',
+    '-ftree-copyrename',
+    '-ftree-cselim',
+    '-ftree-dce',
+    '-ftree-dominator-opts',
+    '-ftree-dse',
+    '-ftree-forwprop',
+    '-ftree-fre',
+    '-ftree-loop-distribute-patterns',
+    '-ftree-loop-distribution',
+    '-ftree-loop-if-convert',
+    '-ftree-loop-im',
+    '-ftree-loop-ivcanon',
+    '-ftree-loop-optimize',
+    '-ftree-partial-pre',
+    '-ftree-phiprop',
+    '-ftree-pre',
+    '-ftree-pta',
+    '-ftree-reassoc',
+    '-ftree-scev-cprop',
+    '-ftree-sink',
+    '-ftree-slp-vectorize',
+    '-ftree-slsr',
+    '-ftree-sra',
+    '-ftree-switch-conversion',
+    '-ftree-tail-merge',
+    '-ftree-ter',
+    '-ftree-vect-loop-version',
+    '-ftree-vectorize',
+    '-ftree-vrp',
+    '-funroll-all-loops',
+    '-funroll-loops',
+    '-funswitch-loops',
+    '-fvariable-expansion-in-unroller',
+    '-fvect-cost-model',
+    '-fweb'
+]
 
-  print(
-    '-- Benchmark build parameters:',
-    ' |- GCC plugin path:   ' + gcc_plugin_path,
-    ' |- Benchmark sources: ' + benchmark_dir,
-    ' |- Compiler config:   ' + config_path,
-    ' |- Database file:     ' + db_path,
-    ' |- Output directory:  ' + out_dir,
-    sep='\n'
-  )
 
-  build_dir   = os.path.join(out_dir, 'build')
-  install_dir = os.path.join(out_dir, 'install')
-
-  # Check that the output directory doesn't already exist. We don't want to
-  # clobber a previous build.
-  if os.path.exists(out_dir):
-    print ('-- Output directory already exists and would be clobbered... '
-           'Aborting')
+def is_command_on_path(cmd):
+    for path in os.environ['PATH'].split(os.pathsep):
+        path = path.strip('"')
+        exec_file = os.path.join(path, cmd)
+        if os.path.isfile(exec_file) and os.access(exec_file, os.X_OK):
+            return True
     return False
-  os.makedirs(out_dir)
-  os.makedirs(build_dir)
-  os.makedirs(install_dir)
 
-  # Copy the configuration to the ouput directory, update the config path to
-  # point to this copy
-  shutil.copy(config_path, out_dir)
-  config_file = os.path.basename(config_path)
-  config_path = os.path.join(out_dir, config_file)
 
-  # Store the compilation ids and any debug output from the build
-  debug_path = os.path.join(out_dir, 'build.log')
-  compilation_ids_path = os.path.join(out_dir, 'compilation.ids')
+def build_benchmark(benchmark_src, build_dir, install_dir, build_system, cc,
+                    cflags):
+    assert(build_system != None)
+    assert(os.path.exists(benchmark_src))
+    assert(os.path.exists(build_dir))
+    assert(os.path.exists(install_dir))
 
-  # Setup cflags and the compiler for building the benchmark using FileML
-  # FIXME: This will cause the build system to spit out compilation ids for
-  # any tests it runs too.
-  cflags = [
-    '-g', '-O3', '-fplugin=' + gcc_plugin_path,
-    '-fplugin-arg-libmageec_gcc-debug',
-    '-fplugin-arg-libmageec_gcc-database=' + db_path,
-    '-fplugin-arg-libmageec_gcc-feature-extract',
-    '-fplugin-arg-libmageec_gcc-out-file=' + compilation_ids_path,
-    '-fplugin-arg-libmageec_gcc-ml=' + fileml_uuid,
-    '-fplugin-arg-libmageec_gcc-ml-config=' + config_path,
-    '-fplugin-arg-libmageec_gcc-optimize'
-  ]
-  c_compiler = 'gcc'
-
-  # Build with cmake or autoconf. If neither is detected error
-  # FIXME: Target something other than just Makefiles?
-  cmake_lists_path = os.path.join(benchmark_dir, 'CMakeLists.txt')
-  configure_path   = os.path.join(benchmark_dir, 'configure')
-
-  if os.path.exists(cmake_lists_path):
-    print ('-- CMakeLists.txt detected... Building benchmark with cmake')
-
-    orig_cwd = os.getcwd()
     os.chdir(build_dir)
+    if build_system == 'cmake' or build_system == 'configure':
+        if build_system == 'cmake':
+            cmd = ['cmake', benchmark_src, '-G', 'Unix Makefiles']
+            cmd.append('-DCMAKE_C_COMPILER=' + cc)
+            cmd.append('-DCMAKE_C_FLAGS=' + cflags)
+            cmd.append('-DCMAKE_INSTALL_PREFIX=' + install_dir)
+        elif build_system == 'configure':
+            cmd = [os.path.join(benchmark_src, 'configure')]
+            cmd.append('CC=' + cc)
+            cmd.append('CFLAGS=' + cflags)
+            cmd.append('--prefix=' + install_dir)
+            print (cmd)
 
-    cmd = [
-      'cmake', benchmark_dir,
-      '-DCMAKE_C_COMPILER=' + c_compiler,
-      '-DCMAKE_C_FLAGS=' + ' '.join(cflags),
-      '-DCMAKE_INSTALL_PREFIX=' + install_dir
-    ]
-    print ('-- Configuring benchmarks with command: ', ' '.join(cmd))
-    ret = subprocess.call(cmd, stderr=open(debug_path, 'a'))
-    if ret != 0:
-      print ('-- Failed to configure benchmarks... Aborting')
-      return False
+        # configure
+        ret = subprocess.call(cmd)
+        if ret != 0:
+            print ('-- Failed to configure benchmark')
+            sys.exit(1)
 
-    # build and install
-    # Provide -k so that a single failure does not ruin the whole benchmark
-    print ('-- Building and installing benchmarks into \'' + out_dir + '\'')
-    ret = subprocess.call(['make', '-k', '-j5'], stderr=open(debug_path, 'a'))
-    if ret != 0:
-      print ('-- Failed to built benchmark in \'' + build_dir + '\'')
-      # continue in the case of build errors. It's inevitable that some
-      # compiles will fail, and there's no harm in ignoring them.
+        # Both cmake and configure will generate Makefiles. So use make to
+        # do the actual build and install
+        cmd = 'make'
+        ret = subprocess.call(cmd)
+        if ret != 0:
+            print ('-- Failed to build benchmark')
+            sys.exit(1)
+        cmd = ['make', 'install']
+        ret = subprocess.call(cmd)
+        if ret != 0:
+            print ('-- Failed to install benchmark')
+            sys.exit(1)
+    else:
+        assert False, 'custom build script not supported yet'
 
-    ret = subprocess.call(['make', 'install', '-k'],
-                          stderr=open(debug_path, 'a'))
-    if ret != 0:
-      print ('-- Failed to install benchmark to \'' + install_dir + '\'... '
-             'Aborting')
-      # Continue in case of build errors
 
-    # restore to the original working directory
-    os.chdir(orig_cwd)
+def feature_extract(benchmark_src, build_dir, install_dir, build_system,
+                    cc, cflags, database_path, plugin_path, features_path):
+    assert(build_system != None)
+    assert(os.path.exists(benchmark_src))
+    assert(os.path.exists(build_dir))
+    assert(os.path.exists(install_dir))
+    assert(os.path.exists(database_path))
+    assert(os.path.exists(plugin_path))
 
-  elif os.path.exists(configure_path):
-    print ('-- configure detected... Building benchmark with autoconf')
+    plugin_flags = '-fplugin=' + plugin_path
+    plugin_flags += ' -fplugin-arg-libgcc_feature_extract-debug'
+    plugin_flags += ' -fplugin-arg-libgcc_feature_extract-database=' + database_path
+    plugin_flags += ' -fplugin-arg-libgcc_feature_extract-out=' + features_path
 
-    orig_cwd = os.getcwd()
-    os.chdir(build_dir)
+    build_benchmark(benchmark_src=benchmark_src,
+                    build_dir=build_dir,
+                    install_dir=install_dir,
+                    build_system=build_system,
+                    cc=cc,
+                    cflags=plugin_flags + ' ' + cflags)
 
-    cmd = [configure_path, '--prefix=' + install_dir]
-    print ('-- Configuring benchmarks with command: ', ' '.join(cmd))
-    ret = subprocess.call(cmd, stderr=open(debug_path, 'a'))
-    if ret != 0:
-      print ('-- Failed to configure benchmarks... Aborting')
-      return False
 
-    # build and install
-    # Provide -k so that a single failure does not ruin the whole benchmark
-    print ('-- Building and installing benchmarks into \'' + out_dir + '\'')
-    make_cmd = [
-      'make', '-k', '-j5',
-      'CFLAGS=' + ' '.join(cflags),
-      'CC=' + c_compiler
-    ]
-    ret = subprocess.call(make_cmd, stderr=open(debug_path, 'a'))
-    if ret != 0:
-      print ('-- Failed to build benchmark in \'' + build_dir + '\'')
-      # continue in the case of build errors. It's inevitable that some
-      # compiles will fail, and there's no harm in ignoring them.
-
-    ret = subprocess.call(['make', 'install', '-k'],
-                          stderr=open(debug_path, 'a'))
-    if ret != 0:
-      print ('-- Failed to install benchmark to \'' + install_dir + '\'')
-      # Continue in case of build errors
-
-    # restore to the original cwd
-    os.chdir(orig_cwd)
-
-  else:
-    print ('-- No supported build system detected... Aborting')
-    return False
-
-  return True
+def generate_configurations(flags, num_configs, generator):
+    configs = []
+    if generator == 'random':
+        for i in range(0, num_configs):
+            num_enabled = random.randint(0, len(flags))
+            flag_seq = random.sample(flags, num_enabled)
+            configs.append(' '.join(flag_seq))
+    else:
+        assert False, 'custom configuration generators not supported yet'
+    return configs
 
 
 def main():
-  # Parse in the arguments
-  parser = argparse.ArgumentParser(
-      description='Generate a build of a provided benchmark suite')
-  parser.add_argument('--gcc-plugin-path', nargs=1, required=True,
-      help='Path of the MAGEEC gcc plugin')
-  parser.add_argument('--benchmark', nargs=1, required=True,
-      help='Directory of the benchmark to be built')
-  parser.add_argument('--database',  nargs=1, required=True,
-      help='Path of the database that extracted results will be added to')
-  parser.add_argument('--config',    nargs=1, required=True,
-      help='FileML configuration to be provided to the compiler')
-  parser.add_argument('--out-dir',   nargs=1, required=True,
-      help='Directory for the benchmark build and tool output')
+    parser = argparse.ArgumentParser(
+        description='Generate and build multiple versions of a benchmark')
+    parser.add_argument('--database', nargs=1, required=True,
+        help='Path of the mageec database')
+    parser.add_argument('--benchmark', nargs=1, required=True,
+        help='Path of the benchmark to build')
+    parser.add_argument('--cc', nargs=1, required=True,
+        help='Compiler to build the benchmark with')
+    parser.add_argument('--cflags', nargs=1, required=False,
+        help='Flag provided to the compiler when building the benchmarks')
+    parser.add_argument('--mageec-library-path', nargs=1, required=True,
+        help='Path to the mageec libraries')
+    parser.add_argument('--num-configs', nargs=1, required=True,
+        help='Number of configurations of the compiler to generate')
+    parser.add_argument('--build-system', nargs=1, required=False,
+        help='Build system to use, may be \'cmake\', \'configure\' or a custom script')
+    parser.add_argument('--config-generator', nargs=1, required=False,
+        help='Configuration generator to use, may be \'random\' or a custom script')
 
-  args = parser.parse_args(sys.argv[1:])
-  gcc_plugin_path = args.gcc_plugin_path[0]
-  benchmark_dir   = args.benchmark[0]
-  db_path         = args.database[0]
-  config_path     = args.config[0]
-  out_dir         = args.out_dir[0]
+    args = parser.parse_args(sys.argv[1:])
+    database_path       = os.path.abspath(args.database[0])
+    benchmark_src       = os.path.abspath(args.benchmark[0])
+    cc                  = args.cc[0]
+    cflags = ''
+    if args.cflags:
+        cflags = args.cflags[0]
+    mageec_library_path = os.path.abspath(args.mageec_library_path[0])
+    num_configs         = int(args.num_configs[0])
+    build_system = None
+    if args.build_system:
+        build_system = args.build_system[0]
+    config_generator = 'random'
+    if args.config_generator:
+        args.config_generator = args.config_generator[0]
 
-  ret_code = build_benchmark(gcc_plugin_path, benchmark_dir, config_path,
-                             db_path, out_dir)
-  if not ret_code:
-    return -1
-  return 0
+    plugin_path = os.path.join(mageec_library_path, mageec_feature_extract_plugin)
+
+    # The structure for this script is as follows
+    # base/
+    #   build/
+    #     feature_extract/
+    #     run-X/
+    #   install/
+    #     run-X/
+    #       compilations.csv
+    #       bin/
+    #         a.out
+    #   features.csv
+    #   compilations.csv
+    base_dir = os.getcwd()
+    build_dir = os.path.join(base_dir, 'build')
+    install_dir = os.path.join(base_dir, 'install')
+    if not os.path.exists(build_dir):
+        os.makedirs(build_dir)
+    if not os.path.exists(install_dir):
+        os.makedirs(install_dir)
+    features_path = os.path.join(base_dir, 'features.csv')
+
+    print ('-- Checking that mageec database exists')
+    if not os.path.exists(database_path):
+        print ('-- Could not find database ' + database_path)
+        sys.exit(1)
+
+    print ('-- Checking that benchmark source exists')
+    if not os.path.exists(benchmark_src):
+        print ('-- Could not find benchmark source in ' + benchmark_src)
+        sys.exit(1)
+
+    print ('-- Checking for mageec-gcc wrapper')
+    if not is_command_on_path(mageec_gcc_wrapper):
+        print ('-- mageec-gcc is not available on the PATH')
+        sys.exit(1)
+
+    print ('-- Checking for mageec feature extractor in ' + mageec_library_path)
+    if not os.path.exists(plugin_path):
+        print ('-- Could not find ' + mageec_feature_extract_plugin + ' in ' + mageec_library_path)
+        sys.exit(1)
+
+    print ('-- Retrieving gcc version for ' + cc)
+    try:
+        pipe = subprocess.Popen([cc, '--version'], stdout=subprocess.PIPE)
+        version_str = pipe.communicate()[0].decode()
+    except subprocess.CalledProcessError:
+        print ('-- Could not retrieve gcc version for ' + cc)
+        sys.exit(1)
+    match = re.search('\s*([0-9]+)\.([0-9]+)\.([0-9]+)\s*', version_str)
+    if match:
+        gcc_major = match.group(1)
+        gcc_minor = match.group(2)
+        gcc_patch = match.group(3)
+        gcc_version = gcc_major + '.' + gcc_minor + '.' + gcc_patch
+    else:
+        print ('-- Could not extract gcc version for ' + cc)
+        sys.exit(1)
+    print ('-- Underlying gcc version ' + gcc_version)
+
+    # If no build system was specified on the command line, try and detect
+    # either a CMake or configure build system
+    if build_system is None:
+        print ('-- No configure system specified')
+        print ('-- Searching for CMakeLists.txt')
+        if os.path.exists(os.path.join(benchmark_src, 'CMakeList.txt')):
+            print ('-- Found, configuring using CMake')
+            build_system = 'cmake'
+        else:
+            print ('-- Searching for configure script')
+            if os.path.exists(os.path.join(benchmark_src, 'configure')):
+                print ('-- Found, configuring using configure script')
+                build_system = 'configure'
+            else:
+                print ('-- No supported configure system found, aborting...')
+                sys.exit(1)
+    elif build_system == 'cmake':
+        print ('-- Configuring using cmake')
+    elif build_system == 'configure':
+        print ('-- Configuring using configure')
+    else:
+        print ('-- Configuring using user-specified configure script')
+
+    # Generate flag configurations appropriate to the version of gcc
+    # being targetted
+    gcc_major = int(gcc_major)
+    gcc_minor = int(gcc_minor)
+    gcc_patch = int(gcc_patch)
+    if gcc_major == 6 and gcc_minor == 3:
+        flags = gcc_flags
+    else:
+        print ('-- Unsupported gcc version ' + gcc_version)
+        sys.exit(1)
+    configs = generate_configurations(flags=flags, num_configs=num_configs,
+                                      generator=config_generator)
+
+    # Do a feature extraction run to generate a set of features for all of the
+    # elements of the benchmark
+    feature_extract_build_dir = os.path.join(build_dir, 'feature_extract')
+    feature_extract_install_dir = os.path.join(install_dir, 'feature_extract')
+    if not os.path.exists(feature_extract_build_dir):
+        os.makedirs(feature_extract_build_dir)
+    if not os.path.exists(feature_extract_install_dir):
+        os.makedirs(feature_extract_install_dir)
+
+    feature_extract(benchmark_src=benchmark_src,
+                    build_dir=feature_extract_build_dir,
+                    install_dir=feature_extract_install_dir,
+                    build_system=build_system,
+                    cc=cc,
+                    cflags=cflags,
+                    database_path=database_path,
+                    plugin_path=plugin_path,
+                    features_path=features_path)
+
+    # build the benchmark for every configuration
+    # Here, a wrapper around gcc is used which records each compilation in the
+    # database
+    run_id = 0
+    for config in configs:
+        run_build_dir = os.path.join(build_dir, 'run-' + str(run_id))
+        run_install_dir = os.path.join(install_dir, 'run-' + str(run_id))
+        if not os.path.exists(run_build_dir):
+            os.makedirs(run_build_dir)
+        if not os.path.exists(run_install_dir):
+            os.makedirs(run_install_dir)
+        run_id += 1
+
+        compilations_path = os.path.join(run_install_dir, 'compilations.csv')
+
+        wrapper_cflags = '-fmageec-gcc=' + cc
+        wrapper_cflags += ' -fmageec-debug'
+        wrapper_cflags += ' -fmageec-mode=gather'
+        wrapper_cflags += ' -fmageec-database=' + database_path
+        wrapper_cflags += ' -fmageec-features=' + features_path
+        wrapper_cflags += ' -fmageec-out=' + compilations_path
+        cflags = wrapper_cflags + ' ' + cflags + ' ' + config
+
+        build_benchmark(benchmark_src=benchmark_src,
+                        build_dir=run_build_dir, 
+                        install_dir=run_install_dir,
+                        build_system=build_system,
+                        cc=mageec_gcc_wrapper,
+                        cflags=cflags)
 
 
 if __name__ == '__main__':
-  main()
+    main()
