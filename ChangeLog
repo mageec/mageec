@@ -1,5 +1,10 @@
 2017-01-10  Edward Jones  <ed.jones@embecosm.com>
 
+	* script/generate-build.py: Factor out code into mageec_common.py
+	* script/mageec_common.py: Added file.
+
+2017-01-10  Edward Jones  <ed.jones@embecosm.com>
+
 	* script/generate-build.py: Update to reflect changes to the framework.
 
 2017-01-10  Edward Jones  <ed.jones@embecosm.com>

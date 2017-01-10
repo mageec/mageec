@@ -6,6 +6,7 @@ import random
 import re
 import subprocess
 import sys
+import mageec_common
 
 mageec_feature_extract_plugin='libgcc_feature_extract.so'
 mageec_gcc_wrapper='mageec-gcc'
@@ -148,61 +149,8 @@ gcc_flags = [
 ]
 
 
-def is_command_on_path(cmd):
-    for path in os.environ['PATH'].split(os.pathsep):
-        path = path.strip('"')
-        exec_file = os.path.join(path, cmd)
-        if os.path.isfile(exec_file) and os.access(exec_file, os.X_OK):
-            return True
-    return False
-
-
-def build_benchmark(benchmark_src, build_dir, install_dir, build_system, cc,
-                    cflags):
-    assert(build_system != None)
-    assert(os.path.exists(benchmark_src))
-    assert(os.path.exists(build_dir))
-    assert(os.path.exists(install_dir))
-
-    os.chdir(build_dir)
-    if build_system == 'cmake' or build_system == 'configure':
-        if build_system == 'cmake':
-            cmd = ['cmake', benchmark_src, '-G', 'Unix Makefiles']
-            cmd.append('-DCMAKE_C_COMPILER=' + cc)
-            cmd.append('-DCMAKE_C_FLAGS=' + cflags)
-            cmd.append('-DCMAKE_INSTALL_PREFIX=' + install_dir)
-        elif build_system == 'configure':
-            cmd = [os.path.join(benchmark_src, 'configure')]
-            cmd.append('CC=' + cc)
-            cmd.append('CFLAGS=' + cflags)
-            cmd.append('--prefix=' + install_dir)
-            print (cmd)
-
-        # configure
-        ret = subprocess.call(cmd)
-        if ret != 0:
-            print ('-- Failed to configure benchmark')
-            sys.exit(1)
-
-        # Both cmake and configure will generate Makefiles. So use make to
-        # do the actual build and install
-        cmd = 'make'
-        ret = subprocess.call(cmd)
-        if ret != 0:
-            print ('-- Failed to build benchmark')
-            sys.exit(1)
-        cmd = ['make', 'install']
-        ret = subprocess.call(cmd)
-        if ret != 0:
-            print ('-- Failed to install benchmark')
-            sys.exit(1)
-    else:
-        assert False, 'custom build script not supported yet'
-
-
 def feature_extract(benchmark_src, build_dir, install_dir, build_system,
                     cc, cflags, database_path, plugin_path, features_path):
-    assert(build_system != None)
     assert(os.path.exists(benchmark_src))
     assert(os.path.exists(build_dir))
     assert(os.path.exists(install_dir))
@@ -214,12 +162,12 @@ def feature_extract(benchmark_src, build_dir, install_dir, build_system,
     plugin_flags += ' -fplugin-arg-libgcc_feature_extract-database=' + database_path
     plugin_flags += ' -fplugin-arg-libgcc_feature_extract-out=' + features_path
 
-    build_benchmark(benchmark_src=benchmark_src,
-                    build_dir=build_dir,
-                    install_dir=install_dir,
-                    build_system=build_system,
-                    cc=cc,
-                    cflags=plugin_flags + ' ' + cflags)
+    mageec_common.build(src_dir=benchmark_src,
+                        build_dir=build_dir,
+                        install_dir=install_dir,
+                        build_system=build_system,
+                        cc=cc,
+                        cflags=plugin_flags + ' ' + cflags)
 
 
 def generate_configurations(flags, num_configs, generator):
@@ -304,7 +252,7 @@ def main():
         sys.exit(1)
 
     print ('-- Checking for mageec-gcc wrapper')
-    if not is_command_on_path(mageec_gcc_wrapper):
+    if not mageec_common.is_command_on_path(mageec_gcc_wrapper):
         print ('-- mageec-gcc is not available on the PATH')
         sys.exit(1)
 
@@ -330,29 +278,6 @@ def main():
         print ('-- Could not extract gcc version for ' + cc)
         sys.exit(1)
     print ('-- Underlying gcc version ' + gcc_version)
-
-    # If no build system was specified on the command line, try and detect
-    # either a CMake or configure build system
-    if build_system is None:
-        print ('-- No configure system specified')
-        print ('-- Searching for CMakeLists.txt')
-        if os.path.exists(os.path.join(benchmark_src, 'CMakeList.txt')):
-            print ('-- Found, configuring using CMake')
-            build_system = 'cmake'
-        else:
-            print ('-- Searching for configure script')
-            if os.path.exists(os.path.join(benchmark_src, 'configure')):
-                print ('-- Found, configuring using configure script')
-                build_system = 'configure'
-            else:
-                print ('-- No supported configure system found, aborting...')
-                sys.exit(1)
-    elif build_system == 'cmake':
-        print ('-- Configuring using cmake')
-    elif build_system == 'configure':
-        print ('-- Configuring using configure')
-    else:
-        print ('-- Configuring using user-specified configure script')
 
     # Generate flag configurations appropriate to the version of gcc
     # being targetted
@@ -409,12 +334,12 @@ def main():
         wrapper_cflags += ' -fmageec-out=' + compilations_path
         cflags = wrapper_cflags + ' ' + cflags + ' ' + config
 
-        build_benchmark(benchmark_src=benchmark_src,
-                        build_dir=run_build_dir, 
-                        install_dir=run_install_dir,
-                        build_system=build_system,
-                        cc=mageec_gcc_wrapper,
-                        cflags=cflags)
+        mageec_common.build(src_dir=benchmark_src,
+                            build_dir=run_build_dir, 
+                            install_dir=run_install_dir,
+                            build_system=build_system,
+                            cc=mageec_gcc_wrapper,
+                            cflags=cflags)
 
 
 if __name__ == '__main__':
