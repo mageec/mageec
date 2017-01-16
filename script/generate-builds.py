@@ -9,7 +9,7 @@ import mageec
 
 gcc_wrapper = 'mageec-gcc'
 gcc_flags = [
-    '-faggressive-loop-optimizations',
+    #'-faggressive-loop-optimizations', # Not supported in 4.5
     '-falign-functions',
     '-falign-jumps',
     '-falign-labels',
@@ -19,18 +19,18 @@ gcc_flags = [
     '-fbranch-target-load-optimize2',
     '-fbtr-bb-exclusive',
     '-fcaller-saves',
-    '-fcombine-stack-adjustments',
-    #'-fcommon',          # affects semantics, unlikely to affect performance
-    '-fcompare-elim',
+    #'-fcombine-stack-adjustments',     # Not supported in 4.5
+    #'-fcommon',                        # affects semantics, unlikely to affect performance
+    #'-fcompare-elim',                  # Not supported in 4.5
     '-fconserve-stack',
     '-fcprop-registers',
     '-fcrossjumping',
     '-fcse-follow-jumps',
-    #'-fdata-sections',   # affects semantics unlikely to affect performance
+    #'-fdata-sections',                 # affects semantics unlikely to affect performance
     '-fdce',
     '-fdefer-pop',
     '-fdelete-null-pointer-checks',
-    '-fdevirtualize',
+    #'-fdevirtualize',                  # Not supported in 4.5
     '-fdse',
     '-fearly-inlining',
     '-fexpensive-optimizations',
@@ -41,29 +41,29 @@ gcc_flags = [
     '-fgcse-lm',
     '-fgcse-sm',
     '-fguess-branch-probability',
-    '-fhoist-adjacent-loads',
+    #'-fhoist-adjacent-loads',          # Not supported in 4.5
     '-fif-conversion',
     '-fif-conversion2',
     '-finline',
-    '-finline-atomics',
+    #'-finline-atomics',                # Not supported in 4.5
     '-finline-functions',
     '-finline-functions-called-once',
     '-finline-small-functions', 
     '-fipa-cp',
     '-fipa-cp-clone',
-    '-fipa-profile',
+    #'-fipa-profile',                   # Not supported in 4.5
     '-fipa-pta',
     '-fipa-pure-const',
     '-fipa-reference',
     '-fipa-sra',
-    '-fira-hoist-pressure',
+    #'-fira-hoist-pressure',            # Not supported in 4.5
     '-fivopts',
     '-fmerge-constants',
     '-fmodulo-sched',
     '-fmove-loop-invariants',
     '-fomit-frame-pointer',
     '-foptimize-sibling-calls',
-    '-foptimize-strlen',
+    #'-foptimize-strlen',               # Not supported in 4.5
     '-fpeephole',
     '-fpeephole2',
     '-fpredictive-commoning',
@@ -88,24 +88,24 @@ gcc_flags = [
     '-fsched-stalled-insns-dep',
     '-fschedule-insns',
     '-fschedule-insns2',
-    #'-fsection-anchors',   # may conflict with other flags
+    #'-fsection-anchors',               # may conflict with other flags
     '-fsel-sched-pipelining',
     '-fsel-sched-pipelining-outer-loops',
     '-fsel-sched-reschedule-pipelined',
     '-fselective-scheduling',
     '-fselective-scheduling2',
-    '-fshrink-wrap',
+    #'-fshrink-wrap',                   # Not supported in 4.5
     '-fsplit-ivs-in-unroller',
     '-fsplit-wide-types',
-    #'-fstrict-aliasing',   # affects semantics
+    #'-fstrict-aliasing',               # affects semantics
     '-fthread-jumps',
     '-ftoplevel-reorder',
-    '-ftree-bit-ccp',
+    #'-ftree-bit-ccp',                  # Not supported in 4.5
     '-ftree-builtin-call-dce',
     '-ftree-ccp',
     '-ftree-ch',
-    #'-ftree-coalesce-inlined-vars', # there is no equivalent -fno for this flag
-    '-ftree-coalesce-vars',
+    #'-ftree-coalesce-inlined-vars',    # No equivalent -fno for this flag
+    #'-ftree-coalesce-vars',            # Not supported in 4.5
     '-ftree-copy-prop',
     '-ftree-copyrename',
     '-ftree-cselim',
@@ -114,13 +114,13 @@ gcc_flags = [
     '-ftree-dse',
     '-ftree-forwprop',
     '-ftree-fre',
-    '-ftree-loop-distribute-patterns',
+    #'-ftree-loop-distribute-patterns', # Not supported in 4.5
     '-ftree-loop-distribution',
-    '-ftree-loop-if-convert',
+    #'-ftree-loop-if-convert',          # Not supported in 4.5
     '-ftree-loop-im',
     '-ftree-loop-ivcanon',
     '-ftree-loop-optimize',
-    '-ftree-partial-pre',
+    #'-ftree-partial-pre',              # Not supported in 4.5
     '-ftree-phiprop',
     '-ftree-pre',
     '-ftree-pta',
@@ -128,10 +128,10 @@ gcc_flags = [
     '-ftree-scev-cprop',
     '-ftree-sink',
     '-ftree-slp-vectorize',
-    '-ftree-slsr',
+    #'-ftree-slsr',                     # Not supported in 4.5
     '-ftree-sra',
     '-ftree-switch-conversion',
-    '-ftree-tail-merge',
+    #'-ftree-tail-merge',               # Not supported in 4.5
     '-ftree-ter',
     '-ftree-vect-loop-version',
     '-ftree-vectorize',
