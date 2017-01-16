@@ -1,5 +1,11 @@
 2017-01-16  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/Database.cpp (Database::addResults): If a result is
+	added for a compilation id and metric already in the database,
+	replace the old value.
+
+2017-01-16  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Database.h (Database::InputResult): Remove structure.
 	(Database::addResults): Change results argument to be a map from
 	a CompilerID + metric name to a value.

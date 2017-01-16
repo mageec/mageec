@@ -701,15 +701,21 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
 
 void Database::
 addResults(std::map<std::pair<CompilationID, std::string>, uint64_t> results) {
+  // It is possible for the user to provide a compilation_id and metric which
+  // already has a result in the database. In this case, we replace the
+  // original value.
   SQLQuery insert_result =
       SQLQueryBuilder(*m_db)
-      << "INSERT INTO RESULT(compilation_id, metric, result) "
+      << "INSERT OR REPLACE INTO RESULT(compilation_id, metric, result) "
          "VALUES(" << SQLType::kInteger << ", " << SQLType::kText << ", "
                    << SQLType::kInteger << ")";
 
   // All results in a single transaction
   SQLTransaction transaction(m_db);
 
+  // FIXME: Adding a result with an invalid compilation_id will violate
+  // the foreign key constraint on the results table and cause a crash. The
+  // provided compilation_id needs to be sanitized first.
   for (const auto &res : results) {
     auto compilation_id = res.first.first;
     auto metric = res.first.second;
