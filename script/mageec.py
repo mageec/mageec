@@ -25,20 +25,20 @@ def build(src_dir, build_dir, install_dir, build_system, cc, cflags):
     assert(os.path.exists(install_dir) and os.path.isabs(install_dir))
     assert(is_command_on_path(cc))
 
-    print ('-- Building source    ' + src_dir)
-    print ('   Build directory:   ' + build_dir)
-    print ('   Install directory: ' + install_dir)
+    print ('-- Building source    \'' + src_dir + '\'')
+    print ('   Build directory:   \'' + build_dir + '\'')
+    print ('   Install directory: \'' + install_dir + '\'')
 
     # If no build system was specified, try and detect either a CMake or
     # configure script based build system
     if build_system is None or build_system == '':
         print ('-- No build system specified')
-        print ('-- Searching for CMakeLists.txt in ' + src_dir)
+        print ('-- Searching for CMakeLists.txt in \'' + src_dir + '\'')
         if os.path.exists(os.path.join(src_dir, 'CMakeLists.txt')):
             print ('-- Found, configuring using CMake')
             build_system = 'cmake'
         else:
-            print ('-- Searching for configure script in ' + src_dir)
+            print ('-- Searching for configure script in \'' + src_dir + '\'')
             if os.path.exists(os.path.join(src_dir, 'configure')):
                 print ('-- Found, configuring using configure script')
                 build_system = 'configure'
@@ -72,9 +72,9 @@ def build(src_dir, build_dir, install_dir, build_system, cc, cflags):
     
             # configure the build
             ret = subprocess.call(cmd)
-            print ('-- Configuring with: ' + ' '.join(cmd))
+            print ('-- Configuring with: \'' + ' '.join(cmd) + '\'')
             if ret != 0:
-                print ('-- Failed to configure ' + src_dir + ' using CMake')
+                print ('-- Failed to configure \'' + src_dir + '\' using CMake')
                 raise Exception
 
             # Both cmake and configure will generate Makefiles
@@ -85,13 +85,13 @@ def build(src_dir, build_dir, install_dir, build_system, cc, cflags):
             cmd = ['make']
             ret = subprocess.call(cmd)
             if ret != 0:
-                print ('-- Failed to build source ' + src_dir + ' using CMake')
+                print ('-- Failed to build source \'' + src_dir + '\' using CMake')
                 raise Exception
 
             cmd = ['make', 'install']
             ret = subprocess.call(cmd)
             if ret != 0:
-                print ('-- Failed to install build ' + build_dir + ' to ' + install_dir)
+                print ('-- Failed to install build \'' + build_dir + '\' to \'' + install_dir)
                 raise Exception
         else:
             assert False, 'custom build script not supported yet'

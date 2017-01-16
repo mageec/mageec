@@ -26,8 +26,8 @@ def read_compilation_ids(compilation_id_path):
             continue
 
         src_path = values[0]
-        if not os.path.isabs(src_path):
-            print ('-- Relative path encountered in compilation id csv file. Ignoring ...')
+        if not os.path.exists(src_path):
+            print ('-- Compilation id csv file references non-existent file \'' + src_path + '\'. Ignoring...')
             continue
 
         entry_type = values[1]
@@ -35,20 +35,21 @@ def read_compilation_ids(compilation_id_path):
             module_name = values[2].strip()
             compilation_id = values[4].strip()
             if src_path in src_module:
-                print ('-- Multiple module compilation ids for source file ' + src_path + '. Ignoring...')
+                print ('-- Multiple module compilation ids for source file \'' + src_path + '\'. Ignoring...')
                 continue
             src_module[src_path] = (module_name, compilation_id)
         elif entry_type == 'function':
             func_name = values[2].strip()
             compilation_id = values[4].strip()
             if src_path in src_functions and func_name in src_functions[src_path]:
-                print ('-- Multiple compilation ids for function ' + func_name + ' in ' + src_path + '. Ignoring...')
+                print ('-- Multiple compilation ids for function \'' + func_name + '\' in \'' + src_path + '\'. Ignoring...')
                 continue
             if src_path not in src_functions:
                 src_functions[src_path] = {}
             src_functions[src_path][func_name] = compilation_id
         else:
-            print ('-- Unknown entry in compilation id csv file \n    ' + line)
+            print ('-- Unknown entry in compilation id csv file\n'
+                   '   ' + line)
 
     src_paths = set(list(src_module.keys()) + list(src_functions.keys()))
     for src_path in src_paths:
@@ -74,11 +75,11 @@ def get_executable_src_files(exec_path):
         try:
             elf_file = ELFFile(elf_file_handle)
         except:
-            print ("-- Executable " + exec_path + " is not an ELF file")
+            print ('-- Executable \'' + exec_path + '\' is not an ELF file')
             return []
 
         if not elf_file.has_dwarf_info():
-            print ("-- Executable " + exec_path + " has no DWARF information")
+            print ('-- Executable \'' + exec_path + '\' has no DWARF information')
             return []
 
         dwarf_info = elf_file.get_dwarf_info()
@@ -107,7 +108,7 @@ def get_executable_symbol_sizes(exec_path):
         try:
             elf_file = ELFFile(elf_file_handle)
         except:
-            print ("-- Executable " + exec_path + " is not an ELF file")
+            print ('-- Executable \'' + exec_path + '\' is not an ELF file')
             return {}
 
         for section in elf_file.iter_sections():
@@ -124,8 +125,6 @@ def measure_executable(exec_path, compilation_ids_path, debug, results_path):
     assert(os.path.exists(compilation_ids_path) and os.path.isabs(compilation_ids_path))
     assert(os.path.isabs(results_path))
 
-    results_file = open(results_path, 'a')
-
     # Dictionary mapping from source files to module and function compilations
     # ids
     src_file_compilation_ids = read_compilation_ids(compilation_ids_path)
@@ -138,7 +137,12 @@ def measure_executable(exec_path, compilation_ids_path, debug, results_path):
 
     # For each file referenced in the executable, look for associated
     # compilation ids
+    compilation_sizes = {}
     for exec_src_file in exec_src_files:
+        if not os.path.exists(exec_src_file):
+            print ('-- File referenced in executable \'' + exec_src_file + '\' '
+                   'does not exist')
+            continue
         if exec_src_file not in src_file_compilation_ids:
             print ('-- File referenced in executable, but has no associated '
                    'compilation ids: \'' + exec_src_file + '\'... Ignoring')
@@ -153,9 +157,11 @@ def measure_executable(exec_path, compilation_ids_path, debug, results_path):
             if func_name in symbol_sizes:
                 func_size = symbol_sizes[func_name]
 
-                # We have the compilation id and its size, emit it into the
-                # results file.
-                results_file.write(func_id + ',size,' + str(func_size) + '\n')
+                # Store the compilation id and its size
+                if not func_id in compilation_sizes:
+                    compilation_sizes[func_id] = [func_size]
+                else:
+                    compilation_sizes[func_id].append(func_size)
 
                 # Accumulate module size too
                 module_size += func_size
@@ -166,11 +172,23 @@ def measure_executable(exec_path, compilation_ids_path, debug, results_path):
                 print ('-- Function \'' + func_name + '\' appeared in '
                        'a compilation but not in the final executable')
 
-        # Now we have a module size too, so we can emit it into the results
+        # Now we have a module size too, so we can store it into the results
         if module:
             _, module_id = module
-            results_file.write(module_id + ',size,' + str(module_size) + '\n');
-    results_file.close()
+            if not module_id in compilation_sizes:
+                compilation_sizes[module_id] = [module_size]
+            else:
+                compilation_sizes[module_id].append(module_size)
+
+    with open(results_path, 'a') as results_file:
+        for compilation_id in compilation_sizes:
+            sizes = compilation_sizes[compilation_id]
+
+            # It does not make much sense to have multiple results for the
+            # same compilation id. We emit duplicate results into the
+            # file anyway, and let mageec deal with the problem later.
+            for size in sizes:
+                results_file.write(compilation_id + ',size,' + str(size) + '\n')
     return 0
 
 
@@ -199,10 +217,10 @@ def main():
     debug = args.debug
 
     if not os.path.exists(install_dir):
-        print ('-- Install directory ' + install_dir + ' does not exist')
+        print ('-- Install directory \'' + install_dir + '\' does not exist')
         return -1
     if not os.path.exists(compilation_ids):
-        print ('-- Compilation id file ' + compilation_ids + ' does not exist')
+        print ('-- Compilation id file \'' + compilation_ids + '\' does not exist')
         return -1
 
     # Find all executable files in the executable directory
@@ -231,7 +249,7 @@ def main():
                                  debug=debug,
                                  results_path=results_path)
         if not res:
-            print ('-- Failed to measure the size of ' + exec_path)
+            print ('-- Failed to measure the size of \'' + exec_path + '\'')
     return 0
 
 

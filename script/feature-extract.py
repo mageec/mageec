@@ -55,21 +55,21 @@ def main():
     gcc_plugin_name = mageec.get_gcc_plugin_name() + '.so'
 
     if not os.path.exists(src_dir):
-        print ('-- Source directory ' + src_dir + ' does not exist')
+        print ('-- Source directory \'' + src_dir + '\' does not exist')
         return -1
     if not os.path.exists(build_dir):
         os.makedirs(build_dir)
     if not os.path.exists(install_dir):
         os.makedirs(install_dir)
     if not os.path.exists(database_path):
-        print ('-- Database ' + database_path + ' does not exist')
+        print ('-- Database \'' + database_path + '\' does not exist')
         return -1
 
     if not mageec.is_command_on_path(cc):
-        print ('-- Compiler ' + cc + ' is not on the path')
+        print ('-- Compiler \'' + cc + '\' is not on the path')
         return -1
 
-    print ('-- Checking for mageec plugin ' + gcc_plugin_name)
+    print ('-- Checking for mageec plugin \'' + gcc_plugin_name + '\'')
     gcc_plugin_path = os.path.join(mageec_lib_path, gcc_plugin_name)
     if not os.path.exists(gcc_plugin_path):
         print ('-- Could not find gcc plugin')

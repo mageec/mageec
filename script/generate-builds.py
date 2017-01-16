@@ -182,6 +182,9 @@ def generate_configurations(src_dir, build_dir, install_dir, build_system,
             os.makedirs(run_install_dir)
         run_id += 1
 
+        print ('-- Building configuration:\n'
+               '   Configuration: \'' + config + '\'')
+
         compilations_path = os.path.join(run_install_dir, 'compilations.csv')
 
         wrapper_cflags = '-fmageec-gcc=' + cc
@@ -251,24 +254,24 @@ def main():
     generator       = args.generator[0]
 
     if not os.path.exists(src_dir):
-        print ('-- Source directory ' + src_dir + ' does not exist')
+        print ('-- Source directory \'' + src_dir + '\' does not exist')
         return -1
     if not os.path.exists(build_dir):
         os.makedirs(build_dir)
     if not os.path.exists(install_dir):
         os.makedirs(install_dir)
     if not os.path.exists(database_path):
-        print ('-- Database ' + database_path + ' does not exist')
+        print ('-- Database \'' + database_path + '\' does not exist')
         return -1
     if not os.path.exists(features_path):
-        print ('-- Features file ' + features_path + ' does not exist')
+        print ('-- Features file \'' + features_path + '\' does not exist')
         return -1
 
     if not mageec.is_command_on_path(cc):
-        print ('-- Compiler ' + cc + ' is not on the path')
+        print ('-- Compiler \'' + cc + '\' is not on the path')
         return -1
     if not mageec.is_command_on_path(gcc_wrapper):
-        print ('-- mageec gcc wrapper ' + gcc_wrapper + ' is not on the path')
+        print ('-- mageec gcc wrapper \'' + gcc_wrapper + '\' is not on the path')
         return -1
 
     if num_configs <= 0:
