@@ -26,6 +26,14 @@
 #include "Features.h"
 #include "mageec/AttributeSet.h"
 
+// Older versions of gcc poison malloc and calloc, because they should not
+// be used in gcc source code. By putting the system headers first, we can
+// avoid any calls in these headers from being poisoned.
+#include <memory>
+#include <set>
+#include <vector>
+#include <algorithm>
+
 // GCC Plugin headers                                                           
 // Undefine these as gcc-plugin.h redefines them                                
 #undef PACKAGE_BUGREPORT                                                        
@@ -58,11 +66,6 @@
   #include "gimple.h"
   #include "gimple-iterator.h"
 #endif
-
-#include <memory>
-#include <set>
-#include <vector>
-#include <algorithm>
 
 
 //===----------------------------------------------------------------------===//

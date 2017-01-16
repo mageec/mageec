@@ -1,3 +1,9 @@
+2017-01-16  Edward Jones  <ed.jones@embecosm.com>
+
+	* FeatureExtract.cpp: Fix to work with older GCC versions where
+	malloc+calloc are poisoned by the plugin headers.
+	* Plugin.cpp: Likewise.
+
 2016-11-29  Edward Jones  <ed.jones@embecosm.com>
 
 	* FeatureExtract.cpp: Fix to work with all GCC versions >=4.8.0

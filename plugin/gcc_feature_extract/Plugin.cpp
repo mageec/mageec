@@ -22,17 +22,25 @@
 //
 //===----------------------------------------------------------------------===//
 
-// We need to undefine these as gcc-plugin.h redefines them
+#include "mageec/AttributeSet.h"
+#include "mageec/Framework.h"
+#include "mageec/Util.h"
+#include "Plugin.h"
+
+// Older versions of gcc poison malloc and calloc, because they should not
+// be used in gcc source code. By putting the system headers first, we can
+// avoid any calls in these headers from being poisoned.
+#include <fstream>
+#include <map>
+#include <string>
+
+// GCC Plugin headers                                                           
+// Undefine these as gcc-plugin.h redefines them                                
 #undef PACKAGE_BUGREPORT
 #undef PACKAGE_NAME
 #undef PACKAGE_STRING
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
-
-#include "mageec/AttributeSet.h"
-#include "mageec/Framework.h"
-#include "mageec/Util.h"
-#include "Plugin.h"
 
 // Version of GCC that the plugin will be used with
 #ifndef BUILDING_GCC_VERSION
@@ -53,10 +61,6 @@
   #include "tree-pass.h"
   #include "context.h"
 #endif
-
-#include <fstream>
-#include <map>
-#include <string>
 
 
 /// Declared to allow GCC to load the plugin
