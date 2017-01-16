@@ -109,7 +109,7 @@ def feature_extract(src_dir, build_dir, install_dir, build_system, cc, cflags,
     assert(is_command_on_path(cc))
     assert(os.path.exists(database_path))
     assert(os.path.exists(gcc_plugin_path))
-
+    
     gcc_plugin_name = get_gcc_plugin_name()
     plugin_flags = '-fplugin=' + gcc_plugin_path
     if debug:
