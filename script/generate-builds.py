@@ -229,13 +229,16 @@ def main():
         help='Generator to use to generate configurations')
 
     # optional arguments
-    parser.add_argument('--debug', required=False,
+    parser.add_argument('--debug', action='store_true', required=False,
         help='Enable debug when doing feature extraction')
     parser.add_argument('--build-system', nargs=1, required=False,
         help='Build system to be used to build the source. May be \'cmake\', '
              '\'configure\', or a script to be used to build the source')
     parser.add_argument('--cflags', nargs=1, required=False,
         help='Common arguments to be used when building')
+    parser.set_defaults(debug=False,
+                        build_system=[None],
+                        cflags=[''])
 
     args = parser.parse_args(sys.argv[1:])
     src_dir         = os.path.abspath(args.src_dir[0])
@@ -272,13 +275,9 @@ def main():
         print ('-- Cannot generate a negative or zero number of configurations')
         return -1
 
-    build_system = None
-    if args.build_system:
-        build_system = args.build_system[0]
-    cflags = ''
-    if args.cflags:
-        cflags = args.cflags[0]
-    debug = args.debug
+    debug        = args.debug
+    build_system = args.build_system[0]
+    cflags       = args.cflags[0]
 
     res = generate_configurations(src_dir=src_dir,
                                   build_dir=build_dir,

@@ -1,14 +1,21 @@
 2017-01-16  Edward Jones  <ed.jones@embecosm.com>
 
-	* scripts/build-and-measure.py: Deleted file.
-	* scripts/feature_extract.py: Rewritten, renamed to feature-extract.py
-	* scripts/feature-extract.py: Added file.
-	* scripts/generate-build.py: Rewritten, renamed to generate-builds.py
-	* scripts/generate-builds.py: Added file.
-	* scripts/mageec_common.py: Renamed to mageec.py. Added
+	* script/feature-extract.py: Fix argument parsing.
+	* script/generate-builds.py: Likewise.
+	* script/measure-code-size.py: Added script to measure the
+	size of executables in a directory.
+
+2017-01-16  Edward Jones  <ed.jones@embecosm.com>
+
+	* script/build-and-measure.py: Deleted file.
+	* script/feature_extract.py: Rewritten, renamed to feature-extract.py
+	* script/feature-extract.py: Added file.
+	* script/generate-build.py: Rewritten, renamed to generate-builds.py
+	* script/generate-builds.py: Added file.
+	* script/mageec_common.py: Renamed to mageec.py. Added
 	feature extraction functionality.
-	* scripts/mageec.py: Added file.
-	* scripts/measure-code-size.py: Deleted file.
+	* script/mageec.py: Added file.
+	* script/measure-code-size.py: Deleted file.
 
 2017-01-10  Edward Jones  <ed.jones@embecosm.com>
 

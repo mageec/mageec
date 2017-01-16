@@ -27,13 +27,16 @@ def main():
         help='File to output the extracted features to')
 
     # optional arguments
-    parser.add_argument('--debug', required=False,
+    parser.add_argument('--debug', action='store_true', required=False,
         help='Enable debug when doing feature extraction')
     parser.add_argument('--build-system', nargs=1, required=False,
         help='Build system to be used to build the source. May be \'cmake\', '
              '\'configure\', or a script to be used to build the source')
     parser.add_argument('--cflags', nargs=1, required=False,
         help='Common arguments to be used when building')
+    parser.set_defaults(debug=False,
+                        build_system=[None],
+                        cflags=[''])
 
     args = parser.parse_args(sys.argv[1:])
     src_dir         = os.path.abspath(args.src_dir[0])
@@ -44,13 +47,9 @@ def main():
     mageec_lib_path = os.path.abspath(args.mageec_library_path[0])
     out_path        = os.path.abspath(args.out[0])
 
-    build_system = None
-    if args.build_system:
-        build_system = args.build_system[0]
-    cflags = ''
-    if args.cflags:
-        cflags = args.cflags[0]
-    debug = args.debug
+    debug        = args.debug
+    build_system = args.build_system[0]
+    cflags       = args.cflags[0]
 
     # TODO: Extension should depend on platform
     gcc_plugin_name = mageec.get_gcc_plugin_name() + '.so'
