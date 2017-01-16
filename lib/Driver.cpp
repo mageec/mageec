@@ -256,9 +256,9 @@ static bool trainDatabase(Framework &framework, const std::string &db_path,
   return true;
 }
 
-static util::Option<std::set<Database::InputResult>>
+static util::Option<std::map<std::pair<CompilationID, std::string>, uint64_t>>
 parseResults(const std::string &result_path) {
-  std::set<Database::InputResult> results;
+  std::map<std::pair<CompilationID, std::string>, uint64_t> results;
 
   MAGEEC_DEBUG("Opening file '" << result_path << "' to parse results");
   std::ifstream result_file(result_path);
@@ -331,8 +331,13 @@ parseResults(const std::string &result_path) {
       return nullptr;
     }
 
-    // Add the now parsed results into the dataset
-    results.insert({compilation_id, metric_str, value});
+    // Add the now parsed result into the dataset
+    if (results.count({compilation_id, metric_str})) {
+      MAGEEC_WARN("Multiple results for compilation id '" << id_str << "'. "
+                  "compilation id will be ignored");
+    } else {
+      results.insert({{compilation_id, metric_str}, value});
+    }
   }
   return results;
 }

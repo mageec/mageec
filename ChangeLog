@@ -1,5 +1,16 @@
 2017-01-16  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/Database.h (Database::InputResult): Remove structure.
+	(Database::addResults): Change results argument to be a map from
+	a CompilerID + metric name to a value.
+	* lib/Database.cpp (Database::addResults): Change results argument to
+	be a map from a CompilerID + metric name to a value.
+	* lib/Driver.cpp (parseResults): Avoid adding duplicate results
+	to the database. Instead warn the user of the offending compilation
+	id.
+
+2017-01-16  Edward Jones  <ed.jones@embecosm.com>
+
 	* script/feature-extract.py: Fix argument parsing.
 	* script/generate-builds.py: Likewise.
 	* script/measure-code-size.py: Added script to measure the

@@ -203,34 +203,12 @@ public:
 
 //===------------------------ Results interface ---------------------------===//
 
-  /// \struct InputResult Structure for results to be added to the database
-  struct InputResult {
-    InputResult(CompilationID id, std::string m, uint64_t val)
-        : compilation_id(id), metric(m), value(val) {}
-
-    bool operator<(const InputResult &other) const {
-      if (compilation_id < other.compilation_id) {
-        return true;
-      }
-      if (metric < other.metric) {
-        return true;
-      }
-      if (value < other.value) {
-        return true;
-      }
-      return false;
-    }
-
-    const CompilationID compilation_id;
-    const std::string metric;
-    const uint64_t value;
-  };
-
   /// \brief Add results entries to the database for previously
   // established compilations.
   ///
   /// \param results A set of results to be added to the database
-  void addResults(std::set<InputResult> results);
+  void
+  addResults(std::map<std::pair<CompilationID, std::string>, uint64_t> results);
 
 //===----------------------- Training interface ---------------------------===//
 

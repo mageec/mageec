@@ -699,7 +699,8 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
 
 //===------------------------ Results interface ---------------------------===//
 
-void Database::addResults(std::set<InputResult> results) {
+void Database::
+addResults(std::map<std::pair<CompilationID, std::string>, uint64_t> results) {
   SQLQuery insert_result =
       SQLQueryBuilder(*m_db)
       << "INSERT INTO RESULT(compilation_id, metric, result) "
@@ -710,12 +711,14 @@ void Database::addResults(std::set<InputResult> results) {
   SQLTransaction transaction(m_db);
 
   for (const auto &res : results) {
+    auto compilation_id = res.first.first;
+    auto metric = res.first.second;
+    auto value = res.second;
+
     insert_result.clearAllBindings();
-    insert_result << static_cast<int64_t>(res.compilation_id) << res.metric
-                  << static_cast<int64_t>(res.value);
+    insert_result << static_cast<int64_t>(compilation_id) << metric
+                  << static_cast<int64_t>(value);
     insert_result.exec().assertDone();
-    // FIXME: This will trigger an assertion if the compilation id fails
-    // the foreign key constraint.
   }
   transaction.commit();
 }
