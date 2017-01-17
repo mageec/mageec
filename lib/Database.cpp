@@ -108,7 +108,7 @@ static const char *const create_result_table =
 // machine learner table creation strings
 static const char *const create_machine_learner_table =
     "CREATE TABLE MachineLearner("
-    "ml_id             BLOB, "
+    "ml_id             TEXT, "
     "feature_class_id  INTEGER NOT NULL, "
     "metric            TEXT, "
     "ml_blob           BLOB NOT NULL, "
@@ -754,7 +754,7 @@ void Database::trainMachineLearner(std::string ml, FeatureClass feature_class,
       SQLQueryBuilder(*m_db)
       << "INSERT OR REPLACE INTO MachineLearner(ml_id, feature_class_id, "
                                                "metric, ml_blob) "
-         "VALUES (" << SQLType::kBlob << ", " << SQLType::kInteger << ", "
+         "VALUES (" << SQLType::kText << ", " << SQLType::kInteger << ", "
                     << SQLType::kText << ", " << SQLType::kBlob << ")";
 
   // Get the machine learner interface

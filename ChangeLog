@@ -1,3 +1,8 @@
+2017-01-17  Edward Jones  <ed.jones@embecosm.com>
+
+	* lib/Database.cpp: Fix ml_id field in SQL to be text instead of
+	a blob.
+
 2017-01-16  Edward Jones  <ed.jones@embecosm.com>
 
 	* script/generate-builds.py: Do not toggle passed which aren't
