@@ -1,5 +1,12 @@
 2017-01-17  Edward Jones  <ed.jones@embecosm.com>
 
+	* script/feature-extract.py: Add ability to specify number of jobs
+	for a build.
+	* script/generate-builds.py: Likewise.
+	* script/mageec.py: Likewise.
+
+2017-01-17  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/Database.cpp: Fix ml_id field in SQL to be text instead of
 	a blob.
 

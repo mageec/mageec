@@ -159,7 +159,7 @@ def generate_configs(flags, num_configs, generator):
 
 
 def generate_configurations(src_dir, build_dir, install_dir, build_system,
-                            cc, cflags, database_path, features_path,
+                            cc, cflags, jobs, database_path, features_path,
                             num_configs, generator, debug):
     assert(os.path.exists(src_dir) and os.path.isabs(src_dir))
     assert(os.path.exists(build_dir) and os.path.isabs(build_dir))
@@ -169,6 +169,7 @@ def generate_configurations(src_dir, build_dir, install_dir, build_system,
     assert(mageec.is_command_on_path(cc))
     assert(mageec.is_command_on_path(gcc_wrapper))
     assert(num_configs > 0)
+    assert(jobs > 0)
 
     configs = generate_configs(gcc_flags, num_configs, generator)
 
@@ -202,7 +203,8 @@ def generate_configurations(src_dir, build_dir, install_dir, build_system,
                            install_dir=run_install_dir,
                            build_system=build_system,
                            cc=gcc_wrapper,
-                           cflags=new_cflags)
+                           cflags=new_cflags,
+                           jobs=jobs)
         # just ignore failed builds
         if not res:
             print ('-- Build failed. Continuing regardless')
@@ -239,9 +241,12 @@ def main():
              '\'configure\', or a script to be used to build the source')
     parser.add_argument('--cflags', nargs=1, required=False,
         help='Common arguments to be used when building')
+    parser.add_argument('--jobs', nargs=1, required=False,
+        help='Number of jobs to run when building')
     parser.set_defaults(debug=False,
                         build_system=[None],
-                        cflags=[''])
+                        cflags=[''],
+                        jobs=[1])
 
     args = parser.parse_args(sys.argv[1:])
     src_dir         = os.path.abspath(args.src_dir[0])
@@ -281,6 +286,10 @@ def main():
     debug        = args.debug
     build_system = args.build_system[0]
     cflags       = args.cflags[0]
+    jobs         = int(args.jobs[0])
+    if jobs < 1:
+        print ('-- Number of jobs must be a positive integer')
+        return -1
 
     res = generate_configurations(src_dir=src_dir,
                                   build_dir=build_dir,
@@ -288,6 +297,7 @@ def main():
                                   build_system=build_system,
                                   cc=cc,
                                   cflags=cflags,
+                                  jobs=jobs,
                                   database_path=database_path,
                                   features_path=features_path,
                                   num_configs=num_configs,

@@ -34,9 +34,12 @@ def main():
              '\'configure\', or a script to be used to build the source')
     parser.add_argument('--cflags', nargs=1, required=False,
         help='Common arguments to be used when building')
+    parser.add_argument('--jobs', nargs=1, required=False,
+        help='Number of jobs to run in parallel when building')
     parser.set_defaults(debug=False,
                         build_system=[None],
-                        cflags=[''])
+                        cflags=[''],
+                        jobs=[1])
 
     args = parser.parse_args(sys.argv[1:])
     src_dir         = os.path.abspath(args.src_dir[0])
@@ -50,6 +53,11 @@ def main():
     debug        = args.debug
     build_system = args.build_system[0]
     cflags       = args.cflags[0]
+    jobs         = int(args.jobs[0])
+
+    if jobs < 1:
+        print ('-- Number of jobs must be a positive integer')
+        return -1
 
     # TODO: Extension should depend on platform
     gcc_plugin_name = mageec.get_gcc_plugin_name() + '.so'
@@ -88,6 +96,7 @@ def main():
                                  build_system=build_system,
                                  cc=cc,
                                  cflags=cflags,
+                                 jobs=jobs,
                                  database_path=database_path,
                                  gcc_plugin_path=gcc_plugin_path,
                                  debug=debug,

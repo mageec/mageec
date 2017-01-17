@@ -17,7 +17,7 @@ def is_command_on_path(cmd):
     return False
 
 
-def build(src_dir, build_dir, install_dir, build_system, cc, cflags):
+def build(src_dir, build_dir, install_dir, build_system, cc, cflags, jobs):
     base_dir = os.getcwd()
 
     assert(os.path.exists(src_dir) and os.path.isabs(src_dir))
@@ -82,7 +82,7 @@ def build(src_dir, build_dir, install_dir, build_system, cc, cflags):
                 print ('-- make command not on path')
                 raise Exception
 
-            cmd = ['make']
+            cmd = ['make', '-j' + str(jobs)]
             ret = subprocess.call(cmd)
             if ret != 0:
                 print ('-- Failed to build source \'' + src_dir + '\' using CMake')
@@ -102,7 +102,7 @@ def build(src_dir, build_dir, install_dir, build_system, cc, cflags):
 
 
 def feature_extract(src_dir, build_dir, install_dir, build_system, cc, cflags,
-                    database_path, gcc_plugin_path, debug, out_path):
+                    jobs, database_path, gcc_plugin_path, debug, out_path):
     assert(os.path.exists(src_dir) and os.path.isabs(src_dir))
     assert(os.path.exists(build_dir) and os.path.isabs(build_dir))
     assert(os.path.exists(install_dir) and os.path.isabs(install_dir))
@@ -125,5 +125,6 @@ def feature_extract(src_dir, build_dir, install_dir, build_system, cc, cflags,
                  install_dir=install_dir,
                  build_system=build_system,
                  cc=cc,
-                 cflags=new_cflags)
+                 cflags=new_cflags,
+                 jobs=jobs)
 
