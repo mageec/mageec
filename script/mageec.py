@@ -17,13 +17,20 @@ def is_command_on_path(cmd):
     return False
 
 
-def build(src_dir, build_dir, install_dir, build_system, cc, cflags, jobs):
-    base_dir = os.getcwd()
+class preserve_cwd():
+    def __enter__(self):
+        self.cwd = os.getcwd()
+    def __exit__(self, type, value, traceback):
+        os.chdir(self.cwd)
 
+
+def build(src_dir, build_dir, install_dir, build_system, cc, fort, flags,
+          jobs):
     assert(os.path.exists(src_dir) and os.path.isabs(src_dir))
     assert(os.path.exists(build_dir) and os.path.isabs(build_dir))
     assert(os.path.exists(install_dir) and os.path.isabs(install_dir))
     assert(is_command_on_path(cc))
+    assert(is_command_on_path(fort))
 
     print ('-- Building source    \'' + src_dir + '\'')
     print ('   Build directory:   \'' + build_dir + '\'')
@@ -52,8 +59,8 @@ def build(src_dir, build_dir, install_dir, build_system, cc, cflags, jobs):
     else:
         print ('-- Configuring using user-specified build script')
 
-    os.chdir(build_dir)
-    try:
+    with preserve_cwd():
+        os.chdir(build_dir)
         if build_system == 'cmake' or build_system == 'configure':
             if build_system == 'cmake':
                 if not is_command_on_path('cmake'):
@@ -62,12 +69,12 @@ def build(src_dir, build_dir, install_dir, build_system, cc, cflags, jobs):
 
                 cmd = ['cmake', src_dir, '-G', 'Unix Makefiles']
                 cmd.append('-DCMAKE_C_COMPILER=' + cc)
-                cmd.append('-DCMAKE_C_FLAGS=' + cflags)
+                cmd.append('-DCMAKE_C_FLAGS=' + flags)
                 cmd.append('-DCMAKE_INSTALL_PREFIX=' + install_dir)
             elif build_system == 'configure':
                 cmd = [os.path.join(src_dir, 'configure')]
                 cmd.append('CC=' + cc)
-                cmd.append('CFLAGS=' + cflags)
+                cmd.append('CFLAGS=' + flags)
                 cmd.append('--prefix=' + install_dir)
     
             # configure the build
@@ -75,38 +82,63 @@ def build(src_dir, build_dir, install_dir, build_system, cc, cflags, jobs):
             print ('-- Configuring with: \'' + ' '.join(cmd) + '\'')
             if ret != 0:
                 print ('-- Failed to configure \'' + src_dir + '\' using CMake')
-                raise Exception
+                return False
 
             # Both cmake and configure will generate Makefiles
             if not is_command_on_path('make'):
                 print ('-- make command not on path')
-                raise Exception
+                return False
 
             cmd = ['make', '-j' + str(jobs)]
             ret = subprocess.call(cmd)
             if ret != 0:
                 print ('-- Failed to build source \'' + src_dir + '\' using CMake')
-                raise Exception
+                return False
 
             cmd = ['make', 'install']
             ret = subprocess.call(cmd)
             if ret != 0:
                 print ('-- Failed to install build \'' + build_dir + '\' to \'' + install_dir)
-                raise Exception
+                return False
         else:
-            assert False, 'custom build script not supported yet'
-    except:
-        os.chdir(base_dir)
-        return False
+            # If the command refers to a script in the current working directory
+            # then make the path absolute so that we can execute it. Otherwise
+            # assume that it's a command on the path
+            cmd_path = build_system
+            if not os.path.isabs(cmd_path):
+                cmd_path = os.path.join(base_dir, build_system)
+
+            if os.path.exists(cmd_path):
+                cmd_name = cmd_path
+            elif is_command_on_path(build_system):
+                cmd_name = build_system
+            else:
+                print ('-- Build system \'' + build_system + '\' is not a known keyword or executable script')
+                return False
+
+            cmd = [cmd_name,
+                   '--src-dir', src_dir,
+                   '--build-dir', build_dir,
+                   '--install-dir', install_dir,
+                   '--cc', cc,
+                   '--fort', fort,
+                   '--flags', flags,
+                   '--jobs', str(jobs)]
+            ret = subprocess.call(cmd)
+            if ret != 0:
+                print ('-- Failed to build using custom build script \'' + build_system + '\'')
+                return False
     return True
 
 
-def feature_extract(src_dir, build_dir, install_dir, build_system, cc, cflags,
-                    jobs, database_path, gcc_plugin_path, debug, out_path):
+def feature_extract(src_dir, build_dir, install_dir, build_system, cc, fort, 
+                    flags, jobs, database_path, gcc_plugin_path, debug,
+                    out_path):
     assert(os.path.exists(src_dir) and os.path.isabs(src_dir))
     assert(os.path.exists(build_dir) and os.path.isabs(build_dir))
     assert(os.path.exists(install_dir) and os.path.isabs(install_dir))
     assert(is_command_on_path(cc))
+    assert(is_command_on_path(fort))
     assert(os.path.exists(database_path))
     assert(os.path.exists(gcc_plugin_path))
     
@@ -117,7 +149,7 @@ def feature_extract(src_dir, build_dir, install_dir, build_system, cc, cflags,
     plugin_flags += ' -fplugin-arg-' + gcc_plugin_name + '-database=' + database_path
     plugin_flags += ' -fplugin-arg-' + gcc_plugin_name + '-out=' + out_path
 
-    new_cflags = plugin_flags + ' ' + cflags
+    new_flags = plugin_flags + ' ' + flags
 
     print ('-- Performing feature extraction')
     return build(src_dir=src_dir,
@@ -125,6 +157,7 @@ def feature_extract(src_dir, build_dir, install_dir, build_system, cc, cflags,
                  install_dir=install_dir,
                  build_system=build_system,
                  cc=cc,
-                 cflags=new_cflags,
+                 fort=fort,
+                 flags=new_flags,
                  jobs=jobs)
 

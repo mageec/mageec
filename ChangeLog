@@ -1,3 +1,15 @@
+2017-01-20  Edward Jones  <ed.jones@embecosm.com>
+
+	* script/feature-extract.py: Add --fort argument, rename --cflags
+	argument to just --flags.
+	* script/generate-builds.py: Likewise.
+	* script/mageec.py (build): Add support for building using a
+	custom build script. Add support for --fort argument and
+	rename cflags to flags.
+	(preserve_cwd): Add function to be used in 'with' clauses to
+	preserved the current working directory across a block.
+	* script/measure-code-size.py: Refactor to use preserved_cwd.
+
 2017-01-17  Edward Jones  <ed.jones@embecosm.com>
 
 	* script/feature-extract.py: Add ability to specify number of jobs

@@ -18,7 +18,9 @@ def main():
     parser.add_argument('--install-dir', nargs=1, required=True,
         help='Install directory')
     parser.add_argument('--cc', nargs=1, required=True,
-        help='Command to use to compile the source')
+        help='Command to use to compile C source')
+    parser.add_argument('--fort', nargs=1, required=True,
+        help='Command to use to compile Fortan source')
     parser.add_argument('--database', nargs=1, required=True,
         help='mageec database to store extracted features into')
     parser.add_argument('--mageec-library-path', nargs=1, required=True,
@@ -32,13 +34,13 @@ def main():
     parser.add_argument('--build-system', nargs=1, required=False,
         help='Build system to be used to build the source. May be \'cmake\', '
              '\'configure\', or a script to be used to build the source')
-    parser.add_argument('--cflags', nargs=1, required=False,
+    parser.add_argument('--flags', nargs=1, required=False,
         help='Common arguments to be used when building')
     parser.add_argument('--jobs', nargs=1, required=False,
         help='Number of jobs to run in parallel when building')
     parser.set_defaults(debug=False,
                         build_system=[None],
-                        cflags=[''],
+                        flags=[''],
                         jobs=[1])
 
     args = parser.parse_args(sys.argv[1:])
@@ -46,13 +48,14 @@ def main():
     build_dir       = os.path.abspath(args.build_dir[0])
     install_dir     = os.path.abspath(args.install_dir[0])
     cc              = args.cc[0]
+    fort            = args.fort[0]
     database_path   = os.path.abspath(args.database[0])
     mageec_lib_path = os.path.abspath(args.mageec_library_path[0])
     out_path        = os.path.abspath(args.out[0])
 
     debug        = args.debug
     build_system = args.build_system[0]
-    cflags       = args.cflags[0]
+    flags        = args.flags[0]
     jobs         = int(args.jobs[0])
 
     if jobs < 1:
@@ -95,7 +98,8 @@ def main():
                                  install_dir=install_dir,
                                  build_system=build_system,
                                  cc=cc,
-                                 cflags=cflags,
+                                 fort=fort,
+                                 flags=flags,
                                  jobs=jobs,
                                  database_path=database_path,
                                  gcc_plugin_path=gcc_plugin_path,

@@ -6,8 +6,9 @@ import random
 import sys
 import mageec
 
-
 gcc_wrapper = 'mageec-gcc'
+gfortran_wrapper = 'mageec-gfortran'
+
 gcc_flags = [
     #'-faggressive-loop-optimizations', # Not supported in 4.5
     '-falign-functions',
@@ -159,7 +160,7 @@ def generate_configs(flags, num_configs, generator):
 
 
 def generate_configurations(src_dir, build_dir, install_dir, build_system,
-                            cc, cflags, jobs, database_path, features_path,
+                            cc, fort, flags, jobs, database_path, features_path,
                             num_configs, generator, debug):
     assert(os.path.exists(src_dir) and os.path.isabs(src_dir))
     assert(os.path.exists(build_dir) and os.path.isabs(build_dir))
@@ -167,6 +168,7 @@ def generate_configurations(src_dir, build_dir, install_dir, build_system,
     assert(os.path.exists(database_path))
     assert(os.path.exists(features_path))
     assert(mageec.is_command_on_path(cc))
+    assert(mageec.is_command_on_path(fort))
     assert(mageec.is_command_on_path(gcc_wrapper))
     assert(num_configs > 0)
     assert(jobs > 0)
@@ -188,22 +190,24 @@ def generate_configurations(src_dir, build_dir, install_dir, build_system,
 
         compilations_path = os.path.join(run_install_dir, 'compilations.csv')
 
-        wrapper_cflags = '-fmageec-gcc=' + cc
+        wrapper_flags = '-fmageec-gcc=' + cc
+        wrapper_flags = ' -fmageec-gfortran=' + fort
         if debug:
-            wrapper_cflags += ' -fmageec-debug'
-        wrapper_cflags += ' -fmageec-mode=gather'
-        wrapper_cflags += ' -fmageec-database=' + database_path
-        wrapper_cflags += ' -fmageec-features=' + features_path
-        wrapper_cflags += ' -fmageec-out=' + compilations_path
+            wrapper_flags += ' -fmageec-debug'
+        wrapper_flags += ' -fmageec-mode=gather'
+        wrapper_flags += ' -fmageec-database=' + database_path
+        wrapper_flags += ' -fmageec-features=' + features_path
+        wrapper_flags += ' -fmageec-out=' + compilations_path
 
-        new_cflags = wrapper_cflags + ' ' + cflags + ' ' + config
+        new_flags = wrapper_flags + ' ' + flags + ' ' + config
 
         res = mageec.build(src_dir=src_dir,
                            build_dir=run_build_dir,
                            install_dir=run_install_dir,
                            build_system=build_system,
                            cc=gcc_wrapper,
-                           cflags=new_cflags,
+                           fort=gfortran_wrapper,
+                           flags=new_flags,
                            jobs=jobs)
         # just ignore failed builds
         if not res:
@@ -223,7 +227,9 @@ def main():
     parser.add_argument('--install-dir', nargs=1, required=True,
         help='Install directory')
     parser.add_argument('--cc', nargs=1, required=True,
-        help='Command to use to compile the source')
+        help='Command to use to compile C source')
+    parser.add_argument('--fort', nargs=1, required=True,
+        help='Command to use to compile Fortran source')
     parser.add_argument('--database', nargs=1, required=True,
         help='mageec database to store generated compilations in')
     parser.add_argument('--features', nargs=1, required=True,
@@ -239,13 +245,13 @@ def main():
     parser.add_argument('--build-system', nargs=1, required=False,
         help='Build system to be used to build the source. May be \'cmake\', '
              '\'configure\', or a script to be used to build the source')
-    parser.add_argument('--cflags', nargs=1, required=False,
+    parser.add_argument('--flags', nargs=1, required=False,
         help='Common arguments to be used when building')
     parser.add_argument('--jobs', nargs=1, required=False,
         help='Number of jobs to run when building')
     parser.set_defaults(debug=False,
                         build_system=[None],
-                        cflags=[''],
+                        flags=[''],
                         jobs=[1])
 
     args = parser.parse_args(sys.argv[1:])
@@ -253,6 +259,7 @@ def main():
     build_dir       = os.path.abspath(args.build_dir[0])
     install_dir     = os.path.abspath(args.install_dir[0])
     cc              = args.cc[0]
+    fort            = args.fort[0]
     database_path   = os.path.abspath(args.database[0])
     features_path   = os.path.abspath(args.features[0])
     num_configs     = int(args.num_configs[0])
@@ -275,8 +282,14 @@ def main():
     if not mageec.is_command_on_path(cc):
         print ('-- Compiler \'' + cc + '\' is not on the path')
         return -1
+    if not mageec.is_command_on_path(fort):
+        print ('-- Compiler \'' + fort + '\' is not on the path')
+        return -1
     if not mageec.is_command_on_path(gcc_wrapper):
         print ('-- mageec gcc wrapper \'' + gcc_wrapper + '\' is not on the path')
+        return -1
+    if not mageec.is_command_on_path(gfortran_wrapper):
+        print ('-- mageec gfortran wrapper \'' + gfortran_wrapper + '\' is not on the path')
         return -1
 
     if num_configs <= 0:
@@ -285,7 +298,7 @@ def main():
 
     debug        = args.debug
     build_system = args.build_system[0]
-    cflags       = args.cflags[0]
+    flags        = args.flags[0]
     jobs         = int(args.jobs[0])
     if jobs < 1:
         print ('-- Number of jobs must be a positive integer')
@@ -296,7 +309,8 @@ def main():
                                   install_dir=install_dir,
                                   build_system=build_system,
                                   cc=cc,
-                                  cflags=cflags,
+                                  fort=fort,
+                                  flags=flags,
                                   jobs=jobs,
                                   database_path=database_path,
                                   features_path=features_path,

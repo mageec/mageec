@@ -89,14 +89,13 @@ def get_executable_src_files(exec_path):
                 if attr.name == 'DW_AT_name':
                     # Ensure that the source path in the executable is an
                     # absolute path
-                    cwd = os.getcwd()
-                    exec_dir = os.path.dirname(exec_path)
-                    os.chdir(exec_dir)
+                    with mageec.preserve_cwd():
+                        exec_dir = os.path.dirname(exec_path)
+                        os.chdir(exec_dir)
 
-                    src_path = attr.value
-                    src_path = os.path.abspath(src_path)
-                    os.chdir(cwd)
-                    exec_src_paths.append(src_path.decode())
+                        src_path = attr.value
+                        src_path = os.path.abspath(src_path)
+                        exec_src_paths.append(src_path.decode())
     return exec_src_paths
 
 
