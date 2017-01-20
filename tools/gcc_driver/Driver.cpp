@@ -1116,6 +1116,7 @@ static void printHelp() {
 "  -fmageec-framework-version  Print the version of the MAGEEC framework\n"
 "  -fmageec-debug              Enable debug output\n"
 "  -fmageec-gcc=<command>      Command to invoke gcc\n"
+"  -fmageec-gfortran=<command> Command to invoke gfortran\n"
 "  -fmageec-mode=<mode>        Mode of the driver, valid values are\n"
 "                              gather and optimize\n"
 "  -fmageec-database=<file>    Database to record to\n"
@@ -1131,6 +1132,8 @@ int main(int argc, const char *argv[]) {
 
   // The gcc command to use
   std::string gcc_command;
+  // The gfortran command to use
+  std::string gfortran_command;
   // The database to gather into, or use when optimizing
   std::string db_str;
   // File holding the features for input programs
@@ -1150,6 +1153,7 @@ int main(int argc, const char *argv[]) {
   bool with_framework_version = false;
   bool with_debug             = false;
   bool with_gcc_command       = false;
+  bool with_gfortran_command  = false;
   bool with_db                = false;
   bool with_features          = false;
   bool with_out               = false;
@@ -1158,12 +1162,12 @@ int main(int argc, const char *argv[]) {
 
   // Handle arguments controlling mageec, accumulate the arguments which
   // aren't controlling this driver
-  std::vector<std::string> command_args;
+  std::vector<std::string> cmd_args;
   for (int i = 0; i < argc; ++i) {
     std::string arg = argv[i];
 
     if (arg.compare(0, strlen("-fmageec-"), "-fmageec-") != 0) {
-      command_args.push_back(arg);
+      cmd_args.push_back(arg);
       continue;
     }
     arg = std::string(arg.begin() + strlen("-fmageec-"), arg.end());
@@ -1192,6 +1196,14 @@ int main(int argc, const char *argv[]) {
         return -1;
       }
       with_gcc_command = true;
+    } else if (arg.compare(0, strlen("gfortran="), "gfortran=") == 0) {
+      gfortran_command =
+          std::string(arg.begin() + strlen("gfortran="), arg.end());
+      if (gfortran_command == "") {
+        MAGEEC_ERR("No gfortran command provided");
+        return -1;
+      }
+      with_gfortran_command = true;
     } else if (arg.compare(0, strlen("mode="), "mode=") == 0) {
       std::string mode_str(arg.begin() + strlen("mode="), arg.end());
 
@@ -1356,15 +1368,15 @@ int main(int argc, const char *argv[]) {
   // Arguments controlling mageec have been handled, now parse the underlying
   // gcc command line to find the input files and optimization flags used.
   bool to_obj = false;
-  for (unsigned i = 0; i < command_args.size(); ++i) {
-    if (command_args[i] == "-c")
+  for (unsigned i = 0; i < cmd_args.size(); ++i) {
+    if (cmd_args[i] == "-c")
       to_obj = true;
 
     // Check if the output file has a .o extension
-    if (command_args[i] == "-o") {
+    if (cmd_args[i] == "-o") {
       ++i;
-      if (i < command_args.size()) {
-        auto arg = command_args[i];
+      if (i < cmd_args.size()) {
+        auto arg = cmd_args[i];
         if (arg.size() > strlen(".o")) {
           if (arg.compare(arg.size() - strlen(".o"), strlen(".o"), ".o") == 0)
             to_obj = true;
@@ -1372,31 +1384,46 @@ int main(int argc, const char *argv[]) {
       }
     }
     // A subsequent -S or -E override a preceding -c flag
-    if (command_args[i] == "-S" || command_args[i] == "-E") {
+    if (cmd_args[i] == "-S" || cmd_args[i] == "-E") {
       to_obj = false;
     }
   }
 
-  // Replace the original command word with the command specified through the
-  // -mageec-gcc option, or with gcc otherwise
-  if (with_gcc_command) {
-    command_args[0] = gcc_command;
-  } else {
-    command_args[0] = "gcc";
+  // Replace the command word depending on the underlying wrapper being used.
+  //
+  // For the 'mageec-gcc' wrapper, use the argument from '-fmageec-gcc', and
+  // for the 'mageec-gfortran' wrapper, use the '-fmageec-gfortran' argument
+  if (cmd_args[0] == "mageec-gcc") {
+    if (with_gcc_command)
+      cmd_args[0] = gcc_command;
+    else
+      cmd_args[0] = "gcc";
+  }
+  if (cmd_args[0] == "mageec-gfortran") {
+    if (with_gfortran_command)
+      cmd_args[0] = gfortran_command;
+    else
+      cmd_args[0] = "gfortran";
   }
 
   // If we are not in 'gather' or 'optimize' modes, or if we're not compiling
   // to an object file, then just run the original command
   if (!to_obj || (mode == DriverMode::kNone)) {
     std::stringstream command;
-    for (unsigned i = 0; i < command_args.size(); ++i) {
+    for (unsigned i = 0; i < cmd_args.size(); ++i) {
       if (i == 0) {
-        command << command_args[i];
+        command << cmd_args[i];
       } else {
-        command << " " << command_args[i];
+        command << " " << cmd_args[i];
       }
     }
-
+    if (!to_obj && with_debug) {
+      MAGEEC_WARN("MAGEEC driver called, but not compiling to an object file, "
+                  "calling the original command");
+    }
+    if (with_debug) {
+      MAGEEC_DEBUG("Executing command: " + command.str());
+    }
     // FIXME: Windows?
     return system(command.str().c_str());
   }
@@ -1411,6 +1438,62 @@ int main(int argc, const char *argv[]) {
   // Mapping source files to feature groups and parameter sets
   std::map<std::string, mageec::ParameterSetID> input_file_params;
   std::map<std::string, FileFeatureIDs>         input_file_features;
+
+  // Find the input files and strip them from the command line (they will be
+  // added back individually later).
+  //
+  // If an input file has an extension that we can't handle, then warn, but
+  // pass it on to be compiled anyway.
+  //
+  // It's is assumed that anything without a preceding '-' is a filename,
+  // excluding the command word, and the filename after the '-o' option.
+  std::vector<std::string> new_cmd_args = {cmd_args[0]};
+  auto arg_iter = std::next(cmd_args.begin());
+
+  for (; arg_iter != cmd_args.end(); ++arg_iter) {
+    auto arg = *arg_iter;
+
+    // skip over the file after a -o argument
+    if (!arg.compare(arg.size() - strlen("-o"), strlen("-o"), "-o")) {
+      new_cmd_args.push_back(arg);
+      if (std::next(arg_iter) != cmd_args.end()) {
+        arg = *(++arg_iter);
+        new_cmd_args.push_back(arg);
+      }
+      continue;
+    }
+    // ignore any other arguments beginning with '-', since they can't be
+    // filenames (hopefully).
+    if (arg[0] == '-') {
+      new_cmd_args.push_back(arg);
+      continue;
+    }
+
+    // Check the extension to see if it's a filename that can be handled
+    // by the framework. If not, pass it on anyway, but warn in case it's
+    // a case we haven't handled.
+    const char *input_file_exts[] = {
+      // C input file extensions
+      ".c", ".i",
+      // C++ input file extensions
+      ".ii", ".cc", ".cp", ".cxx", ".cpp", ".CPP", ".c++", ".C",
+      // Fortran input file extensions
+      ".f", ".for", ".ftn", ".F", ".FOR", ".fpp", ".FPP", ".FTN", ".f90",
+      ".f95", ".f03", ".f08", ".F90", ".F95", ".F03", ".F08",
+      // Assembly code
+      ".s", ".S", ".sx"
+    };
+    bool found_ext = false;
+    for (auto ext : input_file_exts)
+      found_ext |= arg.compare(arg.size() - strlen(ext), strlen(ext), ext) == 0;
+    if (!found_ext)
+      MAGEEC_WARN("Unrecognized extension on input file '" + arg + "'");
+
+    if (with_debug)
+      MAGEEC_DEBUG("Found input file '" + arg + "'");
+    input_files.push_back(arg);
+  };
+  cmd_args = new_cmd_args;
 
   // Load the database
   assert((mode == DriverMode::kOptimize) || (mode == DriverMode::kGather));
@@ -1429,44 +1512,17 @@ int main(int argc, const char *argv[]) {
   }
   input_file_features = feature_groups.get();
 
-  // Find the input files and strip them from the command line (they will be
-  // added back individually later).
-  //
-  // It is assumed that the input files appear right at the end of the command
-  // but this may not always be the case.
-  while (command_args.size()) {
-    auto arg = command_args.back();
-
-    // Check the extension of the argument
-    bool is_input = false;
-    is_input |= (arg.size() > strlen(".c")) &&
-                !arg.compare(arg.size() - strlen(".c"), strlen(".c"), ".c");
-    is_input |= (arg.size() > strlen(".C")) &&
-                !arg.compare(arg.size() - strlen(".C"), strlen(".C"), ".C");
-    is_input |= (arg.size() > strlen(".s")) &&
-                !arg.compare(arg.size() - strlen(".s"), strlen(".s"), ".s");
-    is_input |= (arg.size() > strlen(".S")) &&
-                !arg.compare(arg.size() - strlen(".S"), strlen(".S"), ".S");
-
-    if (is_input) {
-      input_files.push_back(arg);
-      command_args.pop_back();
-    } else {
-      break;
-    }
-  }
-
   // Extract the parameters that were provided to the compiler on the command
   // line. Use this to build up a parameter set.
   std::set<unsigned> params;
 
   // A copy of the command with the optimization flags stripped out
-  std::vector<std::string> stripped_command_args;
+  std::vector<std::string> stripped_cmd_args;
 
   // First set the parameter set according to the basic optimization level
   // The rightmost optimization flag takes precedence.
   std::string opt_level = "-O0";
-  for (auto arg : command_args) {
+  for (auto arg : cmd_args) {
     if (arg == "-O0" || arg == "-O"  || arg == "-O1" || arg == "-O2" ||
         arg == "-O3" || arg == "-O4" || arg == "-Os" || arg == "-Ofast") {
       opt_level = arg;
@@ -1500,7 +1556,7 @@ int main(int argc, const char *argv[]) {
   //
   // Also build a stripped command, with all of the recognize optimization flags
   // omitted.
-  for (auto arg : command_args) {
+  for (auto arg : cmd_args) {
     if (arg == "-O0" || arg == "-O"  || arg == "-O1" || arg == "-O2" ||
         arg == "-O3" || arg == "-O4" || arg == "-Os" || arg == "-Ofast") {
       continue;
@@ -1528,7 +1584,7 @@ int main(int argc, const char *argv[]) {
     }
     // If this isn't an -O flag, or a parameter flag we recognize, add it to
     // the stripped command arguments
-    stripped_command_args.push_back(arg);
+    stripped_cmd_args.push_back(arg);
   }
 
   // When gathering, convert the set of input parameters into a mageec
@@ -1548,7 +1604,7 @@ int main(int argc, const char *argv[]) {
 
     // Build the command to compile each file in turn
     for (auto file : input_files) {
-      std::vector<std::string> file_cmd = command_args;
+      std::vector<std::string> file_cmd = cmd_args;
       file_cmd.push_back(file);
 
       // Add to the mapping from input files to commands
@@ -1587,7 +1643,7 @@ int main(int argc, const char *argv[]) {
     for (auto file : input_files) {
       auto file_feature_ids = input_file_features.find(file);
       if (file_feature_ids == input_file_features.end()) {
-        std::vector<std::string> file_cmd = command_args;
+        std::vector<std::string> file_cmd = cmd_args;
         file_cmd.push_back(file);
         input_file_commands[file] = file_cmd;
         continue;
@@ -1634,7 +1690,7 @@ int main(int argc, const char *argv[]) {
 
       // Build the command line for this file based on the 'stripped' command
       // line derived early. Add in optimization flags for this configuration.
-      auto cmd_iter = stripped_command_args.begin();
+      auto cmd_iter = stripped_cmd_args.begin();
 
       // Add the original command word
       std::vector<std::string> file_cmd;
@@ -1655,7 +1711,7 @@ int main(int argc, const char *argv[]) {
         }
       }
       // Add the remaining flags from the original command
-      for (; cmd_iter != stripped_command_args.end(); ++cmd_iter)
+      for (; cmd_iter != stripped_cmd_args.end(); ++cmd_iter)
         file_cmd.push_back(*cmd_iter);
       // Add the input filename
       file_cmd.push_back(file);

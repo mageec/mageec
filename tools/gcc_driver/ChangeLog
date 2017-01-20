@@ -1,5 +1,17 @@
 2017-01-20  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Add a symlink from mageec-gcc to
+	mageec-fortran at install time.
+	* Driver.cpp: Add the ability to specific a command to invoke
+	gfortran from the GCC wrapper. When the driver is used, it will
+	use the provided fortran compiler or c compiler depending on
+	whether the driver is called through mageec-gcc or
+	mageec-gfortran.
+	(main): Refactor the argument handling to cope with fortran file,
+	and input file provided mid-way through the command line string.
+
+2017-01-20  Edward Jones  <ed.jones@embecosm.com>
+
 	* Driver.cpp: Remove some unnecessary flags.
 	* Parameters.h: Likewise.
 
