@@ -45,13 +45,11 @@ enum : unsigned {
   kBTRBBExclusive,                 // -fbtr-bb-exclusive
   kCallerSaves,                    // -fcaller-saves
   kCombineStackAdjustments,        // -fcombine-stack-adjustments
-  kCommon,                         // -fcommon
   kCompareElim,                    // -fcompare-elim
   kConserveStack,                  // -fconserve-stack
   kCPropRegister,                  // -fcprop-registers
   kCrossJumping,                   // -fcrossjumping
   kCSEFollowJumps,                 // -fcse-follow-jumps
-  kDataSections,                   // -fdata-sections
   kDCE,                            // -fdce
   kDeferPop,                       // -fdefer-pop
   kDeleteNullPointerChecks,        // -fdelete-null-pointer-checks
@@ -122,7 +120,6 @@ enum : unsigned {
   kShrinkWrap,                     // -fshrink-wrap
   kSplitIVsInUnroller,             // -fsplit-ivs-in-unroller
   kSplitWideTypes,                 // -fsplit-wide-types
-  kStrictAliasing,                 // -fstrict-aliasing
   kThreadJumps,                    // -fthread-jumps
   kTopLevelReorder,                // -ftoplevel-reorder
   kTreeBitCCP,                     // -ftree-bit-ccp

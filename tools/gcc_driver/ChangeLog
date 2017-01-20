@@ -1,3 +1,8 @@
+2017-01-20  Edward Jones  <ed.jones@embecosm.com>
+
+	* Driver.cpp: Remove some unnecessary flags.
+	* Parameters.h: Likewise.
+
 2017-01-10  Edward Jones  <ed.jones@embecosm.com>
 
 	* Driver.cpp: Compare feature file entries on the name of the
