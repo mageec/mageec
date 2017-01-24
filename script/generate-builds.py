@@ -191,7 +191,7 @@ def generate_configurations(src_dir, build_dir, install_dir, build_system,
         compilations_path = os.path.join(run_install_dir, 'compilations.csv')
 
         wrapper_flags = '-fmageec-gcc=' + cc
-        wrapper_flags = ' -fmageec-gfortran=' + fort
+        wrapper_flags += ' -fmageec-gfortran=' + fort
         if debug:
             wrapper_flags += ' -fmageec-debug'
         wrapper_flags += ' -fmageec-mode=gather'

@@ -1,5 +1,10 @@
 2017-01-24  Edward Jones  <ed.jones@embecosm.com>
 
+	* script/generate-builds.py: Fix typo causing -fmageec-gfortran to
+	not be passed to the builder.
+
+2017-01-24  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Util.h (getFullPath getBaseName): Added functions.
 	* lib/Util.cpp: Likewise.
 
