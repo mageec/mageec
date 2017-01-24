@@ -1,5 +1,13 @@
 2017-01-24  Edward Jones  <ed.jones@embecosm.com>
 
+	* script/measure-code-size.py (get_executable_src_files): Always
+	extract an absolute path for each source file in the executable.
+	(measure_executable): Do not add modules and functions of size 0
+	to the results.
+	(main): Correct an inverted check for errors.
+
+2017-01-24  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/Database.cpp (Database::addResults): Check that a result
 	is for a valid CompilationID before adding it.
 

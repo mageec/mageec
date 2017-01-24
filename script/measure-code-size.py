@@ -85,17 +85,24 @@ def get_executable_src_files(exec_path):
         dwarf_info = elf_file.get_dwarf_info()
         for CU in dwarf_info.iter_CUs():
             DIE = CU.get_top_DIE()
+
+            name = ''
+            comp_dir = ''
             for attr in itervalues(DIE.attributes):
                 if attr.name == 'DW_AT_name':
-                    # Ensure that the source path in the executable is an
-                    # absolute path
-                    with mageec.preserve_cwd():
-                        exec_dir = os.path.dirname(exec_path)
-                        os.chdir(exec_dir)
+                    name = attr.value
+                if attr.name == 'DW_AT_comp_dir':
+                    comp_dir = attr.value
 
-                        src_path = attr.value
-                        src_path = os.path.abspath(src_path)
-                        exec_src_paths.append(src_path.decode())
+            # If the source path in the executable is not an absolute
+            # path then use the DW_AT_comp_dir attribute to get the
+            # build directory to make it absolute
+            src_path = name
+            if not os.path.isabs(name):
+                assert (comp_dir != '')
+                src_path = os.path.join(comp_dir, name)
+                assert(os.path.isabs(src_path))
+            exec_src_paths.append(src_path.decode())
     return exec_src_paths
 
 
@@ -156,11 +163,14 @@ def measure_executable(exec_path, compilation_ids_path, debug, results_path):
             if func_name in symbol_sizes:
                 func_size = symbol_sizes[func_name]
 
-                # Store the compilation id and its size
-                if not func_id in compilation_sizes:
-                    compilation_sizes[func_id] = [func_size]
+                if func_size == 0:
+                    print ('-- Size of function \'' + func_name + '\' is 0... Ignoring')
                 else:
-                    compilation_sizes[func_id].append(func_size)
+                    # Store the compilation id and its size
+                    if not func_id in compilation_sizes:
+                        compilation_sizes[func_id] = [func_size]
+                    else:
+                        compilation_sizes[func_id].append(func_size)
 
                 # Accumulate module size too
                 module_size += func_size
@@ -173,11 +183,14 @@ def measure_executable(exec_path, compilation_ids_path, debug, results_path):
 
         # Now we have a module size too, so we can store it into the results
         if module:
-            _, module_id = module
-            if not module_id in compilation_sizes:
-                compilation_sizes[module_id] = [module_size]
+            if module_size == 0:
+                print ('-- Size of module \'' + module[0] + '\' is 0... Ignoring')
             else:
-                compilation_sizes[module_id].append(module_size)
+                _, module_id = module
+                if not module_id in compilation_sizes:
+                    compilation_sizes[module_id] = [module_size]
+                else:
+                    compilation_sizes[module_id].append(module_size)
 
     with open(results_path, 'a') as results_file:
         for compilation_id in compilation_sizes:
@@ -247,7 +260,7 @@ def main():
                                  compilation_ids_path=compilation_ids,
                                  debug=debug,
                                  results_path=results_path)
-        if not res:
+        if res:
             print ('-- Failed to measure the size of \'' + exec_path + '\'')
     return 0
 
