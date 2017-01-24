@@ -1599,16 +1599,19 @@ int main(int argc, const char *argv[]) {
                                                   parameter_to_flag.at(i)));
     }
     mageec::ParameterSetID param_set_id = db->newParameterSet(param_set);
-    for (auto file : input_files)
-      input_file_params[file] = param_set_id;
+    for (auto file_arg : input_files) {
+      auto input_filename = mageec::util::getFullPath(file_arg);
+      input_file_params[input_filename] = param_set_id;
+    }
 
     // Build the command to compile each file in turn
-    for (auto file : input_files) {
+    for (auto file_arg : input_files) {
+      auto input_filename = mageec::util::getFullPath(file_arg);
       std::vector<std::string> file_cmd = cmd_args;
-      file_cmd.push_back(file);
+      file_cmd.push_back(file_arg);
 
       // Add to the mapping from input files to commands
-      input_file_commands[file] = file_cmd;
+      input_file_commands[input_filename] = file_cmd;
     }
   } else if (mode == DriverMode::kOptimize) {
     // Find a selected machine learner trained for the specified metric
@@ -1640,12 +1643,15 @@ int main(int argc, const char *argv[]) {
     // For each input file, use the set of features to generate the flags
     // If there are no features found for a file, then use the original
     // command with the file appended as an input.
-    for (auto file : input_files) {
-      auto file_feature_ids = input_file_features.find(file);
+    for (auto file_arg : input_files) {
+      // The module name is the basename of the file
+      std::string input_filename = mageec::util::getFullPath(file_arg);
+
+      auto file_feature_ids = input_file_features.find(input_filename);
       if (file_feature_ids == input_file_features.end()) {
         std::vector<std::string> file_cmd = cmd_args;
-        file_cmd.push_back(file);
-        input_file_commands[file] = file_cmd;
+        file_cmd.push_back(file_arg);
+        input_file_commands[input_filename] = file_cmd;
         continue;
       }
 
@@ -1714,17 +1720,18 @@ int main(int argc, const char *argv[]) {
       for (; cmd_iter != stripped_cmd_args.end(); ++cmd_iter)
         file_cmd.push_back(*cmd_iter);
       // Add the input filename
-      file_cmd.push_back(file);
+      file_cmd.push_back(file_arg);
 
       // Add the mapping from file to parameter set, and from file to command
-      input_file_params[file] = param_set_id;
-      input_file_commands[file] = file_cmd;
+      input_file_params[input_filename] = param_set_id;
+      input_file_commands[input_filename] = file_cmd;
     }
   }
 
   std::map<std::string, std::string> file_commands;
-  for (auto file : input_files) {
-    auto args = input_file_commands[file];
+  for (auto file_arg : input_files) {
+    std::string input_filename = mageec::util::getFullPath(file_arg);
+    auto args = input_file_commands[input_filename];
 
     std::stringstream command;
     for (unsigned i = 0; i < args.size(); ++i) {
@@ -1734,7 +1741,7 @@ int main(int argc, const char *argv[]) {
         command << " " << args[i];
       }
     }
-    file_commands[file] = command.str();
+    file_commands[input_filename] = command.str();
   }
 
   // Compile each input file in turn, if any fail, error out early
@@ -1756,9 +1763,10 @@ int main(int argc, const char *argv[]) {
                "may not have sufficient permissions to read and write it");
     return -1;
   }
-  for (auto file : input_files) {
-    auto file_feature_ids = input_file_features.find(file);
-    auto parameter_set_id = input_file_params.find(file);
+  for (auto file_arg : input_files) {
+    std::string input_filename = mageec::util::getFullPath(file_arg);
+    auto file_feature_ids = input_file_features.find(input_filename);
+    auto parameter_set_id = input_file_params.find(input_filename);
 
     // If there were no features for this file, then parameters would not have
     // been derived and there will be no compilation id
@@ -1775,26 +1783,27 @@ int main(int argc, const char *argv[]) {
                                                  module_entry.id,
                                                  mageec::FeatureClass::kModule,
                                                  parameter_set_id->second,
-                                                 file_commands[file],
+                                                 file_commands[input_filename],
                                                  nullptr);
 
     // TODO: Avoid static_cast here
     uint64_t tmp = static_cast<uint64_t>(module_compilation);
-    out_file << file << ",module," << module_entry.name
-                     << ",compilation," << tmp << "\n";
+    out_file << input_filename << ",module," << module_entry.name
+                               << ",compilation," << tmp << "\n";
 
     // Generate a compilation id for each of the functions in the module.
     for (auto function_entry : file_feature_ids->second.functions) {
       auto function_compilation =
           db->newCompilation(function_entry.name, "function",
                              function_entry.id, mageec::FeatureClass::kFunction,
-                             parameter_set_id->second, file_commands[file],
+                             parameter_set_id->second,
+                             file_commands[input_filename],
                              module_compilation);
 
       // TODO: Avoid static cast here
       tmp = static_cast<uint64_t>(function_compilation);
-      out_file << file << ",function," << function_entry.name
-                       << ",compilation," << tmp << "\n";
+      out_file << input_filename << ",function," << function_entry.name
+                                 << ",compilation," << tmp << "\n";
     }
   }
   return 0;
