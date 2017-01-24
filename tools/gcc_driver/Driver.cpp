@@ -1200,7 +1200,7 @@ int main(int argc, const char *argv[]) {
         return -1;
       }
       with_gcc_command = true;
-    } else if (arg.compare(0, strlen("g++=") == 0) {
+    } else if (arg.compare(0, strlen("g++="), "g++=") == 0) {
       gxx_command = std::string(arg.begin() + strlen("g++="), arg.end());
       if (gcc_command == "") {
         MAGEEC_ERR("No gcc command provided");
