@@ -1,5 +1,14 @@
 2017-01-24  Edward Jones  <ed.jones@embecosm.com>
 
+	* CMakeLists.txt: Add a symlink from mageec-gcc to mageec-g++ at
+	install time.
+	* Driver.cpp: Add the ability to specify a command to invokve g++
+	from the GCC wrapper. Depending on whether the mageec-gcc,
+	mageec-gfortran or mageec-g++ is called this will use the
+	corresponding command -fmageec-g?? command from the command line.
+
+2017-01-24  Edward Jones  <ed.jones@embecosm.com>
+
 	* Driver.cpp: Convert input filenames to be absolute filenames for
 	internal use.
 

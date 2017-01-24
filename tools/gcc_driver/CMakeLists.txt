@@ -122,8 +122,14 @@ install(TARGETS gcc_driver
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
 
-# FIXME: Linux specific. Create a symlink from mageec-gcc to mageec-gfortran
+# FIXME: Linux specific. Create a symlink from mageec-gcc to
+# mageec-gfortran and mageec-g++
 install(CODE
         "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
                          ${CMAKE_INSTALL_PREFIX}/bin/mageec-gcc \
                          ${CMAKE_INSTALL_PREFIX}/bin/mageec-gfortran)")
+install(CODE
+        "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-gcc \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-g++)")
+       
