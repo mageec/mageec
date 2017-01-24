@@ -1,3 +1,8 @@
+2017-01-24  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Util.h (getFullPath getBaseName): Added functions.
+	* lib/Util.cpp: Likewise.
+
 2017-01-20  Edward Jones  <ed.jones@embecosm.com>
 
 	* script/feature-extract.py: Add --fort argument, rename --cflags

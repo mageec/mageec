@@ -104,5 +104,28 @@ uint64_t crc64(uint8_t *message, unsigned len) {
   return ~crc;
 }
 
+#ifdef __unix__
+  extern "C" {
+    #include <linux/limits.h>
+    #include <string.h>
+  };
+#else
+  #error Only Linux is supported
+#endif
+
+std::string getFullPath(std::string filename) {
+  char path[PATH_MAX + 1];
+  char *res = realpath(filename.c_str(), path);
+  assert(res != nullptr);
+  return path;
+}
+
+std::string getBaseName(std::string filename) {
+  char name[filename.size() + 1];
+  strcpy(name, filename.c_str());
+  char *res = basename(name);
+  return res;
+}
+
 } // end of namespace util
 } // end of namespace mageec

@@ -191,6 +191,12 @@ void write64LE(std::vector<uint8_t> &buf, uint64_t value);
 /// \brief Calculate a CRC64 across a blob
 uint64_t crc64(uint8_t *message, unsigned len);
 
+/// \brief Get the full (absolute) path for a given file
+std::string getFullPath(std::string filename);
+
+/// \brief Get the basename of a file for a given path
+std::string getBaseName(std::string filename);
+
 } // end of namespace util
 } // end of namespace mageec
 
