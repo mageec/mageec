@@ -1,3 +1,8 @@
+2017-01-24  Edward Jones  <ed.jones@embecosm.com>
+
+	* Plugin.cpp: In the output features, use an absolute path for the
+	filename and the basename of the module as the module name.
+
 2017-01-16  Edward Jones  <ed.jones@embecosm.com>
 
 	* FeatureExtract.cpp: Fix to work with older GCC versions where

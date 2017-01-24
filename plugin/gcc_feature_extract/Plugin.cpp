@@ -454,7 +454,10 @@ void featureExtractFinishUnit(void *, void *) {
 
   // Extract module features based on the function features, convert to a
   // mageec feature set
-  std::string module_name = main_input_filename;
+  std::string src_filename =
+      mageec::util::getFullPath(main_input_filename);
+  std::string module_name =
+      mageec::util::getBaseName(main_input_filename);
 
   std::unique_ptr<ModuleFeatures> module_features =
       extractModuleFeatures(func_features);
@@ -464,7 +467,7 @@ void featureExtractFinishUnit(void *, void *) {
   mageec::FeatureSetID module_feature_set_id =
       getContext().getDatabase().newFeatureSet(*module_feature_set);
 
-  getContext().getOutFile() << main_input_filename << ",module,"
+  getContext().getOutFile() << src_filename << ",module,"
                             << module_name << ",features,"
                             << (uint64_t)module_feature_set_id
                             << ",feature_class,"
@@ -479,7 +482,7 @@ void featureExtractFinishUnit(void *, void *) {
     mageec::FeatureSetID func_feature_set_id =
         getContext().getDatabase().newFeatureSet(*func_feature_set);
 
-    getContext().getOutFile() << main_input_filename << ",function,"
+    getContext().getOutFile() << src_filename << ",function,"
                               << features.first << ",features,"
                               << (uint64_t)func_feature_set_id
                               << ",feature_class,"
