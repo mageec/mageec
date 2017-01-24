@@ -706,23 +706,41 @@ addResults(std::map<std::pair<CompilationID, std::string>, uint64_t> results) {
   // original value.
   SQLQuery insert_result =
       SQLQueryBuilder(*m_db)
-      << "INSERT OR REPLACE INTO RESULT(compilation_id, metric, result) "
+      << "INSERT OR REPLACE INTO Result(compilation_id, metric, result) "
          "VALUES(" << SQLType::kInteger << ", " << SQLType::kText << ", "
                    << SQLType::kInteger << ")";
+
+  SQLQuery get_compilation_ids(
+      *m_db, "SELECT compilation_id FROM Compilation");
+
+  // Get all compilation ids first, so that we don't try and insert a
+  // result for a compilation which doesn't exist
+  std::set<int64_t> compilation_ids;
+  for (auto compilation_id_iter = get_compilation_ids.exec();
+       !compilation_id_iter.done();
+       compilation_id_iter = compilation_id_iter.next()) {
+    assert(compilation_id_iter.numColumns() == 1);
+    uint64_t id = compilation_id_iter.getInteger(0);
+    compilation_ids.insert(id);
+  }
 
   // All results in a single transaction
   SQLTransaction transaction(m_db);
 
-  // FIXME: Adding a result with an invalid compilation_id will violate
-  // the foreign key constraint on the results table and cause a crash. The
-  // provided compilation_id needs to be sanitized first.
   for (const auto &res : results) {
-    auto compilation_id = res.first.first;
+    auto id = res.first.first;
     auto metric = res.first.second;
     auto value = res.second;
 
+    // Check that this is a result for a valid compilation id, else we will
+    // violate a foreign key constraint when adding it to the database
+    if (compilation_ids.count(static_cast<int64_t>(id)) != 1) {
+      MAGEEC_DEBUG("Result for an invalid compilation id... Ignoring...");
+      continue;
+    }
+
     insert_result.clearAllBindings();
-    insert_result << static_cast<int64_t>(compilation_id) << metric
+    insert_result << static_cast<int64_t>(id) << metric
                   << static_cast<int64_t>(value);
     insert_result.exec().assertDone();
   }

@@ -1,5 +1,10 @@
 2017-01-24  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/Database.cpp (Database::addResults): Check that a result
+	is for a valid CompilationID before adding it.
+
+2017-01-24  Edward Jones  <ed.jones@embecosm.com>
+
 	* script/feature-extract.py: Add --cxx argument.
 	* script/generate-builds.py: Likewise.
 	* script/mageec.py: Likewise.
