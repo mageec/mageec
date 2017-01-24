@@ -19,6 +19,8 @@ def main():
         help='Install directory')
     parser.add_argument('--cc', nargs=1, required=True,
         help='Command to use to compile C source')
+    parser.add_argument('--cxx', nargs=1, required=True,
+        help='Command to use to compile C++ source')
     parser.add_argument('--fort', nargs=1, required=True,
         help='Command to use to compile Fortan source')
     parser.add_argument('--database', nargs=1, required=True,
@@ -48,6 +50,7 @@ def main():
     build_dir       = os.path.abspath(args.build_dir[0])
     install_dir     = os.path.abspath(args.install_dir[0])
     cc              = args.cc[0]
+    cxx             = args.cxx[0]
     fort            = args.fort[0]
     database_path   = os.path.abspath(args.database[0])
     mageec_lib_path = os.path.abspath(args.mageec_library_path[0])
@@ -98,6 +101,7 @@ def main():
                                  install_dir=install_dir,
                                  build_system=build_system,
                                  cc=cc,
+                                 cxx=cxx,
                                  fort=fort,
                                  flags=flags,
                                  jobs=jobs,

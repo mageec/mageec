@@ -7,6 +7,7 @@ import sys
 import mageec
 
 gcc_wrapper = 'mageec-gcc'
+gxx_wrapper = 'mageec-g++'
 gfortran_wrapper = 'mageec-gfortran'
 
 gcc_flags = [
@@ -160,14 +161,15 @@ def generate_configs(flags, num_configs, generator):
 
 
 def generate_configurations(src_dir, build_dir, install_dir, build_system,
-                            cc, fort, flags, jobs, database_path, features_path,
-                            num_configs, generator, debug):
+                            cc, cxx, fort, flags, jobs, database_path,
+                            features_path, num_configs, generator, debug):
     assert(os.path.exists(src_dir) and os.path.isabs(src_dir))
     assert(os.path.exists(build_dir) and os.path.isabs(build_dir))
     assert(os.path.exists(install_dir) and os.path.isabs(install_dir))
     assert(os.path.exists(database_path))
     assert(os.path.exists(features_path))
     assert(mageec.is_command_on_path(cc))
+    assert(mageec.is_command_on_path(cxx))
     assert(mageec.is_command_on_path(fort))
     assert(mageec.is_command_on_path(gcc_wrapper))
     assert(num_configs > 0)
@@ -191,6 +193,7 @@ def generate_configurations(src_dir, build_dir, install_dir, build_system,
         compilations_path = os.path.join(run_install_dir, 'compilations.csv')
 
         wrapper_flags = '-fmageec-gcc=' + cc
+        wrapper_flags += ' -fmageec-g++=' + cxx
         wrapper_flags += ' -fmageec-gfortran=' + fort
         if debug:
             wrapper_flags += ' -fmageec-debug'
@@ -206,6 +209,7 @@ def generate_configurations(src_dir, build_dir, install_dir, build_system,
                            install_dir=run_install_dir,
                            build_system=build_system,
                            cc=gcc_wrapper,
+                           cxx=gxx_wrapper,
                            fort=gfortran_wrapper,
                            flags=new_flags,
                            jobs=jobs)
@@ -228,6 +232,8 @@ def main():
         help='Install directory')
     parser.add_argument('--cc', nargs=1, required=True,
         help='Command to use to compile C source')
+    parser.add_argument('--cxx', nargs=1, required=True,
+        help='Command to use to compile C++ source')
     parser.add_argument('--fort', nargs=1, required=True,
         help='Command to use to compile Fortran source')
     parser.add_argument('--database', nargs=1, required=True,
@@ -259,6 +265,7 @@ def main():
     build_dir       = os.path.abspath(args.build_dir[0])
     install_dir     = os.path.abspath(args.install_dir[0])
     cc              = args.cc[0]
+    cxx             = args.cxx[0]
     fort            = args.fort[0]
     database_path   = os.path.abspath(args.database[0])
     features_path   = os.path.abspath(args.features[0])
@@ -282,11 +289,17 @@ def main():
     if not mageec.is_command_on_path(cc):
         print ('-- Compiler \'' + cc + '\' is not on the path')
         return -1
+    if not mageec.is_command_on_path(cxx):
+        print ('-- Compiler \'' + cxx + '\' is not on the path')
+        return -1
     if not mageec.is_command_on_path(fort):
         print ('-- Compiler \'' + fort + '\' is not on the path')
         return -1
     if not mageec.is_command_on_path(gcc_wrapper):
         print ('-- mageec gcc wrapper \'' + gcc_wrapper + '\' is not on the path')
+        return -1
+    if not mageec.is_command_on_path(gxx_wrapper):
+        print ('-- mageec g++ wrapper \'' + gxx_wrapper + '\' is not on the path')
         return -1
     if not mageec.is_command_on_path(gfortran_wrapper):
         print ('-- mageec gfortran wrapper \'' + gfortran_wrapper + '\' is not on the path')
@@ -309,6 +322,7 @@ def main():
                                   install_dir=install_dir,
                                   build_system=build_system,
                                   cc=cc,
+                                  cxx=cxx,
                                   fort=fort,
                                   flags=flags,
                                   jobs=jobs,

@@ -24,12 +24,13 @@ class preserve_cwd():
         os.chdir(self.cwd)
 
 
-def build(src_dir, build_dir, install_dir, build_system, cc, fort, flags,
+def build(src_dir, build_dir, install_dir, build_system, cc, cxx, fort, flags,
           jobs):
     assert(os.path.exists(src_dir) and os.path.isabs(src_dir))
     assert(os.path.exists(build_dir) and os.path.isabs(build_dir))
     assert(os.path.exists(install_dir) and os.path.isabs(install_dir))
     assert(is_command_on_path(cc))
+    assert(is_command_on_path(cxx))
     assert(is_command_on_path(fort))
 
     print ('-- Building source    \'' + src_dir + '\'')
@@ -59,6 +60,7 @@ def build(src_dir, build_dir, install_dir, build_system, cc, fort, flags,
     else:
         print ('-- Configuring using user-specified build script')
 
+    base_dir = os.getcwd()
     with preserve_cwd():
         os.chdir(build_dir)
         if build_system == 'cmake' or build_system == 'configure':
@@ -121,6 +123,7 @@ def build(src_dir, build_dir, install_dir, build_system, cc, fort, flags,
                    '--build-dir', build_dir,
                    '--install-dir', install_dir,
                    '--cc', cc,
+                   '--cxx', cxx,
                    '--fort', fort,
                    '--flags', flags,
                    '--jobs', str(jobs)]
@@ -131,13 +134,14 @@ def build(src_dir, build_dir, install_dir, build_system, cc, fort, flags,
     return True
 
 
-def feature_extract(src_dir, build_dir, install_dir, build_system, cc, fort, 
-                    flags, jobs, database_path, gcc_plugin_path, debug,
+def feature_extract(src_dir, build_dir, install_dir, build_system, cc, cxx,
+                    fort, flags, jobs, database_path, gcc_plugin_path, debug,
                     out_path):
     assert(os.path.exists(src_dir) and os.path.isabs(src_dir))
     assert(os.path.exists(build_dir) and os.path.isabs(build_dir))
     assert(os.path.exists(install_dir) and os.path.isabs(install_dir))
     assert(is_command_on_path(cc))
+    assert(is_command_on_path(cxx))
     assert(is_command_on_path(fort))
     assert(os.path.exists(database_path))
     assert(os.path.exists(gcc_plugin_path))
@@ -157,6 +161,7 @@ def feature_extract(src_dir, build_dir, install_dir, build_system, cc, fort,
                  install_dir=install_dir,
                  build_system=build_system,
                  cc=cc,
+                 cxx=cxx,
                  fort=fort,
                  flags=new_flags,
                  jobs=jobs)
