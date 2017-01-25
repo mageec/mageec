@@ -50,6 +50,7 @@
 
 #if (GCC_VERSION >= 4005) && (GCC_VERSION < 4009)
   #include "gcc-plugin.h"
+  #include "tree.h"
   #include "coretypes.h"
   #include "tree-pass.h"
   // For 4.5 and 4.6 there is an error in tree.h because a structure has
@@ -57,6 +58,7 @@
   #include "gimple.h"
 #elif (GCC_VERSION >= 4009)
   #include "gcc-plugin.h"
+  #include "tree.h"
   #include "basic-block.h"
   #include "tree-pass.h"
   #include "context.h"
@@ -431,8 +433,14 @@ void registerFeatureExtractPass(void) {
                     NULL, &pass);
 }
 
+
+void mangle_decl(const tree decl);
+
 unsigned featureExtractExecute() {
-  std::string func_name = current_function_name();
+  // We need the mangled name of the current function, as this is what
+  // will appear in the final executable
+  tree decl = current_function_decl;
+  std::string func_name(IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl)));
 
   std::unique_ptr<FunctionFeatures> features = extractFunctionFeatures();  
 

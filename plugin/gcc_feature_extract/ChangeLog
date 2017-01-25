@@ -1,3 +1,8 @@
+2017-01-25  Edward Jones  <ed.jones@embecosm.com>
+
+	* Plugin.cpp: Use a mangled name for functions in the feature
+	extractor.
+
 2017-01-24  Edward Jones  <ed.jones@embecosm.com>
 
 	* Plugin.cpp: In the output features, use an absolute path for the
