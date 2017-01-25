@@ -1128,6 +1128,13 @@ static void printHelp() {
 "  -fmageec-metric=<name>      Metric to optimize for\n";
 }
 
+static bool endsWith(std::string str, std::string ending) {
+  if (str.size() >= ending.size())
+    return str.compare(str.size() - ending.size(), ending.size(), ending) == 0;
+  else
+    return false;
+}
+
 int main(int argc, const char *argv[]) {
   DriverMode mode = DriverMode::kNone;
 
@@ -1405,18 +1412,18 @@ int main(int argc, const char *argv[]) {
   // For the 'mageec-gcc' wrapper, use the argument from '-fmageec-gcc', and
   // for 'mageec-gfortran' and 'mageec-g++', use the '-fmageec-gfortran' and
   // '-fmageec-g++' arguments respectively.
-  if (cmd_args[0] == "mageec-gcc") {
+  if (endsWith(cmd_args[0], "mageec-gcc")) {
     if (with_gcc_command)
       cmd_args[0] = gcc_command;
     else
       cmd_args[0] = "gcc";
-  } else if (cmd_args[0] == "mageec-g++") {
+  } else if (endsWith(cmd_args[0], "mageec-g++")) {
     if (with_gxx_command)
       cmd_args[0] = gxx_command;
     else
       cmd_args[0] = "g++";
   } else {
-    assert(cmd_args[0] == "mageec-gfortran");
+    assert(endsWith(cmd_args[0], "mageec-gfortran"));
     if (with_gfortran_command)
       cmd_args[0] = gfortran_command;
     else

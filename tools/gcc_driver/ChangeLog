@@ -1,3 +1,8 @@
+2017-01-25  Edward Jones  <ed.jones@embecosm.com>
+
+	* Driver.cpp (main): Fix check of the command word to handle
+	absolute paths.
+
 2017-01-24  Edward Jones  <ed.jones@embecosm.com>
 
 	* CMakeLists.txt: Add a symlink from mageec-gcc to mageec-g++ at
