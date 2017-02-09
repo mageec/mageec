@@ -1,3 +1,7 @@
+2017-02-09  Edward Jones  <ed.jones@embecosm.com>
+
+	* script/combined-elimination.py: Added file.
+
 2017-01-24  Edward Jones  <ed.jones@embecosm.com>
 
 	* script/measure-code-size.py (get_executable_src_files): Always
