@@ -277,11 +277,55 @@ parseResults(const std::string &result_path) {
     std::string metric_str;
     std::string value_str;
 
-    // read the id
     auto line_it = line.begin();
-    for (; line_it != line.end() && *line_it != ','; line_it++) {
-      id_str.push_back(*line_it);
+
+    // file name string
+    std::string tmp_str;
+    for (; line_it != line.end() && *line_it != ','; line_it++)
+      tmp_str.push_back(*line_it);
+    if (line_it == line.end() || tmp_str.size() == 0) {
+      MAGEEC_ERR("Malformed results file line\n" << line);
+      continue;
     }
+    assert(*line_it == ',');
+    line_it++;
+    // compilation type
+    for (; line_it != line.end() && *line_it != ','; line_it++)
+      tmp_str.push_back(*line_it);
+    if (line_it == line.end() || tmp_str.size() == 0) {
+      MAGEEC_ERR("Malformed results file line\n" << line);
+      continue;
+    }
+    assert(*line_it == ',');
+    line_it++;
+    // compilation name
+    for (; line_it != line.end() && *line_it != ','; line_it++)
+      tmp_str.push_back(*line_it);
+    if (line_it == line.end() || tmp_str.size() == 0) {
+      MAGEEC_ERR("Malformed results file line\n" << line);
+      continue;
+    }
+    assert(*line_it == ',');
+    line_it++;
+
+    // Read the identifier identifying that this is a "result" field
+    // Check that this is a result line
+    std::string type_str;
+    for (; line_it != line.end() && *line_it != ','; line_it++)
+      type_str.push_back(*line_it);
+    if (line_it == line.end() || type_str.size() == 0) {
+      MAGEEC_ERR("Malformed results file line\n" << line);
+      continue;
+    }
+    // If it's not a result line, ignore it
+    if (type_str != "result")
+      continue;
+    assert(*line_it == ',');
+    line_it++;
+
+    // read the compilation id
+    for (; line_it != line.end() && *line_it != ','; line_it++)
+      id_str.push_back(*line_it);
     if (line_it == line.end() || id_str.size() == 0) {
       MAGEEC_ERR("Malformed results file line\n" << line);
       continue;
@@ -289,10 +333,9 @@ parseResults(const std::string &result_path) {
     assert(*line_it == ',');
     line_it++;
 
-    // metric string
-    for (; line_it != line.end() && *line_it != ','; line_it++) {
+    // read the metric string
+    for (; line_it != line.end() && *line_it != ','; line_it++)
       metric_str.push_back(*line_it);
-    }
     if (line_it == line.end() || metric_str.size() == 0) {
       MAGEEC_WARN("Malformed results file line\n" << line);
       continue;
@@ -300,10 +343,9 @@ parseResults(const std::string &result_path) {
     assert(*line_it == ',');
     line_it++;
 
-    // value string
-    for (; line_it != line.end() && *line_it != ','; line_it++) {
+    // read the result value string
+    for (; line_it != line.end() && *line_it != ','; line_it++)
       value_str.push_back(*line_it);
-    }
     if (line_it != line.end() || value_str.size() == 0) {
       // junk on the end of the line
       MAGEEC_WARN("Malformed results file line\n" << line);
@@ -312,7 +354,6 @@ parseResults(const std::string &result_path) {
 
     // Convert each field to its expected type.
     uint64_t tmp;
-
     std::istringstream id_stream(id_str);
     id_stream >> tmp;
     if (id_stream.fail()) {
