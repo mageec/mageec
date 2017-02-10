@@ -1,3 +1,8 @@
+2017-02-10  Edward Jones  <ed.jones@embecosm.com>
+
+	* script/measure-code-size.py: Update result file csv output to
+	include more metadata about the compiled element
+
 2017-02-09  Edward Jones  <ed.jones@embecosm.com>
 
 	* script/combined-elimination.py: Added file.

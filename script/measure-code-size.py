@@ -144,6 +144,8 @@ def measure_executable(exec_path, compilation_ids_path, debug, results_path):
     # For each file referenced in the executable, look for associated
     # compilation ids
     compilation_sizes = {}
+    compilation_metadata = {}
+
     for exec_src_file in exec_src_files:
         if not os.path.exists(exec_src_file):
             print ('-- File referenced in executable \'' + exec_src_file + '\' '
@@ -166,6 +168,9 @@ def measure_executable(exec_path, compilation_ids_path, debug, results_path):
                 if func_size == 0:
                     print ('-- Size of function \'' + func_name + '\' is 0... Ignoring')
                 else:
+                    # Store metadata about the function
+                    compilation_metadata[func_id] = (exec_src_file, 'function', func_name)
+
                     # Store the compilation id and its size
                     if not func_id in compilation_sizes:
                         compilation_sizes[func_id] = [func_size]
@@ -183,10 +188,15 @@ def measure_executable(exec_path, compilation_ids_path, debug, results_path):
 
         # Now we have a module size too, so we can store it into the results
         if module:
+            module_name = module[0]
             if module_size == 0:
-                print ('-- Size of module \'' + module[0] + '\' is 0... Ignoring')
+                print ('-- Size of module \'' + module_name + '\' is 0... Ignoring')
             else:
                 _, module_id = module
+
+                # Store metadata about the module
+                compilation_metadata[module_id] = (exec_src_file, 'module', module_name)
+
                 if not module_id in compilation_sizes:
                     compilation_sizes[module_id] = [module_size]
                 else:
@@ -195,12 +205,18 @@ def measure_executable(exec_path, compilation_ids_path, debug, results_path):
     with open(results_path, 'a') as results_file:
         for compilation_id in compilation_sizes:
             sizes = compilation_sizes[compilation_id]
+            metadata = compilation_metadata[compilation_id]
+
+            src_file = metadata[0]
+            compilation_type = metadata[1]
+            compilation_name = metadata[2]
 
             # It does not make much sense to have multiple results for the
             # same compilation id. We emit duplicate results into the
             # file anyway, and let mageec deal with the problem later.
             for size in sizes:
-                results_file.write(compilation_id + ',size,' + str(size) + '\n')
+                results_file.write(src_file + ',' + compilation_type + ',' + compilation_name + ',result,')
+                results_file.write(str(compilation_id) + ',size,' + str(size) + '\n')
     return 0
 
 
