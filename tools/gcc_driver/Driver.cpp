@@ -1453,15 +1453,7 @@ int main(int argc, const char *argv[]) {
   }
 
   // Names of all of the input files involved in the compilation
-  std::vector<std::string> input_files;
-
-  // Mapping from an input filename, to a command string to compile that file
-  // With the appropriate set of parameters.
-  std::map<std::string, std::vector<std::string>> input_file_commands;
-
-  // Mapping source files to feature groups and parameter sets
-  std::map<std::string, mageec::ParameterSetID> input_file_params;
-  std::map<std::string, FileFeatureIDs>         input_file_features;
+  std::vector<std::string> src_files;
 
   // Find the input files and strip them from the command line (they will be
   // added back individually later).
@@ -1496,7 +1488,7 @@ int main(int argc, const char *argv[]) {
     // Check the extension to see if it's a filename that can be handled
     // by the framework. If not, pass it on anyway, but warn in case it's
     // a case we haven't handled.
-    const char *input_file_exts[] = {
+    const char *src_file_exts[] = {
       // C input file extensions
       ".c", ".i",
       // C++ input file extensions
@@ -1508,14 +1500,14 @@ int main(int argc, const char *argv[]) {
       ".s", ".S", ".sx"
     };
     bool found_ext = false;
-    for (auto ext : input_file_exts)
+    for (auto ext : src_file_exts)
       found_ext |= arg.compare(arg.size() - strlen(ext), strlen(ext), ext) == 0;
     if (!found_ext)
       MAGEEC_WARN("Unrecognized extension on input file '" + arg + "'");
 
     if (with_debug)
       MAGEEC_DEBUG("Found input file '" + arg + "'");
-    input_files.push_back(arg);
+    src_files.push_back(arg);
   };
   cmd_args = new_cmd_args;
 
@@ -1534,11 +1526,10 @@ int main(int argc, const char *argv[]) {
     MAGEEC_ERR("Failed to retrieve feature groups from features file");
     return -1;
   }
-  input_file_features = feature_groups.get();
 
   // Extract the parameters that were provided to the compiler on the command
   // line. Use this to build up a parameter set.
-  std::set<unsigned> params;
+  std::set<unsigned> orig_params;
 
   // A copy of the command with the optimization flags stripped out
   std::vector<std::string> stripped_cmd_args;
@@ -1572,14 +1563,14 @@ int main(int argc, const char *argv[]) {
   for (auto f : flags) {
     auto p = flag_to_parameter.find(f);
     if (p != flag_to_parameter.end())
-      params.insert(p->second);
+      orig_params.insert(p->second);
   }
 
   // Now, toggle individual flags, modifying the base set of flags. The
   // rightmost flag takes precedence.
   //
-  // Also build a stripped command, with all of the recognize optimization flags
-  // omitted.
+  // Also build a stripped command, with all of the recognized optimization
+  // flags omitted.
   for (auto arg : cmd_args) {
     if (arg == "-O0" || arg == "-O"  || arg == "-O1" || arg == "-O2" ||
         arg == "-O3" || arg == "-O4" || arg == "-Os" || arg == "-Ofast") {
@@ -1591,7 +1582,7 @@ int main(int argc, const char *argv[]) {
     // it disables one.
     auto p = flag_to_parameter.find(arg);
     if (p != flag_to_parameter.end()) {
-      params.insert(p->second);
+      orig_params.insert(p->second);
       continue;
     } else {
       if (arg.size() > strlen("-fno-") &&
@@ -1601,7 +1592,7 @@ int main(int argc, const char *argv[]) {
 
         p = flag_to_parameter.find(arg);
         if (p != flag_to_parameter.end()) {
-          params.erase(p->second);
+          orig_params.erase(p->second);
           continue;
         }
       }
@@ -1611,36 +1602,37 @@ int main(int argc, const char *argv[]) {
     stripped_cmd_args.push_back(arg);
   }
 
-  // When gathering, convert the set of input parameters into a mageec
-  // ParameterSet and add it to the database. Use the same parameter set for
-  // every file.
+  auto src_file_feature_set_ids = feature_groups.get();
+  std::map<std::string, std::set<unsigned>> src_file_parameters;
+  std::map<std::string, mageec::ParameterSetID> src_file_parameter_set_ids;
+
   if (mode == DriverMode::kGather) {
+    // When in 'gather' mode, the parameters used for each file are based on
+    // the flags originally provided on the command line
     mageec::ParameterSet param_set;
     for (unsigned i = FlagParameterID::kFIRST_FLAG_PARAMETER;
          i <= FlagParameterID::kLAST_FLAG_PARAMETER; ++i) {
-      param_set.add(
-          std::make_shared<mageec::BoolParameter>(i, params.count(i),
-                                                  parameter_to_flag.at(i)));
+      auto param_flag = parameter_to_flag.at(i);
+      param_set.add(std::make_shared<mageec::BoolParameter>(i,
+                                                            orig_params.count(i),
+                                                            param_flag));
     }
-    mageec::ParameterSetID param_set_id = db->newParameterSet(param_set);
-    for (auto file_arg : input_files) {
-      auto input_filename = mageec::util::getFullPath(file_arg);
-      input_file_params[input_filename] = param_set_id;
-    }
+    // Add the set of parameters to the database
+    auto param_set_id = db->newParameterSet(param_set);
 
-    // Build the command to compile each file in turn
-    for (auto file_arg : input_files) {
-      auto input_filename = mageec::util::getFullPath(file_arg);
-      std::vector<std::string> file_cmd = cmd_args;
-      file_cmd.push_back(file_arg);
-
-      // Add to the mapping from input files to commands
-      input_file_commands[input_filename] = file_cmd;
+    // Use the same parameters for every input file
+    for (auto file_arg : src_files) {
+      auto src_file_path = mageec::util::getFullPath(file_arg);
+      src_file_parameters[src_file_path] = orig_params;
+      src_file_parameter_set_ids[src_file_path] = param_set_id;
     }
-  } else if (mode == DriverMode::kOptimize) {
-    // Find a selected machine learner trained for the specified metric
-    std::vector<mageec::TrainedML> trained_mls =
-        db->getTrainedMachineLearners();
+  } else {
+    // When in 'optimize' mode, the parameters used for each file are based on
+    // flags generated from the features
+    assert(mode == DriverMode::kOptimize);
+
+    // Find the selected machine learner trained for the specified metric
+    auto trained_mls = db->getTrainedMachineLearners();
     mageec::TrainedML *chosen_ml = nullptr;
 
     bool found_ml = false;
@@ -1664,169 +1656,200 @@ int main(int argc, const char *argv[]) {
       return -1;
     }
 
-    // For each input file, use the set of features to generate the flags
-    // If there are no features found for a file, then use the original
-    // command with the file appended as an input.
-    for (auto file_arg : input_files) {
-      // The module name is the basename of the file
-      std::string input_filename = mageec::util::getFullPath(file_arg);
+    // For each input file, use the set of features for the file and the
+    // user-specified machine learner to generate flags for the compilation
+    for (auto file_arg : src_files) {
+      auto src_file_path = mageec::util::getFullPath(file_arg);
 
-      auto file_feature_ids = input_file_features.find(input_filename);
-      if (file_feature_ids == input_file_features.end()) {
-        std::vector<std::string> file_cmd = cmd_args;
-        file_cmd.push_back(file_arg);
-        input_file_commands[input_filename] = file_cmd;
+      // Ignore any files which don't have associated features, these will
+      // be built with the original command line
+      auto feature_set_ids = src_file_feature_set_ids.find(src_file_path);
+      if (feature_set_ids == src_file_feature_set_ids.end())
         continue;
-      }
 
-      // Generate a parameter set based on the features of the module in the
-      // file.
+      // Generate a parameter set based on the features of the module for the
+      // file
       //
       // Use the original parameter configuration provided on the command line
       // as the base set of flags. If a parameter value is not overridden by
-      // mageec then this will form the 'native' decision.
-      assert(file_feature_ids->second.module);
-      auto feature_set_id = file_feature_ids->second.module.get().id;
-      mageec::FeatureSet features =
-          db->getFeatureSetFeatures(feature_set_id);
+      // mageec then this will form the 'native' decision
+      assert(feature_set_ids->second.module);
+      auto feature_set_id = feature_set_ids->second.module.get().id;
+      auto features = db->getFeatureSetFeatures(feature_set_id);
       assert(features.size() != 0);
 
-      for (unsigned i = FlagParameterID::kFIRST_FLAG_PARAMETER;
-           i <= FlagParameterID::kLAST_FLAG_PARAMETER; ++i) {
-        mageec::BoolDecisionRequest req(i);
-
-        assert(chosen_ml);
-        auto res = chosen_ml->makeDecision(req, features);
-        if (res->getType() == mageec::DecisionType::kNative)
-          continue;
-
-        auto *decision = static_cast<mageec::BoolDecision*>(res.get());
-        if (decision->getValue() == true)
-          params.insert(i);
-        else
-          params.erase(i);
-      }
-
-      // Turn the set of parameters into a mageec ParameterSet and add it to
-      // the database
+      std::set<unsigned> params;
       mageec::ParameterSet param_set;
       for (unsigned i = FlagParameterID::kFIRST_FLAG_PARAMETER;
            i <= FlagParameterID::kLAST_FLAG_PARAMETER; ++i) {
-        param_set.add(
-            std::make_shared<mageec::BoolParameter>(i, params.count(i),
-                                                    parameter_to_flag.at(i)));
-      }
-      mageec::ParameterSetID param_set_id = db->newParameterSet(param_set);
+        assert(chosen_ml);
 
-      // Build the command line for this file based on the 'stripped' command
-      // line derived early. Add in optimization flags for this configuration.
-      auto cmd_iter = stripped_cmd_args.begin();
+        mageec::BoolDecisionRequest req(i);
+        auto res = chosen_ml->makeDecision(req, features);
 
-      // Add the original command word
-      std::vector<std::string> file_cmd;
-      file_cmd.push_back(*cmd_iter);
-      ++cmd_iter;
-      // Add optimization flags
-      for (unsigned i = FlagParameterID::kFIRST_FLAG_PARAMETER;
-           i <= FlagParameterID::kLAST_FLAG_PARAMETER; ++i) {
-        std::string flag = parameter_to_flag.at(i);
-
-        if (params.count(i)) {
-          file_cmd.push_back(flag);
+        bool enabled = false;
+        if (res->getType() == mageec::DecisionType::kNative) {
+          enabled = orig_params.count(i);
         } else {
-          assert(!flag.compare(0, strlen("-f"), "-f"));
-          flag = std::string("-fno-") +
-                 std::string(flag.begin() + strlen("-f"), flag.end());
-          file_cmd.push_back(flag);
+          auto *decision = static_cast<mageec::BoolDecision*>(res.get());
+          enabled = decision->getValue();
         }
-      }
-      // Add the remaining flags from the original command
-      for (; cmd_iter != stripped_cmd_args.end(); ++cmd_iter)
-        file_cmd.push_back(*cmd_iter);
-      // Add the input filename
-      file_cmd.push_back(file_arg);
 
-      // Add the mapping from file to parameter set, and from file to command
-      input_file_params[input_filename] = param_set_id;
-      input_file_commands[input_filename] = file_cmd;
+        auto param_flag = parameter_to_flag.at(i);
+        param_set.add(std::make_shared<mageec::BoolParameter>(i, enabled,
+                                                              param_flag));
+        params.insert(i);
+      }
+      // Add the set of parameters to the database
+      auto param_set_id = db->newParameterSet(param_set);
+
+      src_file_parameters[src_file_path] = params;
+      src_file_parameter_set_ids[src_file_path] = param_set_id;
     }
   }
 
-  std::map<std::string, std::string> file_commands;
-  for (auto file_arg : input_files) {
-    std::string input_filename = mageec::util::getFullPath(file_arg);
-    auto args = input_file_commands[input_filename];
+  // Mapping from an input filename, to a command string to compile that file
+  // With the appropriate set of parameters.
+  std::map<std::string, std::string> src_file_commands;
 
-    std::stringstream command;
-    for (unsigned i = 0; i < args.size(); ++i) {
-      if (i == 0) {
-        command << args[i];
+  for (auto file_arg : src_files) {
+    auto src_file_path = mageec::util::getFullPath(file_arg);
+
+    // If this file doesn't have any features, then it cannot be affected by
+    // mageec. Just use the original command with the input filename appended
+    if (src_file_feature_set_ids.count(src_file_path) == 0) {
+      std::stringstream command;
+      for (unsigned i = 0; i < cmd_args.size(); ++i) {
+        if (i == 0)
+          command << cmd_args[i];
+        else
+          command << " " << cmd_args[i];
+      }
+      // Add in the input file
+      command << " " << file_arg;
+
+      src_file_commands[src_file_path] = command.str();
+      continue;
+    }
+
+    // Otherwise, this file has features, and therefore will also have
+    // associated parameters. Use these parameters to build up a new
+    // command line
+    auto params = src_file_parameters[src_file_path];
+
+    // Build the command line for this file based on the 'stripped' command
+    // line derived earlier, with the specified optimization flags enabled
+    // or disabled.
+    auto cmd_iter = stripped_cmd_args.begin();
+    std::vector<std::string> file_cmd;
+
+    // Add the original command word
+    file_cmd.push_back(*cmd_iter);
+    ++cmd_iter;
+
+    // In both 'gather' and 'optimize' -O3 is used as a base set of flags.
+    // This gives us a common configuration for both gather and optimizing, and
+    // by running at -O3 we are also able to toggle the whole range of
+    // optimizations passes
+    file_cmd.push_back("-O3");
+
+    // Add the optimization flags to the command. This adds *all* optimization
+    // flags which the driver knows about, either in -fflag-name or
+    // -fno-flag-name form depending on whether the flag is enabled or
+    // disabled
+    for (unsigned i = FlagParameterID::kFIRST_FLAG_PARAMETER;
+         i <= FlagParameterID::kLAST_FLAG_PARAMETER; ++i) {
+      std::string flag = parameter_to_flag.at(i);
+
+      if (params.count(i)) {
+        file_cmd.push_back(flag);
       } else {
-        command << " " << args[i];
+        assert(!flag.compare(0, strlen("-f"), "-f"));
+        flag = std::string("-fno-") +
+               std::string(flag.begin() + strlen("-f"), flag.end());
+        file_cmd.push_back(flag);
       }
     }
-    file_commands[input_filename] = command.str();
+
+    // Add the remaining flags from the original command
+    for (; cmd_iter != stripped_cmd_args.end(); ++cmd_iter)
+      file_cmd.push_back(*cmd_iter);
+
+    // Add the input filename
+    file_cmd.push_back(file_arg);
+
+    // Build a command appropriate to compile each of the files
+    std::stringstream command;
+    for (unsigned i = 0; i < file_cmd.size(); ++i) {
+      if (i == 0)
+        command << file_cmd[i];
+      else
+        command << " " << file_cmd[i];
+    }
+    src_file_commands[src_file_path] = command.str();
   }
 
-  // Compile each input file in turn, if any fail, error out early
-  for (auto command : file_commands) {
+  // Compile each of the files in turn, if any fail, error out early
+  for (auto file_arg : src_files) {
+    auto src_file_path = mageec::util::getFullPath(file_arg);
+    auto command = src_file_commands[src_file_path];
+
     // FIXME: Windows?
-    MAGEEC_DEBUG("Executing command: " << command.second);
-    int res = system(command.second.c_str());
+    MAGEEC_DEBUG("Executing command: " << command);
+    int res = system(command.c_str());
     if (res) {
-      MAGEEC_ERR("Compilation failed\ncommand: " << command.second);
+      MAGEEC_ERR("Compilation failed\ncommand: " << command);
       return res;
     }
   }
 
-  // All file compiled successfully, generate compilation ids for them, output
-  // these ids into the output file
+  // If all of the file compiled successfully, generated compilation ids for
+  // them and output these ids into the output file
   std::ofstream out_file(out_path, std::ios::app);
   if (!out_file.is_open()) {
     MAGEEC_ERR("Error opening output file. The file may not exist, or you "
                "may not have sufficient permissions to read and write it");
     return -1;
   }
-  for (auto file_arg : input_files) {
-    std::string input_filename = mageec::util::getFullPath(file_arg);
-    auto file_feature_ids = input_file_features.find(input_filename);
-    auto parameter_set_id = input_file_params.find(input_filename);
+  for (auto file_arg : src_files) {
+    std::string src_file_path = mageec::util::getFullPath(file_arg);
+    auto feature_set_ids = src_file_feature_set_ids.find(src_file_path);
+    auto param_set_id = src_file_parameter_set_ids.find(src_file_path);
 
     // If there were no features for this file, then parameters would not have
     // been derived and there will be no compilation id
-    if (file_feature_ids == input_file_features.end()) {
+    if (feature_set_ids == src_file_feature_set_ids.end())
       continue;
-    }
-    assert(parameter_set_id != input_file_params.end());
+    assert(param_set_id != src_file_parameter_set_ids.end());
 
     // Generate a compilation id for the module
     // Append the generated compilation ids to the output file
-    assert(file_feature_ids->second.module);
-    auto module_entry = file_feature_ids->second.module.get();
+    assert(feature_set_ids->second.module);
+    auto module_entry = feature_set_ids->second.module.get();
     auto module_compilation = db->newCompilation(module_entry.name, "module",
                                                  module_entry.id,
                                                  mageec::FeatureClass::kModule,
-                                                 parameter_set_id->second,
-                                                 file_commands[input_filename],
+                                                 param_set_id->second,
+                                                 src_file_commands[src_file_path],
                                                  nullptr);
 
     // TODO: Avoid static_cast here
     uint64_t tmp = static_cast<uint64_t>(module_compilation);
-    out_file << input_filename << ",module," << module_entry.name
+    out_file << src_file_path << ",module," << module_entry.name
                                << ",compilation," << tmp << "\n";
 
     // Generate a compilation id for each of the functions in the module.
-    for (auto function_entry : file_feature_ids->second.functions) {
+    for (auto function_entry : feature_set_ids->second.functions) {
       auto function_compilation =
           db->newCompilation(function_entry.name, "function",
                              function_entry.id, mageec::FeatureClass::kFunction,
-                             parameter_set_id->second,
-                             file_commands[input_filename],
+                             param_set_id->second,
+                             src_file_commands[src_file_path],
                              module_compilation);
 
       // TODO: Avoid static cast here
       tmp = static_cast<uint64_t>(function_compilation);
-      out_file << input_filename << ",function," << function_entry.name
+      out_file << src_file_path << ",function," << function_entry.name
                                  << ",compilation," << tmp << "\n";
     }
   }
