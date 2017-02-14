@@ -305,6 +305,26 @@ def combined_elimination(src_dir, build_dir, install_dir, build_system,
         print ('-- O3 build failed. Exiting')
         return False
 
+    # Also run at -Os to get a point of comparison
+    os_flags = ['-Os']
+    run_flags = flags + ' ' + ' '.join(os_flags)
+    os_build_dir = os.path.join(build_dir, 'os')
+    os_install_dir = os.path.join(install_dir, 'os')
+    os_res = build_and_measure(src_dir=src_dir,
+                               build_dir=os_build_dir,
+                               install_dir=os_install_dir,
+                               build_system=build_system,
+                               cc=cc, cxx=cxx, fort=fort,
+                               flags=run_flags,
+                               jobs=jobs,
+                               database_path=database_path,
+                               features_path=features_path,
+                               measure_script=measure_script,
+                               debug=debug)
+    if os_res <= 0:
+        print ('-- Os build failed. Exiting')
+        return False
+
     run_id = 0
     run_metadata = []
 
@@ -439,7 +459,8 @@ def combined_elimination(src_dir, build_dir, install_dir, build_system,
 
         base_improvement = float(initial_base_res) / res
         o3_improvement = float(o3_res) / res
-        print (name + ',' + str(res) + ',' + str(base_improvement) + ',' + str(o3_improvement) + ',' + flags)
+        os_improvement = float(os_res) / res
+        print (name + ',' + str(res) + ',' + str(base_improvement) + ',' + str(o3_improvement) + ',' + str(os_improvement) + ',' + flags)
 
 
 def main():

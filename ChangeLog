@@ -1,5 +1,10 @@
 2017-02-10  Edward Jones  <ed.jones@embecosm.com>
 
+	* script/combined-elimination.py: Also do a run at -Os for
+	comparison purposes.
+
+2017-02-10  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/Driver.cpp (parseResults): Read in the newly formatted
 	results csv file.
 
