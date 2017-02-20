@@ -239,7 +239,7 @@ def build_and_measure(src_dir, build_dir, install_dir, build_system,
 
         src_file = values[0]
         module_name = values[2]
-        result = int(values[6])
+        result = float(values[6])
 
         if src_file in result_files:
             print ('-- Duplicate results for module ' + module_name)

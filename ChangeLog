@@ -1,5 +1,10 @@
 2017-02-20  Edward Jones  <ed.jones@embecosm.com>
 
+	* script/combined-elimination.py: Treat result values as floating
+	point values instead of integers.
+
+2017-02-20  Edward Jones  <ed.jones@embecosm.com>
+
 	* script/combined-elimination.py: Add executable flags to be used
 	when measuring executables.
 	* script/measure-code-size.py: Likewise.
