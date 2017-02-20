@@ -1,3 +1,9 @@
+2017-02-20  Edward Jones  <ed.jones@embecosm.com>
+
+	* script/combined-elimination.py: Add executable flags to be used
+	when measuring executables.
+	* script/measure-code-size.py: Likewise.
+
 2017-02-10  Edward Jones  <ed.jones@embecosm.com>
 
 	* script/combined-elimination.py: Also do a run at -Os for

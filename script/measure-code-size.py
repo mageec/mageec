@@ -227,6 +227,8 @@ def main():
     # required arguments
     parser.add_argument('--install-dir', nargs=1, required=True,
         help='Install directory containing the executables to be measured')
+    parser.add_argument('--flags', nargs=1, required=True,
+        help='Flags to use when executing output programs')
     parser.add_argument('--compilation-ids', nargs=1, required=True,
         help='File containing the compilation ids for executables in the install directory')
     parser.add_argument('--out', nargs=1, required=True,

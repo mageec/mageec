@@ -162,7 +162,7 @@ def build_config(all_flags, enabled_flags):
 
 def build_and_measure(src_dir, build_dir, install_dir, build_system,
                       cc, cxx, fort, flags, jobs, database_path, features_path,
-                      measure_script, debug):
+                      measure_script, exec_flags, debug):
     if not os.path.exists(build_dir):
         os.makedirs(build_dir)
     if not os.path.exists(install_dir):
@@ -214,6 +214,7 @@ def build_and_measure(src_dir, build_dir, install_dir, build_system,
 
     cmd = [cmd_name,
            '--install-dir', install_dir,
+           '--flags', exec_flags,
            '--compilation-ids', compilations_path,
            '--out', results_path]
     ret = subprocess.call(cmd)
@@ -270,7 +271,7 @@ def build_and_measure(src_dir, build_dir, install_dir, build_system,
 
 def combined_elimination(src_dir, build_dir, install_dir, build_system,
                          cc, cxx, fort, flags, jobs, database_path,
-                         features_path, measure_script, debug):
+                         features_path, measure_script, exec_flags, debug):
     assert(os.path.exists(src_dir) and os.path.isabs(src_dir))
     assert(os.path.exists(build_dir) and os.path.isabs(build_dir))
     assert(os.path.exists(install_dir) and os.path.isabs(install_dir))
@@ -300,6 +301,7 @@ def combined_elimination(src_dir, build_dir, install_dir, build_system,
                                database_path=database_path,
                                features_path=features_path,
                                measure_script=measure_script,
+                               exec_flags=exec_flags,
                                debug=debug)
     if o3_res <= 0:
         print ('-- O3 build failed. Exiting')
@@ -320,6 +322,7 @@ def combined_elimination(src_dir, build_dir, install_dir, build_system,
                                database_path=database_path,
                                features_path=features_path,
                                measure_script=measure_script,
+                               exec_flags=exec_flags,
                                debug=debug)
     if os_res <= 0:
         print ('-- Os build failed. Exiting')
@@ -344,6 +347,7 @@ def combined_elimination(src_dir, build_dir, install_dir, build_system,
                                  database_path=database_path,
                                  features_path=features_path,
                                  measure_script=measure_script,
+                                 exec_flags=exec_flags,
                                  debug=debug)
     if base_res <= 0:
         print ('-- Base build failed. Exiting')
@@ -381,6 +385,7 @@ def combined_elimination(src_dir, build_dir, install_dir, build_system,
                                          database_path=database_path,
                                          features_path=features_path,
                                          measure_script=measure_script,
+                                         exec_flags=exec_flags,
                                          debug=debug)
             if test_res <= 0:
                 print ('-- Test run ' + str(run_id)  + ' failed. Exiting')
@@ -414,6 +419,7 @@ def combined_elimination(src_dir, build_dir, install_dir, build_system,
                                          database_path=database_path,
                                          features_path=features_path,
                                          measure_script=measure_script,
+                                         exec_flags=exec_flags,
                                          debug=debug)
             if test_res <= 0:
                 print ('-- Test run ' + str(run_id) + ' failed. Exiting')
@@ -443,6 +449,7 @@ def combined_elimination(src_dir, build_dir, install_dir, build_system,
                                              database_path=database_path,
                                              features_path=features_path,
                                              measure_script=measure_script,
+                                             exec_flags=exec_flags,
                                              debug=debug)
                 if base_res <= 0:
                     print ('-- Base run ' + str(run_id) + ' failed. Exiting')
@@ -486,6 +493,8 @@ def main():
         help='File containing extracted features for the source being built')
     parser.add_argument('--measure-script', nargs=1, required=True,
         help='Script to measure the resultant executables')
+    parser.add_argument('--exec-flags', nargs=1, required=True,
+        help='Flags to use when executing generated programs')
 
     # optional arguments
     parser.add_argument('--debug', action='store_true', required=False,
@@ -512,6 +521,7 @@ def main():
     database_path   = os.path.abspath(args.database[0])
     features_path   = os.path.abspath(args.features[0])
     measure_script  = args.measure_script[0]
+    exec_flags      = args.exec_flags[0]
 
     if not os.path.exists(src_dir):
         print ('-- Source directory \'' + src_dir + '\' does not exist')
@@ -566,6 +576,7 @@ def main():
                                database_path=database_path,
                                features_path=features_path,
                                measure_script=measure_script,
+                               exec_flags=exec_flags,
                                debug=debug)
     if not res:
         return -1
