@@ -1737,6 +1737,14 @@ int main(int argc, const char *argv[]) {
     // command line
     auto params = src_file_parameters[src_file_path];
 
+    // The parameters kBranchTargetLoadOptimize and kBranchTargetLoadOptimize2
+    // can't *both* be run, so disable the second run to avoid triggering a
+    // compiler warning.
+    if (params.count(FlagParameterID::kBranchTargetLoadOptimize) &&
+        params.count(FlagParameterID::kBranchTargetLoadOptimize2)) {
+      params.erase(FlagParameterID::kBranchTargetLoadOptimize2);
+    }
+
     // Build the command line for this file based on the 'stripped' command
     // line derived earlier, with the specified optimization flags enabled
     // or disabled.
