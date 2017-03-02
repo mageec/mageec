@@ -35,7 +35,14 @@
 
 namespace mageec {
 
-enum class DriverMode { kNone, kCreate, kTrain, kAddResults, kGarbageCollect };
+enum class DriverMode {
+  kNone,
+  kCreate,
+  kAppend,
+  kTrain,
+  kAddResults,
+  kGarbageCollect
+};
 
 } // end of namespace mageec
 
@@ -209,6 +216,30 @@ static bool createDatabase(Framework &framework, const std::string &db_path) {
     return false;
   }
   return true;
+}
+
+/// \brief Append one database to another
+///
+/// \return true on success, false if the database could not be appended
+static bool appendDatabase(Framework &framework,
+                           const std::string &db_path,
+                           const std::string &append_db_path) {
+  std::unique_ptr<Database> db = framework.getDatabase(db_path, false);
+  if (!db) {
+    MAGEEC_ERR("Error loading database '" + db_path + "'. The database may not "
+               "exist, or you may not have sufficient permissions to "
+               "read/write to it");
+    return false;
+  }
+  std::unique_ptr<Database> append_db = framework.getDatabase(append_db_path,
+                                                              false);
+  if (!append_db) {
+    MAGEEC_ERR("Error loading database for appending '" + append_db_path + "'. "
+               "The database may not exist, or you may not have sufficient "
+               "permissions to read/write to it");
+    return false;
+  }
+  return db->appendDatabase(*append_db);
 }
 
 /// \brief Train a database
@@ -426,6 +457,8 @@ int main(int argc, const char *argv[]) {
 
   // The database to be created or trained
   util::Option<std::string> db_str;
+  // The second database to be appended when in 'append' mode
+  util::Option<std::string> append_db_str;
   // Metrics to train the machine learners
   std::set<std::string> metric_strs;
   // Machine learners to train
@@ -462,6 +495,24 @@ int main(int argc, const char *argv[]) {
     if ((i == 2) && with_db) {
       if (arg == "--create") {
         mode = DriverMode::kCreate;
+        continue;
+      } else if (arg == "--append") {
+        ++i;
+        if (i >= argc) {
+          MAGEEC_ERR("No second database provided for '--append' mode");
+          return -1;
+        }
+        append_db_str = std::string(argv[i]);
+        mode = DriverMode::kAppend;
+        continue;
+      } else if (arg == "--add-results") {
+        ++i;
+        if (i >= argc) {
+          MAGEEC_ERR("No results file provided for '--add-results' mode");
+          return -1;
+        }
+        results_path = std::string(argv[i]);
+        mode = DriverMode::kAddResults;
         continue;
       } else if (arg == "--train") {
         mode = DriverMode::kTrain;
@@ -504,13 +555,11 @@ int main(int argc, const char *argv[]) {
       ml_strs.insert(std::string(argv[i]));
       with_ml = true;
     } else if (arg == "--add-results") {
-      ++i;
-      if (i >= argc) {
-        MAGEEC_ERR("No '--add-results' value provided");
-        return -1;
-      }
-      results_path = std::string(argv[i]);
-      mode = DriverMode::kAddResults;
+      MAGEEC_ERR("'--add-results' must be the second argument");
+      return -1;
+    } else if (arg == "--append") {
+      MAGEEC_ERR("'--append' must be the second argument");
+      return -1;
     } else {
       MAGEEC_ERR("Unrecognized argument: '" << arg << "'");
       return -1;
@@ -535,6 +584,7 @@ int main(int argc, const char *argv[]) {
   // Unused arguments
   if ((mode == DriverMode::kNone) ||
       (mode == DriverMode::kCreate) ||
+      (mode == DriverMode::kAppend) ||
       (mode == DriverMode::kAddResults) ||
       (mode == DriverMode::kGarbageCollect)) {
     if (with_metric) {
@@ -591,6 +641,11 @@ int main(int argc, const char *argv[]) {
     return 0;
   case DriverMode::kCreate:
     if (!createDatabase(framework, db_str.get())) {
+      return -1;
+    }
+    return 0;
+  case DriverMode::kAppend:
+    if (!appendDatabase(framework, db_str.get(), append_db_str.get())) {
       return -1;
     }
     return 0;

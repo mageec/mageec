@@ -126,6 +126,14 @@ public:
   /// \return True if the database is compatible
   bool isCompatible(void);
 
+  /// \brief Append a provided database to the current database
+  ///
+  /// This merges the two database, preserving all primary and foreign
+  /// key constraints.
+  ///
+  /// \return True if the database was successfully appended
+  bool appendDatabase(Database &other);
+
   /// \brief Get all of the trained machine learners in the database
   /// \return All machine learners in the database which are trained.
   std::vector<TrainedML> getTrainedMachineLearners(void);

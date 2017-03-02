@@ -286,6 +286,192 @@ void Database::init_db(sqlite3 &db) {
   MAGEEC_DEBUG("Empty database created");
 }
 
+bool Database::appendDatabase(Database &other) {
+  assert(this->isCompatible());
+  assert(other.isCompatible());
+
+  // TODO: Merge metadata
+  // Nothing to merge at the moment
+  MAGEEC_DEBUG("Merging metadata");
+
+  // Merge feature type tables
+  // TODO: This could be done more efficiently with "ATTACH"
+  MAGEEC_DEBUG("Merging feature types and debug");
+  SQLQuery select_feature_types(*other.m_db,
+      "SELECT feature_id, feature_type FROM FeatureType");
+  SQLQuery insert_feature_types =
+      SQLQueryBuilder(*m_db)
+      << "INSERT OR IGNORE INTO FeatureType(feature_id, feature_type) "
+         "VALUES (" << SQLType::kInteger << ", " << SQLType::kInteger << ")";
+  for (auto res = select_feature_types.exec(); !res.done(); res = res.next()) {
+    assert(res.numColumns() == 2);
+    // Ignore duplicate feature_id rows
+    insert_feature_types.clearAllBindings();
+    insert_feature_types << res.getInteger(0);
+    insert_feature_types << res.getInteger(1);
+    insert_feature_types.exec().assertDone();
+  }
+  // Merge feature debug tables
+  SQLQuery select_feature_debug(*other.m_db,
+      "SELECT feature_id, name FROM FeatureDebug");
+  SQLQuery insert_feature_debug =
+      SQLQueryBuilder(*m_db)
+      << "INSERT OR IGNORE INTO FeatureDebug(feature_id, name) "
+         "VALUES (" << SQLType::kInteger << ", " << SQLType::kText << ")";
+  for (auto res = select_feature_debug.exec(); !res.done(); res = res.next()) {
+    assert(res.numColumns() == 2);
+    insert_feature_debug.clearAllBindings();
+    insert_feature_debug << res.getInteger(0);
+    insert_feature_debug << res.getText(1);
+    insert_feature_debug.exec().assertDone();
+  }
+  // Merge parameter type tables
+  MAGEEC_DEBUG("Merging parameter types and debug");
+  SQLQuery select_param_types(*m_db,
+      "SELECT parameter_id, parameter_type FROM ParameterType");
+  SQLQuery insert_param_types =
+      SQLQueryBuilder(*m_db)
+      << "INSERT OR IGNORE INTO ParameterType(parameter_id, parameter_type) "
+         "VALUES (" << SQLType::kInteger << ", " << SQLType::kInteger << ")";
+  for (auto res = select_param_types.exec(); !res.done(); res = res.next()) {
+    assert(res.numColumns() == 2);
+    insert_param_types.clearAllBindings();
+    insert_param_types << res.getInteger(0);
+    insert_param_types << res.getInteger(1);
+    insert_param_types.exec().assertDone();
+  }
+  // Merge parameter debug tables
+  SQLQuery select_param_debug(*other.m_db,
+      "SELECT parameter_id, name FROM ParameterDebug");
+  SQLQuery insert_param_debug =
+      SQLQueryBuilder(*m_db)
+      << "INSERT OR IGNORE INTO ParameterDebug(parameter_id, name) "
+         "VALUES (" << SQLType::kInteger << ", " << SQLType::kText << ")";
+  for (auto res = select_param_debug.exec(); !res.done(); res = res.next()) {
+    assert(res.numColumns() == 2);
+    insert_param_debug.clearAllBindings();
+    insert_param_debug << res.getInteger(0);
+    insert_param_debug << res.getText(1);
+    insert_param_debug.exec().assertDone();
+  }
+
+  std::map<FeatureSetID,   FeatureSetID>   feature_set_id_remapping;
+  std::map<ParameterSetID, ParameterSetID> parameter_set_id_remapping;
+  std::map<CompilationID,  CompilationID>  compilation_id_remapping;
+
+  // For each feature set, get the feature set id and the features from the
+  // database to be merged. Add to the new feature set, and store the
+  // remapping.
+  MAGEEC_DEBUG("Merging features");
+  SQLQuery select_feature_set_id(*other.m_db,
+      "SELECT feature_set_id FROM FeatureSetFeature");
+  std::vector<FeatureSetID> feature_set_ids;
+  for (auto res = select_feature_set_id.exec(); !res.done(); res = res.next()) {
+    assert(res.numColumns() == 1);
+    feature_set_ids.push_back(static_cast<FeatureSetID>(res.getInteger(0)));
+  }
+  for (auto id : feature_set_ids) {
+    FeatureSet features = other.getFeatureSetFeatures(id);
+    FeatureSetID new_id = this->newFeatureSet(features);
+    feature_set_id_remapping.emplace(id, new_id);
+  }
+
+  // For each parameter set, get the parameter set id and the parametes from the
+  // database to be merged. Add to the new parameter set, and store the
+  // remapping.
+  MAGEEC_DEBUG("Merging parameters");
+  SQLQuery select_param_set_id(*other.m_db,
+      "SELECT parameter_set_id FROM ParameterSetParameter");
+  std::vector<ParameterSetID> parameter_set_ids;
+  for (auto res = select_param_set_id.exec(); !res.done(); res = res.next()) {
+    assert(res.numColumns() == 1);
+    parameter_set_ids.push_back(static_cast<ParameterSetID>(res.getInteger(0)));
+  }
+  for (auto id : parameter_set_ids) {
+    auto parameters = other.getParameters(id);
+    auto new_id = this->newParameterSet(parameters);
+    parameter_set_id_remapping.emplace(id, new_id);
+  }
+
+  // For each compilation id, get the compilation id and compilation
+  // Update the feature set id and parameter set id insert into the
+  // database and store the compilation id remapping
+  MAGEEC_DEBUG("Merging compilations");
+  SQLQuery select_compilation(*other.m_db,
+      "SELECT Compilation.compilation_id, Compilation.feature_set_id, "
+             "Compilation.feature_class_id, "
+             "Compilation.parameter_set_id, "
+             "CompilationDebug.name, CompilationDebug.type, "
+             "CompilationDebug.command, CompilationDebug.parent_id "
+      "FROM Compilation, CompilationDebug "
+      "WHERE Compilation.compilation_id = CompilationDebug.compilation_id");
+  for (auto res = select_compilation.exec(); !res.done(); res = res.next()) {
+    assert(res.numColumns() == 8);
+    auto compilation_id   = static_cast<CompilationID>(res.getInteger(0));
+    auto feature_set_id   = static_cast<FeatureSetID>(res.getInteger(1));
+    auto feature_class    = static_cast<FeatureClass>(res.getInteger(2));
+    auto parameter_set_id = static_cast<ParameterSetID>(res.getInteger(3));
+    auto name = res.getText(4);
+    auto type = res.getText(5);
+    util::Option<std::string> command;
+    if (!res.isNull(6))
+      command = res.getText(6);
+    util::Option<CompilationID> parent;
+    if (!res.isNull(7))
+      parent = static_cast<CompilationID>(res.getInteger(7));
+
+    // Update to point at the newly inserted features and parameters
+    auto new_feature_set_id   = feature_set_id_remapping[feature_set_id];
+    auto new_parameter_set_id = parameter_set_id_remapping[parameter_set_id];
+    auto new_compilation_id = newCompilation(name, type,
+                                             new_feature_set_id,
+                                             feature_class,
+                                             new_parameter_set_id,
+                                             command, parent);
+    // Store the remapping between the compilation ids
+    compilation_id_remapping.emplace(compilation_id, new_compilation_id);
+  }
+
+  // Extract, update and reinsert the results data
+  MAGEEC_DEBUG("Merging results");
+  SQLQuery select_results(*other.m_db,
+      "SELECT compilation_id, metric, result FROM Result");
+  std::map<std::pair<CompilationID, std::string>, uint64_t> new_results;
+  for (auto res = select_results.exec(); !res.done(); res = res.next()) {
+    assert(res.numColumns() == 3);
+    auto compilation_id = static_cast<CompilationID>(res.getInteger(0));
+    auto metric = res.getText(1);
+    auto result = static_cast<uint64_t>(res.getInteger(2));
+
+    // Remap the compilation id
+    auto new_compilation_id = compilation_id_remapping[compilation_id];
+    new_results.emplace(std::make_pair(new_compilation_id, metric), result);
+  }
+  addResults(new_results);
+
+  // Copy across the machine learner training blob, ignore blobs which
+  // already exist
+  MAGEEC_DEBUG("Merging machine learners");
+  SQLQuery select_ml(*other.m_db,
+      "SELECT ml_id, feature_class_id, metric, ml_blob FROM MachineLearner");
+  SQLQuery insert_ml =
+      SQLQueryBuilder(*m_db)
+      << "INSERT OR IGNORE INTO MachineLearner(ml_id, feature_class_id, "
+                                              "metric, ml_blob) "
+         "VALUES (" << SQLType::kText << ", " << SQLType::kInteger << ", "
+                    << SQLType::kText << ", " << SQLType::kBlob << ")";
+  for (auto res = select_ml.exec(); !res.done(); res = res.next()) {
+    assert(res.numColumns() == 4);
+    insert_ml.clearAllBindings();
+    insert_ml << res.getText(0);
+    insert_ml << res.getInteger(1);
+    insert_ml << res.getText(2);
+    insert_ml << res.getBlob(3);
+    insert_ml.exec().assertDone();
+  }
+  return true;
+}
+
 void Database::validate(void) {
   assert(isCompatible() && "Cannot validate incompatible database!");
 }

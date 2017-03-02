@@ -1,3 +1,12 @@
+2017-03-02  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Database.h (Database::appendDatabase): Add
+	function to merge databases.
+	* lib/Database.cpp (Database::appendDatabase): Likewise.
+	* lib/Driver.cpp (DriverMode): Add kAppend mode enumeration value.
+	(appendDatabase): Add driver function to merge databases.
+	(main): Parse and handle --append argument.
+
 2017-02-20  Edward Jones  <ed.jones@embecosm.com>
 
 	* script/combined-elimination.py: Treat result values as floating
