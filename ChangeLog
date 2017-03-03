@@ -1,3 +1,21 @@
+2017-03-03  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Framwork.h (Framework::Framework): Add
+	with_sql_trace argument.
+	(Framework::setSQLTrace): Added method.
+	* include/mageec/SQLQuery.h (SQLQuery::m_sql_query): Added
+	member.
+	* include/mageec/Util.h (withSQLTrace setSQLTrace): Added
+	functions.
+	* lib/Driver.cpp (main): Parse --sql-trace argument, pass
+	value to Framework constructor.
+	* lib/Framework.cpp (Framework::Framework): Add with_sql_trace
+	argument.
+	(Framework::setSQLTrace): Add implementation of function.
+	* lib/SQLQuery.cpp (SQLQuery::m_sql_trace): Add member.
+	(SQLQuery::exec): Print sql query on query execution.
+	* lib/Util.cpp (withSQLTrace setSQLTrace): Added functions.
+
 2017-03-02  Edward Jones  <ed.jones@embecosm.com>
 
 	* lib/Database.cpp (Database::appendDatabase): Add all compilation

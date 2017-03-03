@@ -38,9 +38,12 @@ const util::Version Framework::version(MAGEEC_VERSION_MAJOR,
                                        MAGEEC_VERSION_MINOR,
                                        MAGEEC_VERSION_PATCH);
 
-Framework::Framework(bool with_debug) : m_mls() {
+Framework::Framework(bool with_debug, bool with_sql_trace) : m_mls() {
   if (with_debug) {
     util::setDebug(true);
+  }
+  if (with_sql_trace) {
+    util::setSQLTrace(true);
   }
 }
 
@@ -51,7 +54,12 @@ Framework::~Framework(void) {
   }
 }
 
-void Framework::setDebug(bool with_debug) const { util::setDebug(with_debug); }
+void Framework::setDebug(bool with_debug) const {
+  util::setDebug(with_debug);
+}
+void Framework::setSQLTrace(bool with_sql_trace) const {
+  util::setSQLTrace(with_sql_trace);
+}
 
 util::Version Framework::getVersion(void) const { return Framework::version; }
 

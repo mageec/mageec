@@ -53,7 +53,8 @@ SQLQuery::~SQLQuery(void) {
 SQLQuery::SQLQuery(SQLQuery &&other)
     : m_is_init(false), m_db(other.m_db), m_is_locked(false),
       m_stmt(other.m_stmt), m_curr_param(other.m_curr_param),
-      m_param_count(other.m_param_count), m_param_types(other.m_param_types) {
+      m_param_count(other.m_param_count), m_param_types(other.m_param_types),
+      m_sql_query(other.m_sql_query) {
   assert(!other.m_is_locked && "Cannot moved a query which is currently "
                                "being executed");
   other.m_is_init = false;
@@ -62,7 +63,7 @@ SQLQuery::SQLQuery(SQLQuery &&other)
 
 SQLQuery::SQLQuery(sqlite3 &db, std::string str)
     : m_is_init(false), m_db(db), m_is_locked(false), m_stmt(), m_curr_param(0),
-      m_param_count(0), m_param_types() {
+      m_param_count(0), m_param_types(), m_sql_query(str) {
   int res = sqlite3_prepare_v2(&m_db, str.c_str(), -1, &m_stmt, NULL);
 
   if (res != SQLITE_OK) {
@@ -75,7 +76,7 @@ SQLQuery::SQLQuery(sqlite3 &db, std::string str)
 SQLQuery::SQLQuery(sqlite3 &db, std::vector<std::string> substrs,
                    std::vector<SQLType> params)
     : m_is_init(false), m_db(db), m_is_locked(false), m_stmt(), m_curr_param(0),
-      m_param_count(params.size()), m_param_types(params) {
+      m_param_count(params.size()), m_param_types(params), m_sql_query() {
   assert(substrs.size() == (m_param_count + 0) ||
          substrs.size() == (m_param_count + 1));
 
@@ -87,6 +88,7 @@ SQLQuery::SQLQuery(sqlite3 &db, std::vector<std::string> substrs,
     query << substrs[substrs.size() - 1];
   }
 
+  m_sql_query = query.str();
   int res = sqlite3_prepare_v2(&m_db, query.str().c_str(), -1, &m_stmt, NULL);
 
   if (res != SQLITE_OK) {
@@ -169,6 +171,11 @@ SQLQuery::iterator SQLQuery::exec(void) {
   validate();
   assert(allBindingsPopulated() &&
          "Cannot execute query with unbound parameters");
+
+  if (util::withSQLTrace()) {
+    MAGEEC_DEBUG("SQL: " << m_sql_query);
+  }
+
   return iterator(m_db, *this);
 }
 

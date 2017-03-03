@@ -262,6 +262,9 @@ private:
 
   /// A vector of the parameter types which make up the query.
   const std::vector<SQLType> m_param_types;
+
+  /// Final string for the query. Used when debugging the SQL commands run
+  std::string m_sql_query;
 };
 
 } // end of namespace mageec

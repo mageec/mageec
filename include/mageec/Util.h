@@ -37,6 +37,10 @@ namespace util {
 extern bool withDebug();
 extern void setDebug(bool debug = true);
 
+// SQL tracing functionality.
+extern bool withSQLTrace();
+extern void setSQLTrace(bool sql_trace = true);
+
 std::ostream &dbg();
 std::ostream &out();
 

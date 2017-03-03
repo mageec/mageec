@@ -472,6 +472,7 @@ int main(int argc, const char *argv[]) {
 
   bool with_db_version          = false;
   bool with_debug               = false;
+  bool with_sql_trace           = false;
   bool with_help                = false;
   bool with_print_ml_interfaces = false;
   bool with_print_mls           = false;
@@ -530,6 +531,8 @@ int main(int argc, const char *argv[]) {
       with_version = true;
     } else if (arg == "--debug") {
       with_debug = true;
+    } else if (arg == "--sql-trace") {
+      with_sql_trace = true;
     } else if (arg == "--print-ml-interfaces") {
       with_print_ml_interfaces = true;
     } else if (arg == "--print-mls") {
@@ -597,7 +600,7 @@ int main(int argc, const char *argv[]) {
 
   // Initialize the framework, and register some built in machine learners
   // so that they can be selected by name by the user.
-  Framework framework(with_debug);
+  Framework framework(with_debug, with_sql_trace);
 
   // C5 classifier
   MAGEEC_DEBUG("Registering C5.0 machine learner interface");

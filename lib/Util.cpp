@@ -33,11 +33,20 @@ namespace util {
 
 /// Tracks whether debug is enabled.
 static bool with_debug = false;
+/// Tracks whether SQL tracing is enabled
+static bool with_sql_trace = false;
 
 /// Returns whether debug is enabled at runtime
 bool withDebug() { return with_debug & MAGEEC_WITH_DEBUG; }
 /// Sets whether debug is enabled.
 void setDebug(bool debug) { with_debug = debug & MAGEEC_WITH_DEBUG; }
+
+/// Returns whether sql trace is enabled at runtime
+bool withSQLTrace() { return with_sql_trace & MAGEEC_WITH_DEBUG; }
+/// Sets whether sql trace is enabled.
+void setSQLTrace(bool sql_trace) {
+  with_sql_trace = sql_trace & MAGEEC_WITH_DEBUG;
+}
 
 std::ostream &dbg() { return std::cerr; }
 std::ostream &out() { return std::cout; }

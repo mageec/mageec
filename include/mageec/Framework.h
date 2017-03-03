@@ -54,13 +54,16 @@ private:
 
 public:
   /// \brief Create the framework
-  Framework(bool with_debug = false);
+  Framework(bool with_debug = false, bool with_sql_trace = false);
 
   /// \brief Destroy the framework, deleting help machine learner interfaces
   ~Framework(void);
 
   /// \brief Enable debug in the framework
   void setDebug(bool with_debug) const;
+
+  /// \brief Enable tracing of sql in the framework
+  void setSQLTrace(bool with_sql_trace) const;
 
   /// \brief Get the version of the mageec framework
   util::Version getVersion(void) const;
