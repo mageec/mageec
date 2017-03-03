@@ -117,6 +117,7 @@ static void printHelp()
 "  -version             Print the version of the GCC plugin\n"
 "  -framework-version   Print the version of the MAGEEC framework\n"
 "  -debug               Enable debug output from the plugin and framework\n"
+"  -sql-trace           Enable tracing of SQL queries in the framework\n"
 "  -database=<arg>      Database to be used to store extracted features\n"
 "  -database-version    Print the version of the provided database\n"
 "  -out=<arg>           The output file records identifiers of feature sets\n"
@@ -194,6 +195,7 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
   bool with_version             = false;
   bool with_framework_version   = false;
   bool with_debug               = false;
+  bool with_sql_trace           = false;
   bool with_db_version          = false;
 
   // Flags with arguments
@@ -234,6 +236,12 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
         return false;
       }
       with_debug = true;
+    } else if (arg_str == "sql-trace") {
+      if (argv[i].value) {
+        MAGEEC_ERR("Plugin argument 'sql-trace' does not take a value");
+        return false;
+      }
+      with_sql_trace = true;
     } else if (arg_str == "database-version") {
       if (argv[i].value) {
         MAGEEC_ERR("Plugin argument 'database-version' does not take a value");
@@ -272,7 +280,7 @@ static bool parseArguments(struct plugin_name_args *plugin_info,
 
   // Enable debug now that parsing arguments is finished.
   getContext().getFramework().setDebug(with_debug);
-
+  getContext().getFramework().setSQLTrace(with_sql_trace);
 
   // Print plugin information
   if (with_plugin_info)
