@@ -217,6 +217,20 @@ Database::Database(sqlite3 &db, std::map<std::string, IMachineLearner *> mls,
   // foreign key checking will do done.
   SQLQuery(*m_db, "PRAGMA foreign_keys = ON").exec().assertDone();
 
+  // The MEMORY journaling mode stores the rollback journal in volatile RAM.
+  // This saves disk I/O but at the expense of database safety and integrity.
+  // If the application using SQLite crashes in the middle of a transaction
+  // when the MEMORY journaling mode is set, then the database file will very
+  // likely go corrupt.
+  //
+  // For now we use a memory rollback journal, as it improves performance when
+  // we have lots of small transactions and short-lived journals. This WILL
+  // corrupt the database if we crash mid transaction. If this proves to
+  // be a problem in future, then we may want to move to something like
+  // PERSIST instead, which is higher performance that the default (DELETE),
+  // and also preserves safety.
+  SQLQuery(*m_db, "PRAGMA journal_mode = MEMORY").exec().next().assertDone();
+
   if (create) {
     init_db(*m_db);
     validate();

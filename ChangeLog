@@ -1,5 +1,10 @@
 2017-03-03  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/Database: Set the journaling mode on the SQLite database
+	to be an in-memory journal.
+
+2017-03-03  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Framwork.h (Framework::Framework): Add
 	with_sql_trace argument.
 	(Framework::setSQLTrace): Added method.
