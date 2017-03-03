@@ -1115,6 +1115,7 @@ static void printHelp() {
 "  -fmageec-database-version   Print the version of the provided database\n"
 "  -fmageec-framework-version  Print the version of the MAGEEC framework\n"
 "  -fmageec-debug              Enable debug output\n"
+"  -fmageec-sql-trace          Enable tracing of any SQL queries run\n"
 "  -fmageec-gcc=<command>      Command to invoke gcc\n"
 "  -fmageec-g++=<command>      Command to invoke g++\n"
 "  -fmageec-gfortran=<command> Command to invoke gfortran\n"
@@ -1162,6 +1163,7 @@ int main(int argc, const char *argv[]) {
   bool with_db_version        = false;
   bool with_framework_version = false;
   bool with_debug             = false;
+  bool with_sql_trace         = false;
   bool with_gcc_command       = false;
   bool with_gxx_command       = false;
   bool with_gfortran_command  = false;
@@ -1195,6 +1197,8 @@ int main(int argc, const char *argv[]) {
       handled = with_framework_version = true;
     } else if (arg == "debug") {
       handled = with_debug = true;
+    } else if (arg == "sql-trace") {
+      handled = with_sql_trace = true;
     }
     if (handled)
       continue;
@@ -1324,7 +1328,7 @@ int main(int argc, const char *argv[]) {
 
   // Initialize the framework, and register some builtin machine learners so
   // they can be selected by name by the user.
-  mageec::Framework framework(with_debug);
+  mageec::Framework framework(with_debug, with_sql_trace);
 
   // C5 classifier
   MAGEEC_DEBUG("Registering C5.0 machine learner interface");
