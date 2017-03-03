@@ -405,32 +405,74 @@ bool Database::appendDatabase(Database &other) {
              "CompilationDebug.command, CompilationDebug.parent_id "
       "FROM Compilation, CompilationDebug "
       "WHERE Compilation.compilation_id = CompilationDebug.compilation_id");
-  for (auto res = select_compilation.exec(); !res.done(); res = res.next()) {
-    assert(res.numColumns() == 8);
-    auto compilation_id   = static_cast<CompilationID>(res.getInteger(0));
-    auto feature_set_id   = static_cast<FeatureSetID>(res.getInteger(1));
-    auto feature_class    = static_cast<FeatureClass>(res.getInteger(2));
-    auto parameter_set_id = static_cast<ParameterSetID>(res.getInteger(3));
-    auto name = res.getText(4);
-    auto type = res.getText(5);
-    util::Option<std::string> command;
-    if (!res.isNull(6))
-      command = res.getText(6);
-    util::Option<CompilationID> parent;
-    if (!res.isNull(7))
-      parent = static_cast<CompilationID>(res.getInteger(7));
 
-    // Update to point at the newly inserted features and parameters
-    auto new_feature_set_id   = feature_set_id_remapping[feature_set_id];
-    auto new_parameter_set_id = parameter_set_id_remapping[parameter_set_id];
-    auto new_compilation_id = newCompilation(name, type,
-                                             new_feature_set_id,
-                                             feature_class,
-                                             new_parameter_set_id,
-                                             command, parent);
-    // Store the remapping between the compilation ids
-    compilation_id_remapping.emplace(compilation_id, new_compilation_id);
+  SQLQuery insert_compilation =
+      SQLQueryBuilder(*m_db)
+      << "INSERT INTO Compilation(feature_set_id, feature_class_id, "
+                                 "parameter_set_id) "
+         "VALUES (" << SQLType::kInteger << ", " << SQLType::kInteger << ", "
+                    << SQLType::kInteger << ")";
+  SQLQuery insert_compilation_debug =
+      SQLQueryBuilder(*m_db)
+      << "INSERT INTO CompilationDebug(compilation_id, name, type, command, "
+                                      "parent_id) "
+         "VALUES (" << SQLType::kInteger << ", "
+                    << SQLType::kText << ", "
+                    << SQLType::kText << ", "
+                    << SQLType::kText << ", "
+                    << SQLType::kInteger << ")";
+  {
+    // Insert all compilations in one big transaction
+    SQLTransaction compilation_transaction(m_db);
+    for (auto res = select_compilation.exec(); !res.done(); res = res.next()) {
+      assert(res.numColumns() == 8);
+      auto compilation_id   = static_cast<CompilationID>(res.getInteger(0));
+      auto feature_set_id   = static_cast<FeatureSetID>(res.getInteger(1));
+      auto feature_class    = static_cast<FeatureClass>(res.getInteger(2));
+      auto parameter_set_id = static_cast<ParameterSetID>(res.getInteger(3));
+      auto name = res.getText(4);
+      auto type = res.getText(5);
+      util::Option<std::string> command;
+      if (!res.isNull(6))
+        command = res.getText(6);
+      util::Option<CompilationID> parent;
+      if (!res.isNull(7))
+        parent = static_cast<CompilationID>(res.getInteger(7));
+
+      // Update to point at the newly inserted features and parameters
+      auto new_feature_set_id   = feature_set_id_remapping[feature_set_id];
+      auto new_parameter_set_id = parameter_set_id_remapping[parameter_set_id];
+
+      insert_compilation.clearAllBindings();
+      insert_compilation << static_cast<int64_t>(new_feature_set_id);
+      insert_compilation << static_cast<int64_t>(feature_class);
+      insert_compilation << static_cast<int64_t>(new_parameter_set_id);
+      insert_compilation.exec().assertDone();
+
+      auto new_compilation_id =
+          static_cast<CompilationID>(sqlite3_last_insert_rowid(m_db));
+
+      insert_compilation_debug.clearAllBindings();
+      insert_compilation_debug << static_cast<int64_t>(new_compilation_id);
+      insert_compilation_debug << name;
+      insert_compilation_debug << type;
+      if (command)
+        insert_compilation_debug << command.get();
+      else
+        insert_compilation_debug << nullptr;
+      if (parent)
+        insert_compilation_debug << static_cast<int64_t>(parent.get());
+      else
+        insert_compilation_debug << nullptr;
+      insert_compilation_debug.exec().assertDone();
+
+      // Store the remapping between the compilation ids
+      compilation_id_remapping.emplace(compilation_id, new_compilation_id);
+    }
+    compilation_transaction.commit();
   }
+
+
 
   // Extract, update and reinsert the results data
   MAGEEC_DEBUG("Merging results");

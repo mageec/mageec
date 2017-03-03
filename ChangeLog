@@ -1,5 +1,10 @@
 2017-03-02  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/Database.cpp (Database::appendDatabase): Add all compilation
+	ids in one large transaction.
+
+2017-03-02  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Database.h (Database::appendDatabase): Add
 	function to merge databases.
 	* lib/Database.cpp (Database::appendDatabase): Likewise.
