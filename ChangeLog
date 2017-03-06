@@ -1,3 +1,8 @@
+2017-03-06  Edward Jones  <ed.jones@embecosm.com>
+
+	* scripts/combined-elimination.py: Allow incomplete results
+	when measuring benchmarks.
+
 2017-03-03  Edward Jones  <ed.jones@embecosm.com>
 
 	* lib/Database: Set the journaling mode on the SQLite database

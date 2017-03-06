@@ -10,7 +10,6 @@ gcc_wrapper = 'mageec-gcc'
 gxx_wrapper = 'mageec-g++'
 gfortran_wrapper = 'mageec-gfortran'
 
-benchmark_files = None
 all_flags = [
     #'-faggressive-loop-optimizations', # Not supported in 4.5
     '-falign-functions',
@@ -256,14 +255,6 @@ def build_and_measure(src_dir, build_dir, install_dir, build_system,
         # prohibitively expensive.
         total += result
     
-    # Check that we have results for *exactly* the same files as in the
-    # previous run. If not, then something has gone horribly wrong
-    global benchmark_files
-    if benchmark_files is None:
-        benchmark_files = result_files
-    else:
-        assert benchmark_files == result_files
-
     # FIXME: Actually adding the results to the database is currently left as an
     # exercise for the user
     return total
