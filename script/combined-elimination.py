@@ -395,7 +395,7 @@ def combined_elimination(src_dir, build_dir, install_dir, build_system,
             res.wait()
         for run_id, res in test_results:
             test_res = res.get()
-            if test_res != 0:
+            if test_res <= 0:
                 print ('-- Test run ' + str(run_id) + ' failed. Exiting')
                 return False
             if test_res < base_res:

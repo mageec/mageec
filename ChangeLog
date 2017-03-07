@@ -1,5 +1,10 @@
 2017-03-07  Edward Jones  <ed.jones@embecosm.com>
 
+	* script/combined-elimination.py: Fix check of results from
+	combined elimination test runs.
+
+2017-03-07  Edward Jones  <ed.jones@embecosm.com>
+
 	* lib/Database.cpp (Database::newFeatureSet): Fix implementation
 	to avoid a race hazard when adding features to the database.
 	(Database::newParameterSet): Avoid race hazard when adding
