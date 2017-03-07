@@ -1,5 +1,10 @@
 2017-03-07  Edward Jones  <ed.jones@embecosm.com>
 
+	* script/mageec.py: Use lndir to create a shadow copy of a
+	directory with symlinks to the original source.
+
+2017-03-07  Edward Jones  <ed.jones@embecosm.com>
+
 	* scripts/combined-elimination.py: Do multiple flag tests
 	during combined elimination in parallel, using a process
 	pool.

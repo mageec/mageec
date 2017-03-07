@@ -62,8 +62,8 @@ def build(src_dir, build_dir, install_dir, build_system, cc, cxx, fort, flags,
 
     base_dir = os.getcwd()
     with preserve_cwd():
-        os.chdir(build_dir)
         if build_system == 'cmake' or build_system == 'configure':
+            os.chdir(build_dir)
             if build_system == 'cmake':
                 if not is_command_on_path('cmake'):
                     print ('-- cmake command not on path')
@@ -103,6 +103,19 @@ def build(src_dir, build_dir, install_dir, build_system, cc, cxx, fort, flags,
                 print ('-- Failed to install build \'' + build_dir + '\' to \'' + install_dir)
                 return False
         else:
+            # If a custom build script is used, then the benchmark may be
+            # build in tree. In order to handle this we use lndir to create a
+            # symlink to the source directory in the build directory, and then
+            # build in there instead.
+            orig_src_dir = str(src_dir)
+            src_dir = os.path.join(build_dir, 'src')
+            os.makedirs(src_dir)
+            os.chdir(src_dir)
+            ret = subprocess.call(['lndir', orig_src_dir])
+            if ret != 0:
+                print ('-- Failed to use lndir to create symlink to source')
+                return False
+
             # If the command refers to a script in the current working directory
             # then make the path absolute so that we can execute it. Otherwise
             # assume that it's a command on the path
