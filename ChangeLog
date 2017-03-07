@@ -1,5 +1,10 @@
 2017-03-07  Edward Jones  <ed.jones@embecosm.com>
 
+	* script/measure-code-size.py: Use realpath to get the
+	path of source files in the executable instead of abspath.
+
+2017-03-07  Edward Jones  <ed.jones@embecosm.com>
+
 	* script/mageec.py: Use lndir to create a shadow copy of a
 	directory with symlinks to the original source.
 

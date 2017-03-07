@@ -97,11 +97,15 @@ def get_executable_src_files(exec_path):
             # If the source path in the executable is not an absolute
             # path then use the DW_AT_comp_dir attribute to get the
             # build directory to make it absolute
+            #
+            # Once we have an absolute path, use realpath to resolve any
+            # symbolic links
             src_path = name
             if not os.path.isabs(name):
                 assert (comp_dir != '')
                 src_path = os.path.join(comp_dir, name)
                 assert(os.path.isabs(src_path))
+                src_path = os.path.realpath(src_path)
             exec_src_paths.append(src_path.decode())
     return exec_src_paths
 
