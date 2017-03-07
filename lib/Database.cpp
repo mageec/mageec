@@ -1149,9 +1149,18 @@ ResultIterator ResultIterator::next() {
   }
 }
 
-SQLTransaction::SQLTransaction(sqlite3 *db)
+SQLTransaction::SQLTransaction(sqlite3 *db, TransactionType type)
     : m_is_committed(false), m_db(db) {
-  SQLQuery start_transaction(*m_db, "BEGIN TRANSACTION");
+  const char *query_str;
+  if (type == kImmediate) {
+    query_str = "BEGIN IMMEDIATE TRANSACTION";
+  } else if (type == kExclusive) {
+    query_str = "BEGIN EXCLUSIVE TRANSACTION";
+  } else {
+    assert (type == kDeferred);
+    query_str = "BEGIN TRANSACTION";
+  }
+  SQLQuery start_transaction(*m_db, query_str);
   start_transaction.exec().assertDone();
   m_is_init = true;
 }

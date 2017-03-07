@@ -287,10 +287,18 @@ private:
 /// if it is destroyed before it has been explicitly committed.
 class SQLTransaction {
 public:
+  /// Type of the transaction, this dictates when locks to the database
+  /// are acquired, and correspond to SQL enumeration values
+  enum TransactionType {
+    kDeferred,
+    kImmediate,
+    kExclusive,
+  };
+
   SQLTransaction() = delete;
   ~SQLTransaction();
 
-  SQLTransaction(sqlite3 *db);
+  SQLTransaction(sqlite3 *db, TransactionType type = kDeferred);
   SQLTransaction(const SQLTransaction &other) = delete;
   SQLTransaction(SQLTransaction &&other);
 

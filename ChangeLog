@@ -1,5 +1,11 @@
 2017-03-07  Edward Jones  <ed.jones@embecosm.com>
 
+	* include/mageec/Database.h (SQLTransaction): Add different
+	transaction types.
+	* lib/Database.cpp (SQLTransaction): Likewise.
+
+2017-03-07  Edward Jones  <ed.jones@embecosm.com>
+
 	* script/measure-code-size.py: Use realpath to get the
 	path of source files in the executable instead of abspath.
 
