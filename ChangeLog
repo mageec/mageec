@@ -1,5 +1,11 @@
 2017-03-07  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/Database.cpp (Database::appendDatabase): Select
+	parameter types from the other database, not the same
+	database we're merging with.
+
+2017-03-07  Edward Jones  <ed.jones@embecosm.com>
+
 	* script/combined-elimination.py: Fix check of results from
 	combined elimination test runs.
 

@@ -341,7 +341,7 @@ bool Database::appendDatabase(Database &other) {
   }
   // Merge parameter type tables
   MAGEEC_DEBUG("Merging parameter types and debug");
-  SQLQuery select_param_types(*m_db,
+  SQLQuery select_param_types(*other.m_db,
       "SELECT parameter_id, parameter_type FROM ParameterType");
   SQLQuery insert_param_types =
       SQLQueryBuilder(*m_db)
