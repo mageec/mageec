@@ -6,6 +6,8 @@ import subprocess
 import sys
 import mageec
 
+from multiprocessing.pool import Pool
+
 gcc_wrapper = 'mageec-gcc'
 gxx_wrapper = 'mageec-g++'
 gfortran_wrapper = 'mageec-gfortran'
@@ -355,7 +357,11 @@ def combined_elimination(src_dir, build_dir, install_dir, build_system,
         improvement = False
         flags_with_improvement = []
 
-        # identify flags that bring improvement when disabled
+        # identify flags that bring improvement when disabled.
+        # Each build is done in a seperate process
+        test_pool = Pool(jobs)
+        test_results = []
+
         for flag in flags_to_consider:
             # do a run with each flag disabled in turn
             tmp_flags = list(base_flags)
@@ -366,24 +372,32 @@ def combined_elimination(src_dir, build_dir, install_dir, build_system,
 
             test_build_dir = os.path.join(build_dir, 'test-' + str(run_id))
             test_install_dir = os.path.join(install_dir, 'test-' + str(run_id))
-            test_res = build_and_measure(src_dir=src_dir,
-                                         build_dir=test_build_dir,
-                                         install_dir=test_install_dir,
-                                         build_system=build_system,
-                                         cc=cc, cxx=cxx, fort=fort,
-                                         flags=run_flags,
-                                         jobs=jobs,
-                                         database_path=database_path,
-                                         features_path=features_path,
-                                         measure_script=measure_script,
-                                         exec_flags=exec_flags,
-                                         debug=debug)
-            if test_res <= 0:
-                print ('-- Test run ' + str(run_id)  + ' failed. Exiting')
-                return False
-            run_metadata.append(('test-' + str(run_id), run_flags, test_res))
+
+            res = test_pool.apply_async(build_and_measure,
+                                        (src_dir,
+                                         test_build_dir,
+                                         test_install_dir,
+                                         build_system,
+                                         cc, cxx, fort,
+                                         run_flags,
+                                         1, # jobs
+                                         database_path,
+                                         features_path,
+                                         measure_script,
+                                         exec_flags,
+                                         debug))
+            run_metadata.append(('test-' + str(run_id), run_flags, res))
+            test_results.append((run_id, res))
             run_id += 1
 
+        # Wait for all of the test runs to complete, and then get their results
+        for run_id, res in test_results:
+            res.wait()
+        for run_id, res in test_results:
+            test_res = res.get()
+            if test_res != 0:
+                print ('-- Test run ' + str(run_id) + ' failed. Exiting')
+                return False
             if test_res < base_res:
                 flags_with_improvement += [(flag, test_res)]
 
