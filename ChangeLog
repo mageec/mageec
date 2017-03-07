@@ -1,5 +1,12 @@
 2017-03-07  Edward Jones  <ed.jones@embecosm.com>
 
+	* lib/Database.cpp (Database::newFeatureSet): Fix implementation
+	to avoid a race hazard when adding features to the database.
+	(Database::newParameterSet): Avoid race hazard when adding
+	parameters to the database.
+
+2017-03-07  Edward Jones  <ed.jones@embecosm.com>
+
 	* include/mageec/Database.h (SQLTransaction): Add different
 	transaction types.
 	* lib/Database.cpp (SQLTransaction): Likewise.

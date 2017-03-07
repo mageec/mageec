@@ -673,51 +673,76 @@ FeatureSetID Database::newFeatureSet(FeatureSet features) {
 
   // The hash of the feature set forms its identifier in the database
   FeatureSetID feature_set_id = static_cast<FeatureSetID>(features.hash());
-  
-  bool feature_set_id_found = false;
-  while (!feature_set_id_found) {
-    get_feature_set.clearAllBindings();
-    get_feature_set << static_cast<int64_t>(feature_set_id);
 
-    auto feature_iter = get_feature_set.exec();
-    if (!feature_iter.done()) {
-      // feature set already exists. Get the set and compare
-      if (features == getFeatureSetFeatures(feature_set_id)) {
+  // Do a first check to see if the same feature set already exists. If so
+  // we don't have to do any expensive probing
+  //
+  // If it doesn't exist, then we have to gain an exlusive lock to the database,
+  // do a linear probe for the next available id, and then insert the new
+  // feature set if it doesn't exist. This is really expensive.
+  get_feature_set << static_cast<int64_t>(feature_set_id);
+  bool feature_set_id_found = false;
+
+  if (!get_feature_set.exec().done()) {
+    // There is already a feature set with that id. Do a full check to
+    // see if it is equal
+    if (features == getFeatureSetFeatures(feature_set_id))
+      feature_set_id_found = true;
+  }
+
+  if (!feature_set_id_found) {
+    // The quick test did not find an equal feature set, so we now need
+    // to probe to either find an equal set, or find somewhere to insert
+    // the new feature set.
+    //
+    // The probe + insert must be done atomically without any other process
+    // writing to the database in the meantime, so we require an exclusive
+    // lock to the database.
+    SQLTransaction transaction(m_db, SQLTransaction::kExclusive);
+
+    while (!feature_set_id_found) {
+      get_feature_set.clearAllBindings();
+      get_feature_set << static_cast<int64_t>(feature_set_id);
+      auto feature_iter = get_feature_set.exec();
+
+      if (feature_iter.done()) {
+        // The feature set does not already exist, and we have found a free
+        // identifier for it. Do the insertion now
+        for (auto I : features) {
+          // clear feature bindings for all queries
+          insert_feature_type.clearAllBindings();
+          insert_feature.clearAllBindings();
+          insert_feature_debug.clearAllBindings();
+
+          // Add feature type first if not present
+          insert_feature_type << static_cast<int64_t>(I->getID())
+                              << static_cast<int64_t>(I->getType());
+          insert_feature_type.exec().assertDone();
+
+          // feature insertion
+          insert_feature << static_cast<int64_t>(feature_set_id) 
+                         << static_cast<int64_t>(I->getID())
+                         << I->toBlob();
+          insert_feature.exec().assertDone();
+
+          // debug table
+          insert_feature_debug << static_cast<int64_t>(I->getID())
+                               << I->getName();
+          insert_feature_debug.exec().assertDone();
+        }
         feature_set_id_found = true;
       } else {
-        mageec::ID tmp = static_cast<mageec::ID>(feature_set_id);
-        feature_set_id = static_cast<FeatureSetID>(tmp + 1);
+        // Check if the feature set with the given id is equal. If it is
+        // we're done, otherwise continuing probing
+        if (features == getFeatureSetFeatures(feature_set_id)) {
+          feature_set_id_found = true;
+        } else {
+          mageec::ID tmp = static_cast<mageec::ID>(feature_set_id);
+          feature_set_id = static_cast<FeatureSetID>(tmp + 1);
+        }
       }
-    } else {
-      // No feature set matching this id has been found, so insert the
-      // features into the database.
-      // Whole operation in a single transaction
-      SQLTransaction transaction(m_db);
-      for (auto I : features) {
-        // clear feature bindings for all queries
-        insert_feature_type.clearAllBindings();
-        insert_feature.clearAllBindings();
-        insert_feature_debug.clearAllBindings();
-
-        // Add feature type first if not present
-        insert_feature_type << static_cast<int64_t>(I->getID())
-                            << static_cast<int64_t>(I->getType());
-        insert_feature_type.exec().assertDone();
-
-        // feature insertion
-        insert_feature << static_cast<int64_t>(feature_set_id) 
-                       << static_cast<int64_t>(I->getID())
-                       << I->toBlob();
-        insert_feature.exec().assertDone();
-
-        // debug table
-        insert_feature_debug << static_cast<int64_t>(I->getID())
-                             << I->getName();
-        insert_feature_debug.exec().assertDone();
-      }
-      feature_set_id_found = true;
-      transaction.commit();
     }
+    transaction.commit();
   }
   return feature_set_id;
 }
@@ -731,9 +756,6 @@ FeatureSet Database::getFeatureSetFeatures(FeatureSetID feature_set) {
          "FROM FeatureType, FeatureSetFeature "
          "WHERE FeatureType.feature_id = FeatureSetFeature.feature_id "
            "AND FeatureSetFeature.feature_set_id = " << SQLType::kInteger;
-
-  // Perform in a single transaction
-  SQLTransaction transaction(m_db);
 
   // Retrieve the features
   FeatureSet features;
@@ -758,7 +780,6 @@ FeatureSet Database::getFeatureSetFeatures(FeatureSetID feature_set) {
       break;
     }
   }
-  transaction.commit();
   return features;
 }
 
@@ -772,9 +793,6 @@ ParameterSet Database::getParameters(ParameterSetID param_set) {
          "FROM ParameterType, ParameterSetParameter "
          "WHERE ParameterType.parameter_id = ParameterSetParameter.parameter_id "
            "AND ParameterSetParameter.parameter_set_id = " << SQLType::kInteger;
-
-  // Perform in a single transaction
-  SQLTransaction transaction(m_db);
 
   // Retrieve parameters
   ParameterSet parameters;
@@ -801,7 +819,6 @@ ParameterSet Database::getParameters(ParameterSetID param_set) {
       break;
     }
   }
-  transaction.commit();
   return parameters;
 }
 
@@ -892,49 +909,74 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
   // The hash of the parameter set forms its identifier in the database
   ParameterSetID param_set_id = static_cast<ParameterSetID>(parameters.hash());
 
+  // Do a first check to see if the same parameter set already exists. If so
+  // we don't have to do any expensive probing
+  //
+  // If it doesn't exist, then we have to gain an exlusive lock to the database,
+  // do a linear probe for the first available id, and then insert the new
+  // parameter set. This is really expensive.
+  get_parameter_set << static_cast<int64_t>(param_set_id);
   bool param_set_id_found = false;
-  while (!param_set_id_found) {
-    get_parameter_set.clearAllBindings();
-    get_parameter_set << static_cast<int64_t>(param_set_id);
 
-    auto param_iter = get_parameter_set.exec();
-    if (!param_iter.done()) {
-      // parameter set already exists. Get the set and compare
-      ParameterSet other_parameters = getParameters(param_set_id);
-      if (parameters == getParameters(param_set_id)) {
+  if (!get_parameter_set.exec().done()) {
+    // There is already a parameter set with that id. Do a full check to
+    // see if it is equal
+    if (parameters == getParameters(param_set_id))
+      param_set_id_found = true;
+  }
+
+  if (!param_set_id_found) {
+    // The quick test did not find an equal parameter set, so we now need
+    // to probe to either find an equal set, or find somewhere to insert
+    // the new parameter set.
+    //
+    // The probe + insert must be done atomically without any other process
+    // writing to the database in the meantime, so we require an exclusive
+    // lock to the database.
+    SQLTransaction transaction(m_db, SQLTransaction::kExclusive);
+
+    while (!param_set_id_found) {
+      get_parameter_set.clearAllBindings();
+      get_parameter_set << static_cast<int64_t>(param_set_id);
+      auto param_iter = get_parameter_set.exec();
+
+      if (param_iter.done()) {
+        // The parameter set does not already exist, and we have found a free
+        // identifier for it. Do the insertion now
+        for (auto I : parameters) {
+          // clear parameters bindings for all queries
+          insert_parameter_type.clearAllBindings();
+          insert_parameter.clearAllBindings();
+          insert_parameter_debug.clearAllBindings();
+
+          // add parameter type first if not present
+          insert_parameter_type << static_cast<int64_t>(I->getID())
+                                << static_cast<int64_t>(I->getType());
+          insert_parameter_type.exec().assertDone();
+
+          // parameter insertion
+          insert_parameter << static_cast<int64_t>(param_set_id)
+                           << static_cast<int64_t>(I->getID())
+                           << I->toBlob();
+          insert_parameter.exec().assertDone();
+
+          // debug table
+          insert_parameter_debug << I->getID() << I->getName();
+          insert_parameter_debug.exec().assertDone();
+        }
         param_set_id_found = true;
       } else {
-        mageec::ID tmp = static_cast<mageec::ID>(param_set_id);
-        param_set_id = static_cast<ParameterSetID>(tmp + 1);
+        // Check if the parameter set with the given id is equal. If it is
+        // we're done, otherwise continuing probing
+        if (parameters == getParameters(param_set_id)) {
+          param_set_id_found = true;
+        } else {
+          mageec::ID tmp = static_cast<mageec::ID>(param_set_id);
+          param_set_id = static_cast<ParameterSetID>(tmp + 1);
+        }
       }
-    } else {
-      // Insert the new parameter set
-      // Whole operation in a single transaction
-      SQLTransaction transaction(m_db);
-      for (auto I : parameters) {
-        // clear parameters bindings for all queries
-        insert_parameter_type.clearAllBindings();
-        insert_parameter.clearAllBindings();
-        insert_parameter_debug.clearAllBindings();
-
-        // add parameter type first if not present
-        insert_parameter_type << static_cast<int64_t>(I->getID())
-                              << static_cast<int64_t>(I->getType());
-        insert_parameter_type.exec().assertDone();
-
-        // parameter insertion
-        insert_parameter << static_cast<int64_t>(param_set_id)
-                         << static_cast<int64_t>(I->getID())
-                         << I->toBlob();
-        insert_parameter.exec().assertDone();
-
-        // debug table
-        insert_parameter_debug << I->getID() << I->getName();
-        insert_parameter_debug.exec().assertDone();
-      }
-      param_set_id_found = true;
-      transaction.commit();
     }
+    transaction.commit();
   }
   return param_set_id;
 }
