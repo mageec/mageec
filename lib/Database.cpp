@@ -209,8 +209,8 @@ Database::getDatabase(std::string db_path,
 Database::Database(sqlite3 &db, std::map<std::string, IMachineLearner *> mls,
                    bool create)
     : m_db(&db), m_mls(mls) {
-  // Set a busy timeout for all database transactions
-  sqlite3_busy_timeout(m_db, 10000);
+  // Set a busy timeout for all database transactions of 3 hours
+  sqlite3_busy_timeout(m_db, 10000000);
 
   // Enable foreign keys (requires sqlite 3.6.19 or above)
   // If foreign keys are not available the database is still usable, but no

@@ -1,3 +1,8 @@
+2017-03-07  Edward Jones  <ed.jones@embecosm.com>
+
+	* lib/Database.cpp: Set timeout for access to the database
+	to around 3 hours.
+
 2017-03-06  Edward Jones  <ed.jones@embecosm.com>
 
 	* scripts/combined-elimination.py: Allow incomplete results
