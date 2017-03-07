@@ -391,12 +391,12 @@ def combined_elimination(src_dir, build_dir, install_dir, build_system,
             run_id += 1
 
         # Wait for all of the test runs to complete, and then get their results
-        for run_id, res in test_results:
+        for test_run_id, res in test_results:
             res.wait()
-        for run_id, res in test_results:
+        for test_run_id, res in test_results:
             test_res = res.get()
             if test_res <= 0:
-                print ('-- Test run ' + str(run_id) + ' failed. Exiting')
+                print ('-- Test run ' + str(test_run_id) + ' failed. Exiting')
                 return False
             if test_res < base_res:
                 flags_with_improvement += [(flag, test_res)]
