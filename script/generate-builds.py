@@ -211,8 +211,7 @@ def generate_configurations(src_dir, build_dir, install_dir, build_system,
                            cc=gcc_wrapper,
                            cxx=gxx_wrapper,
                            fort=gfortran_wrapper,
-                           flags=new_flags,
-                           jobs=jobs)
+                           flags=new_flags)
         # just ignore failed builds
         if not res:
             print ('-- Build failed. Continuing regardless')

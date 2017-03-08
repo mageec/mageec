@@ -24,8 +24,7 @@ class preserve_cwd():
         os.chdir(self.cwd)
 
 
-def build(src_dir, build_dir, install_dir, build_system, cc, cxx, fort, flags,
-          jobs):
+def build(src_dir, build_dir, install_dir, build_system, cc, cxx, fort, flags):
     assert(os.path.exists(src_dir) and os.path.isabs(src_dir))
     assert(os.path.exists(build_dir) and os.path.isabs(build_dir))
     assert(os.path.exists(install_dir) and os.path.isabs(install_dir))
@@ -91,7 +90,7 @@ def build(src_dir, build_dir, install_dir, build_system, cc, cxx, fort, flags,
                 print ('-- make command not on path')
                 return False
 
-            cmd = ['make', '-j' + str(jobs)]
+            cmd = ['make']
             ret = subprocess.call(cmd)
             if ret != 0:
                 print ('-- Failed to build source \'' + src_dir + '\' using CMake')
@@ -138,8 +137,7 @@ def build(src_dir, build_dir, install_dir, build_system, cc, cxx, fort, flags,
                    '--cc', cc,
                    '--cxx', cxx,
                    '--fort', fort,
-                   '--flags', flags,
-                   '--jobs', str(jobs)]
+                   '--flags', flags]
             ret = subprocess.call(cmd)
             if ret != 0:
                 print ('-- Failed to build using custom build script \'' + build_system + '\'')
@@ -148,7 +146,7 @@ def build(src_dir, build_dir, install_dir, build_system, cc, cxx, fort, flags,
 
 
 def feature_extract(src_dir, build_dir, install_dir, build_system, cc, cxx,
-                    fort, flags, jobs, database_path, gcc_plugin_path, debug,
+                    fort, flags, database_path, gcc_plugin_path, debug,
                     out_path):
     assert(os.path.exists(src_dir) and os.path.isabs(src_dir))
     assert(os.path.exists(build_dir) and os.path.isabs(build_dir))
@@ -176,6 +174,5 @@ def feature_extract(src_dir, build_dir, install_dir, build_system, cc, cxx,
                  cc=cc,
                  cxx=cxx,
                  fort=fort,
-                 flags=new_flags,
-                 jobs=jobs)
+                 flags=new_flags)
 

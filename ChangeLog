@@ -1,3 +1,16 @@
+2017-03-08  Edward Jones  <ed.jones@embecosm.com>
+
+	* script/combined-elimination.py (build_and_measure): Remove
+	jobs argument.
+	(combined_elimination): Likewise.
+	* script/feature-extract.py: Remove --jobs flags, run
+	feature extraction single threaded.
+	* script/generate-builds.py (generate_configurations): Remove
+	jobs argument.
+	* script/mageec.py (build): Remove jobs argument, build
+	benchmarks single threaded.
+	(feature_extract): Likewise.
+
 2017-03-07  Edward Jones  <ed.jones@embecosm.com>
 
 	* lib/Database.cpp (Database::appendDatabase): Select
