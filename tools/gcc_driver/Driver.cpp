@@ -1702,7 +1702,8 @@ int main(int argc, const char *argv[]) {
         auto param_flag = parameter_to_flag.at(i);
         param_set.add(std::make_shared<mageec::BoolParameter>(i, enabled,
                                                               param_flag));
-        params.insert(i);
+        if (enabled)
+          params.insert(i);
       }
       // Add the set of parameters to the database
       auto param_set_id = db->newParameterSet(param_set);

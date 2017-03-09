@@ -1,3 +1,8 @@
+2017-03-09  Edward Jones  <ed.jones@embecosm.com>
+
+	* Driver.cpp (main): When optimizing, only add a flag if it is
+	actually enabled by the machine learner.
+
 2017-03-03  Edward Jones  <ed.jones@embecosm.com>
 
 	* Driver.cpp: Add -fmageec-sql-trace argument to the Driver.
