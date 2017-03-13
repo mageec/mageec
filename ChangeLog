@@ -1,3 +1,11 @@
+2017-03-13  Edward Jones  <ed.jones@embecosm.com>
+
+	* script/combined-elimination.py: Use /usr/bin/env instead of
+	/bin/env to find an appropriate interpreter for scripts.
+	* script/feature-extract.py: Likewise.
+	* script/generate-builds.py: Likewise.
+	* script/mageec.py: Likewise.
+
 2017-03-08  Edward Jones  <ed.jones@embecosm.com>
 
 	* script/combined-elimination.py (build_and_measure): Remove
