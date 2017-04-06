@@ -100,7 +100,7 @@ static const char *const create_result_table =
     "CREATE TABLE Result("
     "compilation_id INTEGER NOT NULL, "
     "metric         TEXT NOT NULL, "
-    "result         INTEGER NOT NULL, "
+    "result         REAL NOT NULL, "
     "UNIQUE(compilation_id, metric), "
     "FOREIGN KEY(compilation_id) REFERENCES Compilation(compilation_id)"
     ")";
@@ -492,12 +492,12 @@ bool Database::appendDatabase(Database &other) {
   MAGEEC_DEBUG("Merging results");
   SQLQuery select_results(*other.m_db,
       "SELECT compilation_id, metric, result FROM Result");
-  std::map<std::pair<CompilationID, std::string>, uint64_t> new_results;
+  std::map<std::pair<CompilationID, std::string>, double> new_results;
   for (auto res = select_results.exec(); !res.done(); res = res.next()) {
     assert(res.numColumns() == 3);
     auto compilation_id = static_cast<CompilationID>(res.getInteger(0));
     auto metric = res.getText(1);
-    auto result = static_cast<uint64_t>(res.getInteger(2));
+    auto result = static_cast<double>(res.getReal(2));
 
     // Remap the compilation id
     auto new_compilation_id = compilation_id_remapping[compilation_id];
@@ -961,7 +961,8 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
           insert_parameter.exec().assertDone();
 
           // debug table
-          insert_parameter_debug << I->getID() << I->getName();
+          insert_parameter_debug << static_cast<int64_t>(I->getID())
+                                 << I->getName();
           insert_parameter_debug.exec().assertDone();
         }
         param_set_id_found = true;
@@ -984,7 +985,7 @@ ParameterSetID Database::newParameterSet(ParameterSet parameters) {
 //===------------------------ Results interface ---------------------------===//
 
 void Database::
-addResults(std::map<std::pair<CompilationID, std::string>, uint64_t> results) {
+addResults(std::map<std::pair<CompilationID, std::string>, double> results) {
   // It is possible for the user to provide a compilation_id and metric which
   // already has a result in the database. In this case, we replace the
   // original value.
@@ -992,7 +993,7 @@ addResults(std::map<std::pair<CompilationID, std::string>, uint64_t> results) {
       SQLQueryBuilder(*m_db)
       << "INSERT OR REPLACE INTO Result(compilation_id, metric, result) "
          "VALUES(" << SQLType::kInteger << ", " << SQLType::kText << ", "
-                   << SQLType::kInteger << ")";
+                   << SQLType::kReal << ")";
 
   SQLQuery get_compilation_ids(
       *m_db, "SELECT compilation_id FROM Compilation");
@@ -1025,7 +1026,7 @@ addResults(std::map<std::pair<CompilationID, std::string>, uint64_t> results) {
 
     insert_result.clearAllBindings();
     insert_result << static_cast<int64_t>(id) << metric
-                  << static_cast<int64_t>(value);
+                  << value;
     insert_result.exec().assertDone();
   }
   transaction.commit();
@@ -1178,7 +1179,7 @@ util::Option<Result> ResultIterator::operator*() {
     assert(parameters.size() != 0);
   }
 
-  uint64_t res = static_cast<uint64_t>(m_result_iter->getInteger(2));
+  auto res = m_result_iter->getReal(2);
   return Result(features, parameters, res);
 }
 

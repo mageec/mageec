@@ -1,3 +1,30 @@
+2017-04-06  Edward Jones  <ed.jones@embecosm.com>
+
+	* include/mageec/Database.h (Database::addResults): Change
+	results value to be a double instead of an integer.
+	* include/mageec/Result.h (Result::getValue): Returned
+	value is a double instead of an integer.
+	* include/mageec/SQLQuery.h (SQLType): Add kReal enum value
+	for floating point values.
+	(SQLQueryIterator::getReal): Add function to retrieve a
+	value from a floating point field in a query.
+	(SQLQuery::operator<<): Add overload for double values.
+	* lib/Database.cpp (create_result_table): Change the
+	value entry in the result table to be a float.
+	(Database::appendDatabase): Update so that Results tables
+	are correctly merged.
+	(Database::addResults): Change results value to be a
+	double instead of integer.
+	* lib/Driver.cpp (parseResults): Parse the result field as
+	a double instead of an integer.
+	* lib/ML/C5.cpp (C5Driver::train): Retrieve result value
+	as a double instead of an integer.
+	* lib/SQLQuery.cpp (SQLQuery::operator<<): Add overload
+	for double values.
+	(SQLQueryIterator::getReal): Add implementation to
+	retrieve a value from a floating point field in a
+	query.
+
 2017-03-13  Edward Jones  <ed.jones@embecosm.com>
 
 	* script/combined-elimination.py: Use /usr/bin/env instead of

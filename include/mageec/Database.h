@@ -216,7 +216,7 @@ public:
   ///
   /// \param results A set of results to be added to the database
   void
-  addResults(std::map<std::pair<CompilationID, std::string>, uint64_t> results);
+  addResults(std::map<std::pair<CompilationID, std::string>, double> results);
 
 //===----------------------- Training interface ---------------------------===//
 

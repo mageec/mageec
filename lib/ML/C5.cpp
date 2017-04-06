@@ -492,7 +492,7 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
   for (util::Option<Result> result; (result = *result_iter);
        result_iter = result_iter.next()) {
     FeatureSet features = result.get().getFeatures();
-    uint64_t value = result.get().getValue();
+    double value = result.get().getValue();
     uint64_t hash = features.hash();
 
     bool result_handled = false;
@@ -500,7 +500,7 @@ C5Driver::train(std::set<FeatureDesc> feature_descs,
       auto curr_entry = result_map.find(hash);
       if (curr_entry != result_map.end()) {
         const FeatureSet &curr_features = curr_entry->second.getFeatures();
-        uint64_t curr_value = curr_entry->second.getValue();
+        double curr_value = curr_entry->second.getValue();
 
         if (features == curr_features) {
           if (value < curr_value) {

@@ -115,6 +115,23 @@ SQLQuery &SQLQuery::operator<<(int64_t i) {
   return *this;
 }
 
+SQLQuery &SQLQuery::operator<<(double i) {
+  validate();
+  assert(m_param_types[m_curr_param] == SQLType::kReal);
+
+  // bind positions index from 1
+  int res = sqlite3_bind_double(m_stmt, static_cast<int>(m_curr_param) + 1, i);
+
+  if (res != SQLITE_OK) {
+    MAGEEC_DEBUG("Error binding integer value to database query:\n"
+                 << sqlite3_errmsg(&m_db));
+  }
+  assert(res == SQLITE_OK && "Error binding integer value to database query");
+
+  m_curr_param++;
+  return *this;
+}
+
 SQLQuery &SQLQuery::operator<<(std::string str) {
   validate();
   assert(m_param_types[m_curr_param] == SQLType::kText);
@@ -365,6 +382,15 @@ int64_t SQLQueryIterator::getInteger(int index) {
   assert(sqlite3_column_type(m_stmt, index) == SQLITE_INTEGER);
 
   return sqlite3_column_int64(m_stmt, index);
+}
+
+double SQLQueryIterator::getReal(int index) {
+  validate();
+  assert(!done());
+  assert(index < numColumns());
+  assert(sqlite3_column_type(m_stmt, index) == SQLITE_FLOAT);
+
+  return sqlite3_column_double(m_stmt, index);
 }
 
 void SQLQueryIterator::validate(void) {

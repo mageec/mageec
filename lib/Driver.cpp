@@ -287,9 +287,9 @@ static bool trainDatabase(Framework &framework, const std::string &db_path,
   return true;
 }
 
-static util::Option<std::map<std::pair<CompilationID, std::string>, uint64_t>>
+static util::Option<std::map<std::pair<CompilationID, std::string>, double>>
 parseResults(const std::string &result_path) {
-  std::map<std::pair<CompilationID, std::string>, uint64_t> results;
+  std::map<std::pair<CompilationID, std::string>, double> results;
 
   MAGEEC_DEBUG("Opening file '" << result_path << "' to parse results");
   std::ifstream result_file(result_path);
@@ -393,7 +393,7 @@ parseResults(const std::string &result_path) {
     }
     CompilationID compilation_id = static_cast<CompilationID>(tmp);
 
-    uint64_t value;
+    double value;
     std::istringstream value_stream(value_str);
     value_stream >> value;
     if (id_stream.fail()) {

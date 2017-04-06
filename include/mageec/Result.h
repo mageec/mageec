@@ -51,7 +51,7 @@ public:
   const ParameterSet& getParameters(void) const { return m_parameters; }
 
   /// \brief Get the numerical value of the result
-  uint64_t getValue(void) const { return m_value; }
+  double getValue(void) const { return m_value; }
 
 private:
   /// \brief Construct a new result with the provided initial features,
@@ -59,7 +59,7 @@ private:
   ///
   /// This is restricted to be accessible by friend classes. User code should
   /// never be creating results
-  Result(FeatureSet features, ParameterSet parameters, uint64_t value)
+  Result(FeatureSet features, ParameterSet parameters, double value)
       : m_features(features), m_parameters(parameters), m_value(value) {}
 
   /// \brief Features for the program unit
@@ -70,7 +70,7 @@ private:
   ParameterSet m_parameters;
 
   /// \brief Value of the result
-  uint64_t m_value;
+  double m_value;
 };
 
 } // end of namespace mageec

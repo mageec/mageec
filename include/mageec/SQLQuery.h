@@ -36,7 +36,7 @@ namespace mageec {
 class SQLQuery;
 
 /// Defines the types which can appear in SQL queries
-enum class SQLType { kInteger, kText, kBlob };
+enum class SQLType { kInteger, kReal, kText, kBlob };
 
 /// \class SQLQueryBuilder
 ///
@@ -144,6 +144,12 @@ public:
   /// \return The integer value
   int64_t getInteger(int index);
 
+  /// \brief Retrieve a real value from the results table
+  ///
+  /// \param index  Index of column containing the text
+  /// \return The real value
+  double getReal(int index);
+
 private:
   /// \brief Validate the state of the iterator
   void validate(void);
@@ -205,6 +211,9 @@ public:
 
   /// \brief Bind an integer value to the next available parameter
   SQLQuery &operator<<(int64_t i);
+
+  /// \brief Bind a real value to the next available parameter
+  SQLQuery &operator<<(double i);
 
   /// \brief Bind text to the next available parameter
   SQLQuery &operator<<(std::string str);
