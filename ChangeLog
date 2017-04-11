@@ -1,3 +1,12 @@
+2017-04-11  Edward Jones  <ed.jones@embecosm.com>
+
+	* CMakeLists.txt: Build the 1NN machine learner.
+	* include/mageec/ML/1NN.h: Added file.
+	* lib/Driver.cpp (main): Initialize the 1NN machine learner.
+	* lib/ML/1NN.cpp: Added file.
+	* lib/Util.cpp (Util::read64LE): Fix to actually read 64 bits of
+	data.
+
 2017-04-06  Edward Jones  <ed.jones@embecosm.com>
 
 	* include/mageec/Database.h (Database::addResults): Change

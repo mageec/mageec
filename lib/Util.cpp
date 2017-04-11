@@ -65,7 +65,7 @@ void write16LE(std::vector<uint8_t> &buf, unsigned value) {
 }
 
 uint64_t read64LE(std::vector<uint8_t>::const_iterator &it) {
-  unsigned res = 0;
+  uint64_t res = 0;
   res |= static_cast<uint64_t>(*it);
   res |= static_cast<uint64_t>(*(it + 1)) << 8;
   res |= static_cast<uint64_t>(*(it + 2)) << 16;

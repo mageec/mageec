@@ -107,7 +107,7 @@ target_link_libraries(mageec_core sqlite3)
 
 # Machine learners incorporated into MAGEEC
 add_subdirectory(lib/ML/C5)
-set (ML_SOURCES "lib/ML/C5.cpp")
+set (ML_SOURCES "lib/ML/C5.cpp" "lib/ML/1NN.cpp")
 
 add_library (mageec_ml ${ML_SOURCES})
 target_link_libraries(mageec_ml mageec_core c5_machine_learner)

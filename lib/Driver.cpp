@@ -26,6 +26,7 @@
 #include "mageec/Database.h"
 #include "mageec/Framework.h"
 #include "mageec/ML/C5.h"
+#include "mageec/ML/1NN.h"
 #include "mageec/Util.h"
 
 #include <fstream>
@@ -606,6 +607,10 @@ int main(int argc, const char *argv[]) {
   MAGEEC_DEBUG("Registering C5.0 machine learner interface");
   std::unique_ptr<IMachineLearner> c5_ml(new C5Driver());
   framework.registerMachineLearner(std::move(c5_ml));
+
+  MAGEEC_DEBUG("Register 1-NN machine learner interface");
+  std::unique_ptr<IMachineLearner> nn_ml(new OneNN());
+  framework.registerMachineLearner(std::move(nn_ml));
 
   // Get the machine learners provided on the command line
   std::set<std::string> mls;
