@@ -2,6 +2,7 @@
 #include "mageec/Database.h"
 #include "mageec/Framework.h"
 #include "mageec/ML/C5.h"
+#include "mageec/ML/1NN.h"
 #include "mageec/Util.h"
 #include "Parameters.h"
 
@@ -1334,6 +1335,10 @@ int main(int argc, const char *argv[]) {
   MAGEEC_DEBUG("Registering C5.0 machine learner interface");
   std::unique_ptr<mageec::IMachineLearner> c5_ml(new mageec::C5Driver());
   framework.registerMachineLearner(std::move(c5_ml));
+
+  MAGEEC_DEBUG("Registering 1-NN machine learner interface");
+  std::unique_ptr<mageec::IMachineLearner> nn_ml(new mageec::OneNN());
+  framework.registerMachineLearner(std::move(nn_ml));
 
   // Select the machine learner chosen by the user. This may be the name of
   // an already register machine learner, or a path to a shared object which

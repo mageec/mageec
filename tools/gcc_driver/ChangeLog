@@ -1,3 +1,7 @@
+2017-04-12  Edward Jones  <ed.jones@embecosm.com>
+
+	* Driver.cpp (main): Initialize the 1NN machine learner.
+
 2017-04-11  Edward Jones  <ed.jones@embecosm.com>
 
 	* Driver.cpp (main): For now, don't store the compilation
