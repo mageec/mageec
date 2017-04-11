@@ -1843,7 +1843,10 @@ int main(int argc, const char *argv[]) {
                                                  module_entry.id,
                                                  mageec::FeatureClass::kModule,
                                                  param_set_id->second,
-                                                 src_file_commands[src_file_path],
+                                                 // FIXME: The compilation command
+                                                 // takes up a lot of space so
+                                                 // we don't store it for now
+                                                 nullptr, //src_file_commands[src_file_path],
                                                  nullptr);
 
     // TODO: Avoid static_cast here
@@ -1857,7 +1860,9 @@ int main(int argc, const char *argv[]) {
           db->newCompilation(function_entry.name, "function",
                              function_entry.id, mageec::FeatureClass::kFunction,
                              param_set_id->second,
-                             src_file_commands[src_file_path],
+                             // FIXME: The compilation command takes up a lot of
+                             // space so we don't store it for now.
+                             nullptr, //src_file_commands[src_file_path],
                              module_compilation);
 
       // TODO: Avoid static cast here

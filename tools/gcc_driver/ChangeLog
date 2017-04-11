@@ -1,3 +1,9 @@
+2017-04-11  Edward Jones  <ed.jones@embecosm.com>
+
+	* Driver.cpp (main): For now, don't store the compilation
+	command for each compilation. This takes up a huge amount of
+	space (>2kB for each compilation).
+
 2017-03-09  Edward Jones  <ed.jones@embecosm.com>
 
 	* Driver.cpp (main): When optimizing, only add a flag if it is
