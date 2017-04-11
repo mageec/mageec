@@ -314,11 +314,11 @@ OneNN::train(std::set<FeatureDesc> feature_descs,
   // |    16     |  16  | 64  | 64  |...
   // |NumFeatures|FeatID| max | min |...
   util::write16LE(blob, feature_max_min.size());
-  for (auto feature_max_min : feature_max_min) {
-    util::write16LE(blob, feature_max_min.first);
+  for (auto feat_max_min : feature_max_min) {
+    util::write16LE(blob, feat_max_min.first);
     // FIXME: Make this safe and portable
-    util::write64LE(blob, *reinterpret_cast<uint64_t*>(&feature_max_min.second.first));
-    util::write64LE(blob, *reinterpret_cast<uint64_t*>(&feature_max_min.second.second));
+    util::write64LE(blob, *reinterpret_cast<uint64_t*>(&feat_max_min.second.first));
+    util::write64LE(blob, *reinterpret_cast<uint64_t*>(&feat_max_min.second.second));
   }
   // Emit the number of feature points, followed by each feature point in
   // turn.
