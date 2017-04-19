@@ -1117,9 +1117,6 @@ static void printHelp() {
 "  -fmageec-framework-version  Print the version of the MAGEEC framework\n"
 "  -fmageec-debug              Enable debug output\n"
 "  -fmageec-sql-trace          Enable tracing of any SQL queries run\n"
-"  -fmageec-gcc=<command>      Command to invoke gcc\n"
-"  -fmageec-g++=<command>      Command to invoke g++\n"
-"  -fmageec-gfortran=<command> Command to invoke gfortran\n"
 "  -fmageec-mode=<mode>        Mode of the driver, valid values are\n"
 "                              gather and optimize\n"
 "  -fmageec-database=<file>    Database to record to\n"
@@ -1130,22 +1127,9 @@ static void printHelp() {
 "  -fmageec-metric=<name>      Metric to optimize for\n";
 }
 
-static bool endsWith(std::string str, std::string ending) {
-  if (str.size() >= ending.size())
-    return str.compare(str.size() - ending.size(), ending.size(), ending) == 0;
-  else
-    return false;
-}
-
 int main(int argc, const char *argv[]) {
   DriverMode mode = DriverMode::kNone;
 
-  // The gcc command to use
-  std::string gcc_command;
-  // The g++ command to use
-  std::string gxx_command;
-  // The gfortran command to use
-  std::string gfortran_command;
   // The database to gather into, or use when optimizing
   std::string db_str;
   // File holding the features for input programs
@@ -1165,9 +1149,6 @@ int main(int argc, const char *argv[]) {
   bool with_framework_version = false;
   bool with_debug             = false;
   bool with_sql_trace         = false;
-  bool with_gcc_command       = false;
-  bool with_gxx_command       = false;
-  bool with_gfortran_command  = false;
   bool with_db                = false;
   bool with_features          = false;
   bool with_out               = false;
@@ -1205,29 +1186,7 @@ int main(int argc, const char *argv[]) {
       continue;
 
     // Flags with values
-    if (arg.compare(0, strlen("gcc="), "gcc=") == 0) {
-      gcc_command = std::string(arg.begin() + strlen("gcc="), arg.end());
-      if (gcc_command == "") {
-        MAGEEC_ERR("No gcc command provided");
-        return -1;
-      }
-      with_gcc_command = true;
-    } else if (arg.compare(0, strlen("g++="), "g++=") == 0) {
-      gxx_command = std::string(arg.begin() + strlen("g++="), arg.end());
-      if (gcc_command == "") {
-        MAGEEC_ERR("No gcc command provided");
-        return -1;
-      }
-      with_gxx_command = true;
-    } else if (arg.compare(0, strlen("gfortran="), "gfortran=") == 0) {
-      gfortran_command =
-          std::string(arg.begin() + strlen("gfortran="), arg.end());
-      if (gfortran_command == "") {
-        MAGEEC_ERR("No gfortran command provided");
-        return -1;
-      }
-      with_gfortran_command = true;
-    } else if (arg.compare(0, strlen("mode="), "mode=") == 0) {
+    if (arg.compare(0, strlen("mode="), "mode=") == 0) {
       std::string mode_str(arg.begin() + strlen("mode="), arg.end());
 
       if (mode_str == "gather") {
@@ -1416,28 +1375,10 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  // Replace the command word depending on the underlying wrapper being used.
-  //
-  // For the 'mageec-gcc' wrapper, use the argument from '-fmageec-gcc', and
-  // for 'mageec-gfortran' and 'mageec-g++', use the '-fmageec-gfortran' and
-  // '-fmageec-g++' arguments respectively.
-  if (endsWith(cmd_args[0], "mageec-gcc")) {
-    if (with_gcc_command)
-      cmd_args[0] = gcc_command;
-    else
-      cmd_args[0] = "gcc";
-  } else if (endsWith(cmd_args[0], "mageec-g++")) {
-    if (with_gxx_command)
-      cmd_args[0] = gxx_command;
-    else
-      cmd_args[0] = "g++";
-  } else {
-    assert(endsWith(cmd_args[0], "mageec-gfortran"));
-    if (with_gfortran_command)
-      cmd_args[0] = gfortran_command;
-    else
-      cmd_args[0] = "gfortran";
-  }
+  // Replace the command word by chopping off the 'mageec-' from the start
+  // of the name of the wrapper.
+  assert(cmd_args[0].compare(0, strlen("mageec-"), "mageec-") == 0);
+  cmd_args[0] = cmd_args[0].substr(strlen("mageec-"));
 
   // If we are not in 'gather' or 'optimize' modes, or if we're not compiling
   // to an object file, then just run the original command

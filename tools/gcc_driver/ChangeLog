@@ -1,3 +1,12 @@
+2017-04-19  Edward Jones  <ed.jones@embecosm.com>
+
+	* CMakeLists.txt: Create more wrappers for various mpi*
+	commands.
+	* Driver.cpp: Remove -fmageec-gcc, -fmageec-g++ and
+	-fmageec-gfortran arguments. Instead, find the compiler
+	command to use by removing 'mageec-' from the front
+	of the command word.
+
 2017-04-12  Edward Jones  <ed.jones@embecosm.com>
 
 	* Driver.cpp (main): Initialize the 1NN machine learner.

@@ -122,8 +122,9 @@ install(TARGETS gcc_driver
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
 
-# FIXME: Linux specific. Create a symlink from mageec-gcc to
-# mageec-gfortran and mageec-g++
+# FIXME: Linux specific
+# Create all manner of symlinks to mageec-gcc for the various commands which
+# may need wrappers
 install(CODE
         "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
                          ${CMAKE_INSTALL_PREFIX}/bin/mageec-gcc \
@@ -132,4 +133,35 @@ install(CODE
         "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
                          ${CMAKE_INSTALL_PREFIX}/bin/mageec-gcc \
                          ${CMAKE_INSTALL_PREFIX}/bin/mageec-g++)")
+
+# Wrappers around the various MPI wrapper commands
+# mpic++, mpicc, mpiCC, mpicxx, mpif77, mpif90, mpifort
+install(CODE
+        "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-gcc \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-mpic++)")
+install(CODE
+        "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-gcc \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-mpicc)")
+install(CODE
+        "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-gcc \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-mpiCC)")
+install(CODE
+        "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-gcc \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-mpicxx)")
+install(CODE
+        "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-gcc \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-mpif77)")
+install(CODE
+        "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-gcc \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-mpif90)")
+install(CODE
+        "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-gcc \
+                         ${CMAKE_INSTALL_PREFIX}/bin/mageec-mpifort)")
        
