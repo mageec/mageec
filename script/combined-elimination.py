@@ -8,10 +8,6 @@ import mageec
 
 from multiprocessing.pool import Pool
 
-gcc_wrapper = 'mageec-gcc'
-gxx_wrapper = 'mageec-g++'
-gfortran_wrapper = 'mageec-gfortran'
-
 all_flags = [
     #'-faggressive-loop-optimizations', # Not supported in 4.5
     '-falign-functions',
@@ -176,9 +172,13 @@ def build_and_measure(src_dir, build_dir, install_dir, build_system,
     compilations_path = os.path.join(install_dir, 'compilations.csv')
     results_path = os.path.join(install_dir, 'results.csv')
 
-    wrapper_flags = '-fmageec-gcc=' + cc
-    wrapper_flags += ' -fmageec-g++=' + cxx
-    wrapper_flags += ' -fmageec-gfortran=' + fort
+    cc_wrapper = 'mageec-' + cc
+    cxx_wrapper = 'mageec-' + cxx
+    fort_wrapper = 'mageec-' + fort
+    assert(mageec.is_command_on_path(cc_wrapper))
+    assert(mageec.is_command_on_path(cxx_wrapper))
+    assert(mageec.is_command_on_path(fort_wrapper))
+    wrapper_flags = ""
     if debug:
         wrapper_flags += ' -fmageec-debug'
     wrapper_flags += ' -fmageec-mode=gather'
@@ -193,9 +193,9 @@ def build_and_measure(src_dir, build_dir, install_dir, build_system,
                        build_dir=build_dir,
                        install_dir=install_dir,
                        build_system=build_system,
-                       cc=gcc_wrapper,
-                       cxx=gxx_wrapper,
-                       fort=gfortran_wrapper,
+                       cc=cc_wrapper,
+                       cxx=cxx_wrapper,
+                       fort=fort_wrapper,
                        flags=new_flags)
     
     # Run the measurement script to produce a results file which can be
@@ -272,9 +272,6 @@ def combined_elimination(src_dir, build_dir, install_dir, build_system,
     assert(mageec.is_command_on_path(cc))
     assert(mageec.is_command_on_path(cxx))
     assert(mageec.is_command_on_path(fort))
-    assert(mageec.is_command_on_path(gcc_wrapper))
-    assert(mageec.is_command_on_path(gxx_wrapper))
-    assert(mageec.is_command_on_path(gfortran_wrapper))
     assert(jobs > 0)
 
     # Run at -O3 to get a point of comparison
@@ -543,15 +540,6 @@ def main():
         return -1
     if not mageec.is_command_on_path(fort):
         print ('-- Compiler \'' + fort + '\' is not on the path')
-        return -1
-    if not mageec.is_command_on_path(gcc_wrapper):
-        print ('-- mageec gcc wrapper \'' + gcc_wrapper + '\' is not on the path')
-        return -1
-    if not mageec.is_command_on_path(gxx_wrapper):
-        print ('-- mageec g++ wrapper \'' + gxx_wrapper + '\' is not on the path')
-        return -1
-    if not mageec.is_command_on_path(gfortran_wrapper):
-        print ('-- mageec gfortran wrapper \'' + gfortran_wrapper + '\' is not on the path')
         return -1
 
     debug        = args.debug

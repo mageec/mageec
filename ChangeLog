@@ -1,3 +1,11 @@
+2017-04-19  Edward Jones  <ed.jones@embecosm.com>
+
+	* script/combined-elimination.py: Instead of using
+	mageec-gcc, mageec-g++ and mageec-gfortran, prepend
+	'mageec-' on the front of the compiler names to get
+	the name of the corresponding mageec wrapper.
+	* script/generate-builds.py: Likewise.
+
 2017-04-11  Edward Jones  <ed.jones@embecosm.com>
 
 	* CMakeLists.txt: Build the 1NN machine learner.

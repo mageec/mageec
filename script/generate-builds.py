@@ -6,10 +6,6 @@ import random
 import sys
 import mageec
 
-gcc_wrapper = 'mageec-gcc'
-gxx_wrapper = 'mageec-g++'
-gfortran_wrapper = 'mageec-gfortran'
-
 gcc_flags = [
     #'-faggressive-loop-optimizations', # Not supported in 4.5
     '-falign-functions',
@@ -171,7 +167,6 @@ def generate_configurations(src_dir, build_dir, install_dir, build_system,
     assert(mageec.is_command_on_path(cc))
     assert(mageec.is_command_on_path(cxx))
     assert(mageec.is_command_on_path(fort))
-    assert(mageec.is_command_on_path(gcc_wrapper))
     assert(num_configs > 0)
     assert(jobs > 0)
 
@@ -192,9 +187,13 @@ def generate_configurations(src_dir, build_dir, install_dir, build_system,
 
         compilations_path = os.path.join(run_install_dir, 'compilations.csv')
 
-        wrapper_flags = '-fmageec-gcc=' + cc
-        wrapper_flags += ' -fmageec-g++=' + cxx
-        wrapper_flags += ' -fmageec-gfortran=' + fort
+        cc_wrapper = 'mageec-' + cc
+        cxx_wrapper = 'mageec-' + cxx
+        fort_wrapper = 'mageec-' + fort
+        assert(mageec.is_command_on_path(cc_wrapper))
+        assert(mageec.is_command_on_path(cxx_wrapper))
+        assert(mageec.is_command_on_path(fort_wrapper))
+        wrapper_flags = ""
         if debug:
             wrapper_flags += ' -fmageec-debug'
         wrapper_flags += ' -fmageec-mode=gather'
@@ -208,9 +207,9 @@ def generate_configurations(src_dir, build_dir, install_dir, build_system,
                            build_dir=run_build_dir,
                            install_dir=run_install_dir,
                            build_system=build_system,
-                           cc=gcc_wrapper,
-                           cxx=gxx_wrapper,
-                           fort=gfortran_wrapper,
+                           cc=cc_wrapper,
+                           cxx=cxx_wrapper,
+                           fort=fort_wrapper,
                            flags=new_flags)
         # just ignore failed builds
         if not res:
@@ -293,15 +292,6 @@ def main():
         return -1
     if not mageec.is_command_on_path(fort):
         print ('-- Compiler \'' + fort + '\' is not on the path')
-        return -1
-    if not mageec.is_command_on_path(gcc_wrapper):
-        print ('-- mageec gcc wrapper \'' + gcc_wrapper + '\' is not on the path')
-        return -1
-    if not mageec.is_command_on_path(gxx_wrapper):
-        print ('-- mageec g++ wrapper \'' + gxx_wrapper + '\' is not on the path')
-        return -1
-    if not mageec.is_command_on_path(gfortran_wrapper):
-        print ('-- mageec gfortran wrapper \'' + gfortran_wrapper + '\' is not on the path')
         return -1
 
     if num_configs <= 0:
