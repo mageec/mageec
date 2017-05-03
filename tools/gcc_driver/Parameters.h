@@ -30,6 +30,7 @@ enum {
   kFlagParameterBegin = 0,
 };
 
+
 namespace FlagParameterID {
 enum : unsigned {
   kFIRST_FLAG_PARAMETER        = kFlagParameterBegin,

@@ -27,8 +27,20 @@ static const mageec::util::Version gcc_driver_version(GCC_DRIVER_VERSION_MAJOR,
                                                       GCC_DRIVER_VERSION_MINOR,
                                                       GCC_DRIVER_VERSION_PATCH);
 
-enum class DriverMode { kNone, kGather, kOptimize };
+/// \enum DriverMode
+///
+/// \brief Modes which the GCC wrapper driver can run in
+enum class DriverMode {
+  /// Only utility methods can be accessed
+  kNone,
+  /// Gather mode, record the flags used in the compilation to a database
+  kGather,
+  /// Optimize mode, replace the flags with flags derived by sending queries
+  /// about flags to the machine learners
+  kOptimize
+};
 
+/// All of the flags which are enabled by GCC at -O0
 static const auto &opt_flags_O0 = *new std::vector<std::string>({
     "-faggressive-loop-optimizations",
     "-fasynchronous-unwind-tables",
@@ -83,6 +95,7 @@ static const auto &opt_flags_O0 = *new std::vector<std::string>({
     "-fvar-tracking-assignments",
     "-fweb"});
 
+/// All of the flags which are enabled by GCC at -O1
 static const auto &opt_flags_O1 = *new std::vector<std::string>({
     "-faggressive-loop-optimizations",
     "-fasynchronous-unwind-tables",
@@ -168,6 +181,7 @@ static const auto &opt_flags_O1 = *new std::vector<std::string>({
     "-fvar-tracking-assignments",
     "-fweb"});
 
+/// All of the flags which are enabled by GCC at -O2
 static const auto &opt_flags_O2 = *new std::vector<std::string>({
     "-faggressive-loop-optimizations",
     "-falign-functions",
@@ -292,6 +306,7 @@ static const auto &opt_flags_O2 = *new std::vector<std::string>({
     "-fvar-tracking-assignments",
     "-fweb"});
 
+/// All of the flags which are enabled by GCC at -O3
 static const auto &opt_flags_O3 = *new std::vector<std::string>({
     "-faggressive-loop-optimizations",
     "-falign-functions",
@@ -425,6 +440,7 @@ static const auto &opt_flags_O3 = *new std::vector<std::string>({
     "-fvar-tracking-assignments",
     "-fweb"});
 
+/// All of the flags which are enabled by GCC at -O4
 static const auto &opt_flags_O4 = *new std::vector<std::string>({
     "-faggressive-loop-optimizations",
     "-falign-functions",
@@ -558,6 +574,7 @@ static const auto &opt_flags_O4 = *new std::vector<std::string>({
     "-fvar-tracking-assignments",
     "-fweb"});
 
+/// All of the flags which are enabled by GCC at -Os
 static const auto &opt_flags_Os = *new std::vector<std::string>({
     "-faggressive-loop-optimizations",
     "-falign-functions",
@@ -682,6 +699,7 @@ static const auto &opt_flags_Os = *new std::vector<std::string>({
     "-fvar-tracking-assignments",
     "-fweb"});
 
+/// All of the flags which are enabled by GCC at -Ofast
 static const auto &opt_flags_Ofast = *new std::vector<std::string>({
     "-faggressive-loop-optimizations",
     "-falign-functions",
@@ -817,6 +835,7 @@ static const auto &opt_flags_Ofast = *new std::vector<std::string>({
     "-fvar-tracking-assignments",
     "-fweb"});
 
+/// Map from flags to integer parameter identifiers to be used with MAGEEC
 // Heap allocate so the destructor does not need to be called
 static const auto &flag_to_parameter = *new std::map<std::string, unsigned>({
   //{"-faggressive-loop-optimizations",      FlagParameterID::kAggressiveLoopOptimizations},
@@ -968,7 +987,7 @@ struct ParameterToFlag {
 static const std::map<unsigned, std::string> &parameter_to_flag =
     *new ParameterToFlag();
 
-// Split a string on a provided character
+/// \brief Split a string into substrings on an input character
 static std::vector<std::string> splitString(std::string str, char c) {
   std::vector<std::string> res;
 
@@ -985,13 +1004,13 @@ static std::vector<std::string> splitString(std::string str, char c) {
   return res;
 }
 
-// Print the version of this driver.
+/// \brief Print the version of this driver
 static void printVersion() {
   mageec::util::out() << MAGEEC_PREFIX "Driver version: "
                       << static_cast<std::string>(gcc_driver_version) << '\n';
 }
 
-// Print the version of the database that was specified for use
+/// \brief Print the version of the database being used
 static int printDatabaseVersion(mageec::Framework &framework,
                                 const std::string &db_path) {
   std::unique_ptr<mageec::Database> db = framework.getDatabase(db_path, false);
@@ -1005,7 +1024,7 @@ static int printDatabaseVersion(mageec::Framework &framework,
   return 0;
 }
 
-// Print the version of the framework that the driver was compiled with.
+/// \brief Print the version of the framework that the driver was compiled for
 static void printFrameworkVersion(mageec::Framework &framework) {
   mageec::util::out() << MAGEEC_PREFIX "Framework version: "
                       << static_cast<std::string>(framework.getVersion())
@@ -1030,6 +1049,7 @@ struct FileFeatureIDs {
   std::set<FeatureIDEntry>             functions;
 };
 
+/// \brief Load feature IDs from an input file
 static mageec::util::Option<std::map<std::string, FileFeatureIDs>>
 loadFeatureIDs(std::string features_path) {
   std::map<std::string, FileFeatureIDs> file_to_features;
@@ -1105,7 +1125,7 @@ loadFeatureIDs(std::string features_path) {
   return file_to_features;
 }
 
-// Print the help output string
+/// \brief Print help output string
 static void printHelp() {
   mageec::util::out() <<
 "Wrapper around gcc which can interact with the mageec framework\n"
@@ -1127,6 +1147,7 @@ static void printHelp() {
 "  -fmageec-metric=<name>      Metric to optimize for\n";
 }
 
+/// \brief Entry point for the GCC wrapper driver
 int main(int argc, const char *argv[]) {
   DriverMode mode = DriverMode::kNone;
 
