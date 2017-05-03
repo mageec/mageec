@@ -37,6 +37,9 @@ namespace mageec {
 /// \class DecisionBase
 ///
 /// \brief Base class for arbitrary decision types
+///
+/// A Decision is comprised of an identifier which identifies the type of
+/// the decision which is made, as well as a value of that type.
 class DecisionBase {
 public:
   DecisionBase() = delete;
@@ -45,19 +48,23 @@ public:
   DecisionType getType() const { return m_decision_type; }
 
 protected:
-  /// \brief Create a decision with the provided type
+  /// \brief Create a decision with the provided type identifier
   DecisionBase(DecisionType decision_type) : m_decision_type(decision_type) {}
 
 private:
+  /// Identifier which specifies the type of the Decision.
   DecisionType m_decision_type;
 };
 
 /// \class Decision
 ///
-/// \brief Specific decision type
+/// \brief An arbitrary decision type
 ///
-/// Associates a given enumeration value for the decision type with the
-/// appropriate type of value.
+/// A Decision is comprised of an identifier which identifies the type of
+/// the decision which is made, as well as a value of that type.
+///
+/// \tparam decision_type Identifier for the type of the decision
+/// \tparam T The corresponding type for the decision
 template <DecisionType decision_type, typename T>
 class Decision : public DecisionBase {
 public:
@@ -65,6 +72,9 @@ public:
 
   Decision() = delete;
 
+  /// \brief Create a new decision from a given value
+  ///
+  /// \param value The value of the decision
   explicit Decision(const T &value)
       : DecisionBase(decision_type), m_value(value) {}
 
@@ -72,12 +82,16 @@ public:
   const T &getValue() const { return m_value; }
 
 private:
+  /// The value of the made decision
   const T m_value;
 };
 
 /// \class DecisionRequestBase
 ///
 /// \brief Base class for arbitrary decision request types
+///
+/// A DecisionRequest defines a request made to a machine learner, as well
+/// as the type of the resultant decision.
 class DecisionRequestBase {
 public:
   DecisionRequestBase() = delete;

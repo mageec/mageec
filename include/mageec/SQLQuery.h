@@ -22,8 +22,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MAGEEC_DATABASE_QUERY_H
-#define MAGEEC_DATABASE_QUERY_H
+#ifndef MAGEEC_SQL_QUERY_H
+#define MAGEEC_SQL_QUERY_H
 
 #include "sqlite3.h"
 
@@ -35,19 +35,36 @@ namespace mageec {
 
 class SQLQuery;
 
+/// \enum SQLType
+///
 /// Defines the types which can appear in SQL queries
-enum class SQLType { kInteger, kReal, kText, kBlob };
+enum class SQLType {
+  /// 64-bit signed integer type
+  kInteger,
+  /// 64-bit floating point value
+  kReal,
+  /// String
+  kText,
+  /// Binary blob
+  kBlob
+};
 
 /// \class SQLQueryBuilder
 ///
-/// This allows a database query to be constructed piece by piece.
+/// \brief This provides an interface to build an SQLQuery piece-by-piece
+///
+/// During construction, the query is treated as a list of strings, each of
+/// which is interleaved by a parameter slot in a parameterized query.
+/// Each of these slots has a type, and once the query has been fully
+/// constructed values can be bound to the slots provided they have a matching
+/// type.
 class SQLQueryBuilder {
 public:
   SQLQueryBuilder(void) = delete;
 
   /// \brief Begin building a query for a database
   ///
-  /// \param db  The database this query is targetting
+  /// \param db  Handle to the database this query is targeting
   SQLQueryBuilder(sqlite3 &db);
 
   /// \brief Retrieve the query from the builder
@@ -62,10 +79,13 @@ public:
   /// \brief Append a slot for a parameter to the query
   ///
   /// The slot will be subsequently populated when a parameter is bound to it
+  ///
+  /// \param param The type of the parameter which should be bound to the
+  /// provided current slot.
   SQLQueryBuilder &operator<<(SQLType param);
 
 private:
-  /// Handle to the database which this query is for
+  /// Handle to the database which this query targets
   sqlite3 &m_db;
 
   /// True when the last value appended to the query was a string. When
@@ -75,7 +95,7 @@ private:
   bool m_last_input_was_string;
 
   /// Substrings which make up the query. Every substring except the last is
-  /// followed by the paramter which occurs at the same index. For the
+  /// followed by the parameter which occurs at the same index. For the
   /// last substring this parameter is optional.
   std::vector<std::string> m_substrs;
 
@@ -129,24 +149,28 @@ public:
   /// \brief Retrieve a blob from the results table
   ///
   /// \param index  Index of the column containing the blob
+  ///
   /// \return A vector of bytes holding the blob
   std::vector<uint8_t> getBlob(int index);
 
   /// \brief Retrieve text from the results table
   ///
   /// \param index  Index of the column containing the text
+  ///
   /// \return A string containing the text
   std::string getText(int index);
 
   /// \brief Retrieve an integer from the results table
   ///
   /// \param index  Index of column containing the text
+  ///
   /// \return The integer value
   int64_t getInteger(int index);
 
   /// \brief Retrieve a real value from the results table
   ///
   /// \param index  Index of column containing the text
+  ///
   /// \return The real value
   double getReal(int index);
 
@@ -169,10 +193,18 @@ private:
 
 /// \class SQLQuery
 ///
-/// Wrapper around queries to sqlite to simplify the interface, provides a
-/// means to create new statements, and retrieve an iterator to results.
+/// \brief Wrapper around an SQL statement to simplify the interface and
+/// provide additional error checking.
+///
+/// A query is made up of a string, as well as zero or more typed slots. A
+/// user must bind values of the correct type to all of the slots before
+/// executing the query. This ensures the right number and type of values
+/// are bound to the sql query before it is executed.
+///
+/// When the query is executed, an SQLQueryIterator is provided to provide
+/// access to each row of the result in turn.
 class SQLQuery {
-  // SQLQueryIterator needs to be able to steal ownership of the
+  // The SQLQueryIterator needs to be able to steal ownership of the
   // underlying sqlite statement.
   friend class SQLQueryIterator;
 
@@ -198,9 +230,9 @@ public:
 
   /// \brief Construct a query with parameters
   ///
-  /// The query consists of interleaved substrings and parameter slots.
-  /// Values must be bound to all of the parameters slots in turn before the
-  /// query can be executed.
+  /// The query consists of interleaved strings and parameter slots.
+  /// Values of the correct type must be bound to all of the parameter slots
+  /// in turn before the query can be executed.
   ///
   /// \param db  sqlite database this query is for.
   /// \param substrs  Substrings which make up the query. Every parameter is
@@ -278,4 +310,4 @@ private:
 
 } // end of namespace mageec
 
-#endif // MAGEEC_DATABASE_QUERY_H
+#endif // MAGEEC_SQL_QUERY_H

@@ -57,9 +57,10 @@ std::ostream &out();
 
 /// \class Version
 ///
-/// Simple encapsulation of a version number. A version number is divided into
-/// a 3-tuple, consisting of major, minor and patch numbers, and is supposed
-/// to be treated as a semantic version number.
+/// \brief Simple encapsulation of a version number.
+///
+/// A version number is divided into a 3-tuple, consisting of major, minor and
+/// patch numbers, and is supposed to be treated as a semantic version number.
 class Version {
 public:
   Version() = delete;
@@ -164,6 +165,7 @@ public:
   }
 
 private:
+  /// Marks whether the option is populated with a value, or is empty
   bool m_populated;
   union {
     // By placing this in an anonymous union, we avoid its default constructor
@@ -177,9 +179,14 @@ private:
 ///
 /// It is assumed that the end of the iterator will not be encountered
 /// when reading the value.
+///
+/// \param it Iterator to read the 16-bit value from. This iterator will be
+/// advanced by 2 bytes during the read
+///
+/// \return The 16-bit value extracted from the buffer
 unsigned read16LE(std::vector<uint8_t>::const_iterator &it);
 
-/// \brief Write a 16-bit little endian value to a byte vector
+/// \brief Write a 16-bit little endian value to the end of a byte vector
 void write16LE(std::vector<uint8_t> &buf, unsigned value);
 
 /// \brief Read a 64-bit little endian value from a byte vector, advancing
@@ -187,15 +194,27 @@ void write16LE(std::vector<uint8_t> &buf, unsigned value);
 ///
 /// It is assumed that the end of the iterator will not be encountered
 /// when reading the value
+///
+/// \param it The iterator to read the 64-bit value form. This iterator will
+/// be advanced by 8 bytes during the read
+///
+/// \return The 64-bit value extracted from the buffer
 uint64_t read64LE(std::vector<uint8_t>::const_iterator &it);
 
-/// \brief Write a 64-bit little endian value to a byte vector
+/// \brief Write a 64-bit little endian value to the end of a byte vector
 void write64LE(std::vector<uint8_t> &buf, uint64_t value);
 
-/// \brief Calculate a CRC64 across a blob
+/// \brief Calculate the crc64 code for a blob of data
+///
+/// \param message Buffer containing the blob of data
+/// \param len Length of the buffer in bytes
+///
+/// \return The crc64 for the buffer
 uint64_t crc64(uint8_t *message, unsigned len);
 
-/// \brief Get the full (absolute) path for a given file
+/// \brief Get the full, canonical path for a given file
+///
+/// This also elimates any symbolic links in the process
 std::string getFullPath(std::string filename);
 
 /// \brief Get the basename of a file for a given path

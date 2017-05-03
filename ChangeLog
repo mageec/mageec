@@ -1,3 +1,24 @@
+2017-05-03  Edward Jones  <ed.jones@embecosm.com>
+
+	* doc/Doxyfile.in: Update doxygen configuration to fix
+	various issues with the generated documentation.
+	* include/mageec/Attribute.h: Update doxygen comments.
+	* include/mageec/AttributeSet.h: Likewise.
+	* include/mageec/Database.h: Likewise.
+	* include/mageec/Decision.h: Likewise.
+	* include/mageec/Framework.h: Likewise.
+	* include/mageec/ML.h: Likewise.
+	* include/mageec/ML/1NN.h: Likewise.
+	* include/mageec/ML/C5.h: Likewise.
+	* include/mageec/Result.h: Likewise.
+	* include/mageec/SQLQuery.h: Likewise.
+	* include/mageec/TrainedML.h: Likewise.
+	* include/mageec/Types.h: Likewise.
+	* include/mageec/Util.h: Likewise.
+	* lib/Driver.cpp: Likewise.
+	* lib/ML/C5.cpp: Likewise.
+	* lib/Util.cpp: Likewise.
+
 2017-04-19  Edward Jones  <ed.jones@embecosm.com>
 
 	* script/combined-elimination.py: Instead of using

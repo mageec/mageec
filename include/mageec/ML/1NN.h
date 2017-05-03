@@ -42,18 +42,18 @@ namespace mageec {
 
 class DecisionRequestBase;
 
-/// \class C5Driver
+/// \class OneNN
 ///
-/// \brief Machine learner which drives an external C5.0 classifier
+/// \brief 1-NN machine learner
+///
+/// This machine learner makes decision by finding the closest set of
+/// features in the training set, and then using the best set of parameters
+/// used to compile that set of features to make decisions.
 class OneNN : public IMachineLearner {
 public:
   OneNN();
   ~OneNN() override;
 
-  /// \brief Get the name of the machine learner
-  ///
-  /// Note that this is a driver in case a C5.0 classifier is later included
-  /// with MAGEEC.
   std::string getName(void) const override { return "1nn"; }
 
   bool requiresTraining(void) const override { return true; }
@@ -79,10 +79,21 @@ public:
                                    ResultIterator results) const override;
 
 private:
+  /// \struct Point
+  ///
+  /// \brief Represents a point in N-dimensional space, where N is the number
+  /// of distinct features.
+  ///
+  /// Each distinct feature is a separate axis in N-dimensional space. The
+  /// distance between two points is calculated by calculating the Euclidean
+  /// distance between the features in the feature sets.
+  ///
+  /// A point also has an associated set of parameters which is the best
+  /// set of parameters for that feature set encountered during training. If
+  /// a point is determined to be the closest to an input feature set, then
+  /// this parameter set corresponds to the decisions which should be made
+  /// for each parameter.
   struct Point {
-    //Point(std::map<unsigned, double> feats, std::map<unsigned, int64_t> params)
-    //    : features(feats), parameters(params)
-    //{}
     std::map<unsigned, double>  features;
     std::map<unsigned, int64_t> parameters;
   };

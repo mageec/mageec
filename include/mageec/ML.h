@@ -40,12 +40,15 @@ class DecisionRequestBase;
 
 /// \class IMachineLearner
 ///
-/// Abstract interface to a machine learner.
+/// \brief Abstract interface to a machine learner
+///
+/// This provides an interface which is implemented by all machine
+/// learners which interact with the MAGEEC framework.
 class IMachineLearner {
 public:
   virtual ~IMachineLearner(void) = 0;
 
-  /// \brief Get the name of this machine learner as a string
+  /// \brief Get the identifying name of this machine learner as a string
   virtual std::string getName(void) const = 0;
 
   /// \brief Return whether this machine learner must be trained before
@@ -82,11 +85,12 @@ public:
   /// \return True if the config was set successfully.
   virtual bool setDecisionConfig(std::string config_path) = 0;
 
-  // \brief Get the type of decisions which can be requested of this machine
-  // learner.
+  /// \brief Get the type of decisions which can be requested of this machine
+  /// learner.
+  ///
+  /// \return A set containing the supported types of decisions that may be
+  /// requested.
   //
-  // \return A set containing the supported types of decisions that may be
-  // requested.
   // TODO: Support this
   // std::set<DecisionRequestType> getSupportedDecisions(void) const = 0;
 
@@ -97,7 +101,6 @@ public:
   /// \param features  A set of features to be used by the machine learner to
   /// make the decision.
   /// \param blob  A blob of training data appropriate to the machine learner.
-  /// this should never be nullptr
   ///
   /// \return The resultant decision, which is either the appropriate
   /// corresponding decision for the input request, or the native decision if
@@ -106,7 +109,6 @@ public:
   makeDecision(const DecisionRequestBase &request, const FeatureSet &features,
                const std::vector<uint8_t> &blob) const = 0;
 
-  // TODO: machine learner training should be allowed to error
 
   /// \brief Train the machine learner using a complete set of provided
   /// results.
@@ -122,6 +124,8 @@ public:
   /// \param results  Iterator to the results data
   ///
   /// \return A blob of training data.
+  //
+  // TODO: machine learner training should be allowed to error
   virtual const std::vector<uint8_t>
   train(std::set<FeatureDesc> feature_descs,
         std::set<ParameterDesc> parameter_descs, std::set<std::string> passes,

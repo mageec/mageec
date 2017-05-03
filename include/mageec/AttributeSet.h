@@ -34,9 +34,17 @@
 
 namespace mageec {
 
+/// \class AttributeSet
+///
+/// \brief Class to store a set of Attributes
+///
+/// \tparam TypeIDType  The type of the identifier used to identify the
+/// type of the attribute.
 template <typename TypeIDType> class AttributeSet {
 private:
-  /// \brief Comparator object to sort attributes by comparing their ids
+  /// \struct AttributeIDComparator
+  ///
+  /// \brief Comparator object to sort attributes by comparing their identifiers
   struct AttributeIDComparator {
     bool
     operator()(std::shared_ptr<AttributeBase<TypeIDType>> const &lhs,
@@ -46,18 +54,20 @@ private:
   };
 
 public:
-  /// \brief constant iterator to attributes in the set
+  /// Constant iterator to attributes in the set
   typedef
       typename std::set<std::shared_ptr<AttributeBase<TypeIDType>>,
                         AttributeIDComparator>::const_iterator const_iterator;
 
-  /// \brief Construct a new empty attribute set
+  /// \brief Construct a new empty AttributeSet
   AttributeSet() : m_attributes() {}
+
+  /// \brief Construct a new AttributeSet based on an initialize list
   AttributeSet(
       std::initializer_list<std::shared_ptr<AttributeBase<TypeIDType>>> l)
       : m_attributes(l) {}
 
-  /// \brief Add a new attribute to an attribute set
+  /// \brief Add a new attribute to the set
   ///
   /// \param attr The new attribute to be added to the set
   void add(std::shared_ptr<AttributeBase<TypeIDType>> attr) {
@@ -112,10 +122,18 @@ public:
   }
 
 private:
+  /// Set of attributes. Attributes are ordered based on the ordering of
+  /// identifiers, so only one attribute with a given identifier may
+  /// appear in the set at once.
   std::set<std::shared_ptr<AttributeBase<TypeIDType>>,
            AttributeIDComparator> m_attributes;
 
   /// \brief Compare the current AttributeSet against another
+  ///
+  /// First, the size of the sets are compared, then the identifiers of
+  /// each consequtive Attribute is compared, then the Attribute value
+  /// itself is compared.
+  ///
   /// \return -1 if this < other, 0 if this == other, 1 if this > other
   int compare(const AttributeSet &other) const {
     if (size() < other.size())

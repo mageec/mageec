@@ -44,7 +44,14 @@ namespace mageec {
 
 /// \class AttributeBase
 ///
-/// \brief Base class for arbitrary attribute types
+/// \brief Base class for arbitrary attributes used by MAGEEC.
+///
+/// An Attribute is made up of an identifier which uniquely identifies the
+/// Attribute to the feature extractor or compiler, an identifier which defines
+/// the type of the value held in the attribute, and the value of that type.
+///
+/// \tparam TypeIDType  The type of the identifier used to identify the
+/// type of the attribute.
 template <typename TypeIDType> class AttributeBase {
 public:
   AttributeBase() = delete;
@@ -52,44 +59,59 @@ public:
   // vtable may be emitted multiple times
   virtual ~AttributeBase() {}
 
-  /// \brief Get the feature extractor or compiler specific identifier
-  /// associated with an attribute.
+  /// \brief Get the identifier which identifies this feature to the
+  /// feature extractor or compiler.
   unsigned getID() const { return m_id; }
 
-  /// \brief Get the type of the attribute.
+  /// \brief Get the identifier which defining the type of the attribute
   TypeIDType getType() const { return m_type; }
 
-  /// \brief Get the string identifier associated with an attribute
+  /// \brief Get the string name describing the attribute
   std::string getName() const { return m_name; }
 
-  /// \brief Get the value of an attribute as a blob of bytes
+  /// \brief Serialize the value of the attribute to a blob of bytes
+  ///
+  /// \return The value of the Attribute as a serialized blob of bytes
   virtual std::vector<uint8_t> toBlob() const = 0;
 
   /// \brief Print out an attribute to the provided stream
   virtual void print(std::ostream &os) const = 0;
 
 protected:
-  /// \brief Create an Attribute with the provided type and identifier
+  /// \brief Create an Attribute with the specified type identifier,
+  /// attribute identifier and name
+  ///
+  /// \param type  The identifier of the type of the attribute
+  /// \param id  The integer identifier uniquely identifier the attribute
+  /// \param name  A string name for the attribute
   AttributeBase(TypeIDType type, unsigned id, std::string name)
       : m_type(type), m_id(id), m_name(name) {}
 
 private:
-  /// The MAGEEC type of the feature
+  /// Identifier of the type of the feature
   TypeIDType m_type;
 
-  /// Feature extractor or compiler dependent identifier of the attribute
+  /// Identifier to uniquely identify the attribute to the feature
+  /// extractor or compiler which makes use of the attribute.
   unsigned m_id;
 
-  /// String identifier of the specific attribute, used for debug purposes
+  /// String name of the attribute, for debug purposes.
   std::string m_name;
 };
 
 /// \class Attribute
 ///
-/// \brief Represents a specific type of attribute
+/// \brief Defines arbitrary attributes used by MAGEEC.
+//
+/// An Attribute is made up of an identifier which uniquely identifies the
+/// Attribute to the feature extractor or compiler, an identifier which
+/// defines the type of the value held in the attribute, and the value of that
+/// type.
 ///
-/// Associates a given enumeration value for the attribute type with the
-/// appropriate type of value.
+/// \tparam TypeIDType  The type of the identifier used to identify the
+/// type of the attribute
+/// \tparam type  Identifier which defines the type of the attribute
+/// \tparam ValueT  The actual underlying type of the Attribute
 template <typename TypeIDType, TypeIDType type, typename ValueT>
 class Attribute : public AttributeBase<TypeIDType> {
 public:
@@ -98,13 +120,21 @@ public:
   Attribute() = delete;
   ~Attribute() {}
 
+  /// \brief Create an attribute with the specified attribute identifier,
+  /// value and name.
+  ///
+  /// \param id  The integer identifier uniquely identifying the attribute
+  /// \param value  The value of the attribute
+  /// \param name  A string name for the attribute
   Attribute(unsigned id, const value_type &value, std::string name)
       : AttributeBase<TypeIDType>(type, id, name), m_value(value) {}
 
-  /// \brief Get the value associated with this attribute.
+  /// \brief Get the value associated with the attribute
   const value_type &getValue() const { return m_value; }
 
-  /// \brief Convert the held attribute to a binary blob
+  /// \brief Serialize the value of the attribute to a blob of bytes
+  ///
+  /// \return The value of the Attribute as a serialized blob of bytes
   std::vector<uint8_t> toBlob(void) const override {
     static_assert(std::is_integral<value_type>::value,
                   "Only integral types handled for now");
@@ -119,8 +149,15 @@ public:
     return blob;
   }
 
-  /// \brief Create an attribute of this type given the provided id, blob and
-  /// name
+  /// \brief Create an attribute of this type given the provided attribute
+  /// identifier, binary blob to deserialize, and name
+  ///
+  /// \param id  The integer identifier uniquely identifying the attribute
+  /// \param blob  Binary blob which holds the serialized value of the
+  /// attribute, and must be deserialized.
+  /// \param name  A string name for the attribute
+  ///
+  /// \return An initialize Attribute deserialized from the blob
   static std::unique_ptr<Attribute>
   fromBlob(unsigned id, std::vector<uint8_t> blob, std::string name) {
     static_assert(std::is_integral<value_type>::value,
@@ -131,7 +168,7 @@ public:
     return std::unique_ptr<Attribute>(new Attribute(id, *value, name));
   }
 
-  /// \brief Print out an attribute type to the provided stream
+  /// \brief Print out an attribute to the provided stream
   void print(std::ostream &os) const override {
     static_assert(std::is_integral<value_type>::value,
                   "Only integral types handled for now");
@@ -139,8 +176,10 @@ public:
   }
 
 private:
+  /// Value of the feature
   const value_type m_value;
 };
+
 
 // Types of features supported by MAGEEC
 template <FeatureType type, typename ValueT>
@@ -175,10 +214,8 @@ public:
       : AttributeBase<ParameterType>(ParameterType::kPassSeq, id, name),
         m_value(value) {}
 
-  /// \brief Get the value associated with this attribute.
   const value_type &getValue() const { return m_value; }
 
-  /// \brief Convert the held attribute to a binary blob
   std::vector<uint8_t> toBlob(void) const override {
     std::vector<uint8_t> blob;
 
@@ -194,8 +231,6 @@ public:
     return blob;
   }
 
-  /// \brief Create an attribute of this type given the provided id, blob and
-  /// name
   static std::unique_ptr<Attribute>
   fromBlob(unsigned id, std::vector<uint8_t> blob, std::string name) {
     std::vector<std::string> passes;
@@ -216,7 +251,6 @@ public:
     return std::unique_ptr<Attribute>(new Attribute(id, passes, name));
   }
 
-  /// \brief Print out an attribute type to the provided stream
   void print(std::ostream &os) const override {
     os << this->getName() << ": ";
     for (unsigned i = 0; i < m_value.size(); i++) {

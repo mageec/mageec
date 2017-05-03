@@ -37,20 +37,32 @@ namespace mageec {
 
 class ResultIterator;
 
+/// \class Result
+///
+/// \brief A single result as provided to a machine learner during training
+///
+/// This class encapsulates a single result value, as well as the FeatureSet of
+/// the program unit which was compiled and the ParameterSet which the
+/// program unit was compiled with to produce that value.
 class Result {
-  // ResultIterator is responsible for creating each result on demand
+  // ResultIterator is responsible for retrieving each result on demand
   friend class ResultIterator;
 
 public:
   Result() = delete;
 
   /// \brief Get the features of the program unit
+  ///
+  /// \return The FeatureSet of the program unit which produced the result
   const FeatureSet& getFeatures(void) const { return m_features; }
 
   /// \brief Get the parameters of the compilation
+  ///
+  /// \return The ParameterSet the program unit was compiled with to
+  /// produce the given result value
   const ParameterSet& getParameters(void) const { return m_parameters; }
 
-  /// \brief Get the numerical value of the result
+  /// \brief Get the value of the result as as double
   double getValue(void) const { return m_value; }
 
 private:
@@ -62,14 +74,14 @@ private:
   Result(FeatureSet features, ParameterSet parameters, double value)
       : m_features(features), m_parameters(parameters), m_value(value) {}
 
-  /// \brief Features for the program unit
+  /// Features for the program unit which produced the result value
   FeatureSet m_features;
 
-  /// \brief Parameters applicable to the overall compilation of the program
-  /// unit.
+  /// Parameters which were used to compile the program unit which produced
+  /// the defined result value
   ParameterSet m_parameters;
 
-  /// \brief Value of the result
+  /// Value of the result
   double m_value;
 };
 

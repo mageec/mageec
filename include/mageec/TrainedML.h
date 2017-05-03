@@ -42,8 +42,11 @@ class IMachineLearner;
 
 /// \class TrainedML
 ///
-/// Interface to a trained machine learner in a database. Used to make
+/// \brief Interface to a trained machine learner in a database. Used to make
 /// decisions about the compiler configuration.
+///
+/// A TrainedML is a machine learner interface, coupled with a blob of training
+/// database for that interface.
 class TrainedML {
 public:
   TrainedML() = delete;

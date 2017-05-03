@@ -89,11 +89,9 @@ void write64LE(std::vector<uint8_t> &buf, uint64_t value) {
   buf.push_back(static_cast<uint8_t>(value >> 56));
 }
 
-/// \brief Simple CRC implementation
-///
-/// Based on crc32b from Hacker's Delight
-/// (http://www.hackersdelight.org/hdcodetxt/crc.c.txt)
-/// Expanded to support crc64 and nulls by Simon Cook
+// Based on crc32b from Hacker's Delight
+// (http://www.hackersdelight.org/hdcodetxt/crc.c.txt)
+// Expanded to support crc64 and nulls by Simon Cook
 uint64_t crc64(uint8_t *message, unsigned len) {
   unsigned i;
   int j;

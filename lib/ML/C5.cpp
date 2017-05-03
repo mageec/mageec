@@ -118,10 +118,15 @@ struct C5Context {
 /// \brief Types of field found in the machine learner blob for the C5.0
 /// classifier.
 enum class C5BlobField {
+  /// Field describing the features seen when training
   kFeatureDesc,
+  /// Field describing the parameters seen when training
   kParameterDesc,
+  /// Entry describing a name for a pass
   kPassDesc,
+  /// Classifier tree for a parameter
   kParameterClassifierTree,
+  /// Classifier tree to classify whether or not to run a pass
   kPassClassifierTree
 };
 

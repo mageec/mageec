@@ -47,22 +47,38 @@ namespace mageec {
 class Database;
 class IMachineLearner;
 
+/// \class Framework
+///
+/// \brief Main class for accessing MAGEEC functionality
+///
+/// This class provides access to the MAGEEC framework. It holds various
+/// context and provides access to machine learners as well as a
+/// database.
 class Framework {
 private:
-  /// \brief Version of the mageec framework
+  /// Version of the mageec framework
   static const util::Version version;
 
 public:
   /// \brief Create the framework
+  ///
+  /// \param with_debug Enable debug output from MAGEEC
+  /// \param with_sql_trace Enable a fine grained dump of the SQL queries
+  /// as they are run.
   Framework(bool with_debug = false, bool with_sql_trace = false);
 
-  /// \brief Destroy the framework, deleting help machine learner interfaces
+  /// \brief Destroy the framework, deleting held machine learner interfaces
   ~Framework(void);
 
   /// \brief Enable debug in the framework
+  ///
+  /// \param with_debug Flag indicated whether debug should be enabled
   void setDebug(bool with_debug) const;
 
   /// \brief Enable tracing of sql in the framework
+  ///
+  /// \param with_sql_trace Flag indicating whether an SQL trace should
+  /// be enabled.
   void setSQLTrace(bool with_sql_trace) const;
 
   /// \brief Get the version of the mageec framework
@@ -94,15 +110,18 @@ public:
   /// \param create  Dictates whether the database should be loaded or created
   std::unique_ptr<Database> getDatabase(std::string db_path, bool create) const;
 
-  /// \brief Check whether a machine learner with the specified name has be
+  /// \brief Check whether a machine learner with the specified name has been
   /// registered with the framework.
   bool hasMachineLearner(std::string ml) const;
 
   /// \brief Get the interfaces for all of the machine learners registered
   /// with the framework.
+  ///
+  /// \return A set of pointer to the machine learners registered with the
+  /// framework.
   std::set<IMachineLearner *> getMachineLearners() const;
 
-  /// \brief Print information about this framework
+  /// \brief Print information about this framework to the provided stream
   void print(std::ostream &os) const;
 
   /// \brief Dump information about the framework to stdout

@@ -48,9 +48,17 @@ namespace mageec {
 
 class IMachineLearner;
 
+/// \class Database
+///
+/// \brief Main class for accessing the MAGEEC database
+///
+/// This class produces the majority of the operations which work on the
+/// database which is core to MAGEEC. This includes the creation of
+/// new databases, the addition of features, parameters and results, the
+/// training of machine learners and various utility methods.
 class Database {
 private:
-  /// \brief Version of the database interface. A newly created database will
+  /// Version of the database interface. A newly created database will
   /// have this version number.
   static const util::Version version;
 
@@ -74,6 +82,7 @@ public:
   /// \param db_path  Path to the database to be created.
   /// \param mls  Map of the machine learner interfaces available to the
   /// database
+  ///
   /// \return The database if it could be created, nullptr otherwise.
   static std::unique_ptr<Database>
   createDatabase(std::string db_path,
@@ -88,6 +97,7 @@ public:
   /// \param db_path  Path to the database to be created or loaded
   /// \param mls  Map of the machine learner interfaces available to the
   /// database
+  ///
   /// \return The database if it could be created or loaded, nullptr
   /// otherwise.
   static std::unique_ptr<Database>
@@ -121,7 +131,7 @@ public:
   util::Version getVersion(void);
 
   /// \brief Check whether the version of the database is compatible with the
-  /// provided code.
+  /// current version.
   ///
   /// \return True if the database is compatible
   bool isCompatible(void);
@@ -131,22 +141,26 @@ public:
   /// This merges the two database, preserving all primary and foreign
   /// key constraints.
   ///
+  /// \param other The database to be appending to the current database
+  ///
   /// \return True if the database was successfully appended
   bool appendDatabase(Database &other);
 
   /// \brief Get all of the trained machine learners in the database
+  ///
   /// \return All machine learners in the database which are trained.
   std::vector<TrainedML> getTrainedMachineLearners(void);
 
   /// \brief Garbage collect any entries in the database which are
-  /// unreachable from the results in the database.
+  /// unreachable from the results.
   void garbageCollect(void);
 
 private:
   /// \brief Get a metadata field of the database
   ///
-  /// \param field  The field to retrieve from the database, which may not
-  /// exist
+  /// \param field  The field to retrieve from the database, which may or may
+  /// not exist.
+  ///
   /// \return The string value of the retrieved field. This may be the empty
   /// string if the field does not exist.
   std::string getMetadata(MetadataField field);
@@ -171,12 +185,14 @@ public:
   /// \brief Retrieve the provided set of features
   ///
   /// \param feature_set_id  The id of the set of features to be extracted
+  ///
   /// \return The corresponding features
   FeatureSet getFeatureSetFeatures(FeatureSetID feature_set_id);
 
   /// \brief Retrieve the provided set of parameters in a ParameterSet
   ///
   /// \param param_set_id  The id of the set of parameters to be extracted
+  ///
   /// \return The parameters in that set in a ParameterSet
   ParameterSet getParameters(ParameterSetID param_set_id);
 
@@ -184,12 +200,12 @@ public:
 
   /// \brief Create a new compilation of a program unit
   ///
-  /// \param name  The name of the program unit (debug)
-  /// \param type  The type of the program unit (debug)
+  /// \param name  The name of the program unit. This is used for debug.
+  /// \param type  The type of the program unit. This is used for debug.
   /// \param features  The set of features for the program unit
   /// \param features_class  The class of the provided features
   /// \param parameters  Set of parameters which apply to the overall
-  /// compilation
+  /// compilation.
   /// \param command  The command used to compile the program unit
   /// \param parent  Optional parent of this compilation. For example the
   /// encapsulating module for a function. (debug)
@@ -212,7 +228,7 @@ public:
 //===------------------------ Results interface ---------------------------===//
 
   /// \brief Add results entries to the database for previously
-  // established compilations.
+  /// established compilations.
   ///
   /// \param results A set of results to be added to the database
   void
@@ -254,8 +270,8 @@ private:
 
 /// \class ResultIterator
 ///
-/// Provides an interface to retrieve individual results data from the database
-/// in sequence.
+/// \brief Interface to retrieve individual results from the database in
+/// sequence.
 class ResultIterator {
 public:
   /// \brief Constructor an iterator to iterate through results in the database
@@ -283,7 +299,7 @@ private:
 
 /// \class SQLTransaction
 ///
-/// This is a wrapper around a transaction, which rolls back a transaction
+/// \brief Wrapper around an SQL transaction. This rolls back a transaction
 /// if it is destroyed before it has been explicitly committed.
 class SQLTransaction {
 public:
@@ -312,9 +328,13 @@ public:
   void commit(void);
 
 private:
+  /// Flag marking whether the transaction is fully initialized
   bool m_is_init;
 
+  /// Flag marking whether the transaction has been successfully committed.
   bool m_is_committed;
+
+  /// Handle to the underlying sqlite3 database connection
   sqlite3 *m_db;
 };
 

@@ -36,12 +36,21 @@
 
 namespace mageec {
 
+/// \enum DriverMode
+///
+/// \brief Mode which the driver is running in
 enum class DriverMode {
+  /// No mode, only debug utilities available
   kNone,
+  /// Database creation mode
   kCreate,
+  /// Database appending mode
   kAppend,
+  /// Training mode
   kTrain,
+  /// Mode to add results from a file
   kAddResults,
+  /// Mode to garbage collect stale entries in the file
   kGarbageCollect
 };
 
@@ -71,7 +80,7 @@ static int printDatabaseVersion(Framework &framework,
   return 0;
 }
 
-/// \brief Print out a help string for the mageec tool
+/// \brief Print out a help string
 static void printHelp()
 {
   util::out() <<
@@ -163,6 +172,9 @@ getMachineLearners(Framework &framework, std::set<std::string> ml_strs) {
 /// If a database is not provided, then print the machine learners which
 /// do not require training.
 ///
+/// \param framework Framework holding the machine learner interface
+/// \param db_path Path to the database holding the trained machine learners
+///
 /// \return true on success
 static bool printTrainedMLs(Framework &framework,
                             const util::Option<std::string> db_path) {
@@ -198,6 +210,8 @@ static bool printTrainedMLs(Framework &framework,
 
 /// \brief Print a description of all of the machine learner interfaces
 /// known by the framework.
+///
+/// \param framework Framework holding the machine learner interfaces
 static void printMLInterfaces(Framework &framework) {
   std::set<IMachineLearner *> mls = framework.getMachineLearners();
   for (const auto *ml : mls) {
@@ -206,6 +220,9 @@ static void printMLInterfaces(Framework &framework) {
 }
 
 /// \brief Create a new database
+///
+/// \param framework Framework instance to create the database
+/// \param db_path Path of the database to be created
 ///
 /// \return true on success, false if the database could not be created.
 static bool createDatabase(Framework &framework, const std::string &db_path) {
@@ -220,6 +237,10 @@ static bool createDatabase(Framework &framework, const std::string &db_path) {
 }
 
 /// \brief Append one database to another
+///
+/// \param framework Framework instance to load the databases
+/// \param db_path Database to be appended to
+/// \param append_db_path Database to append
 ///
 /// \return true on success, false if the database could not be appended
 static bool appendDatabase(Framework &framework,
@@ -244,6 +265,11 @@ static bool appendDatabase(Framework &framework,
 }
 
 /// \brief Train a database
+///
+/// \param framework Framework instance to load the database
+/// \param db_path Path of the database to train
+/// \param mls Machine learners to train
+/// \param metric_strs Metrics to train for
 ///
 /// \return true on success, false if the database could not be trained.
 static bool trainDatabase(Framework &framework, const std::string &db_path,
@@ -288,6 +314,12 @@ static bool trainDatabase(Framework &framework, const std::string &db_path,
   return true;
 }
 
+/// \brief parseResults from an results file
+///
+/// \param result_path Path for the results file
+///
+/// \return Map from a CompilationID and identifier for the program unit, to
+/// the result value as a double.
 static util::Option<std::map<std::pair<CompilationID, std::string>, double>>
 parseResults(const std::string &result_path) {
   std::map<std::pair<CompilationID, std::string>, double> results;
@@ -415,6 +447,13 @@ parseResults(const std::string &result_path) {
   return results;
 }
 
+/// \brief Parse results and add them to a database
+///
+/// \param framework Framework instance to load the database
+/// \param db_path Path to the database to add the result to
+/// \param result_path Path for the results file
+///
+/// \return true on successful addition of the results, false otherwise
 static bool addResults(Framework &framework, const std::string &db_path,
                        const std::string &results_path) {
   std::unique_ptr<Database> db = framework.getDatabase(db_path, false);

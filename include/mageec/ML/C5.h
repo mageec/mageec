@@ -49,10 +49,6 @@ public:
   C5Driver();
   ~C5Driver() override;
 
-  /// \brief Get the name of the machine learner
-  ///
-  /// Note that this is a driver in case a C5.0 classifier is later included
-  /// with MAGEEC.
   std::string getName(void) const override { return "c50"; }
 
   bool requiresTraining(void) const override { return true; }
