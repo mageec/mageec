@@ -49,7 +49,14 @@ static_assert(GCC_FEATURE_EXTRACT_PLUGIN_VERSION_MAJOR == 2 &&
               "GCC Feature Extractor plugin version does not match");
 
 
+/// \class FeatureExtractContext
+///
 /// \brief Context to hold information needed by the plugin
+///
+/// This holds handles to the framework and database, as well as
+/// the features for each of the functions in the current modules. It also
+/// holds a handle to the output file into which the FeatureIDs are
+/// emitted once the features have been extracted
 class FeatureExtractContext {
 public:
   FeatureExtractContext()
@@ -59,6 +66,7 @@ public:
   FeatureExtractContext(const FeatureExtractContext &) = delete;
   void operator=(const FeatureExtractContext &) = delete;
 
+  /// \brief Get the unique instance of the context
   static FeatureExtractContext& getInstance() {
     static FeatureExtractContext instance;
     return instance;
@@ -97,16 +105,19 @@ public:
   }
 
 private:
+  /// Handle to the framework
   std::unique_ptr<mageec::Framework> m_framework;
+
+  /// Handle to the database
   std::unique_ptr<mageec::Database>  m_db;
 
-  /// Output file into which feature group identifiers will be emitted into
+  /// Output files which FeatureSetIDs will be emitted into
   std::unique_ptr<std::ofstream> m_outfile;
 
-  /// Extract features for each function in the module
+  /// Extracted features for each function in the module, keyed on the
+  /// name of the function
   std::map<std::string, std::unique_ptr<FunctionFeatures>> m_func_features;
 };
-
 
 /// The plugin base_name for our hooks to use to schedule new passes
 extern const char *feature_extract_plugin_name;

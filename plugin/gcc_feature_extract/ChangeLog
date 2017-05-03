@@ -1,3 +1,9 @@
+2017-05-03  Edward Jones  <ed.jones@embecosm.com>
+
+	* FeatureExtract.h: Update doxygen comments.
+	* Plugin.cpp: Likewise.
+	* Plugin.h: Likewise.
+
 2017-03-03  Edward Jones  <ed.jones@embecosm.com>
 
 	* Plugin.cpp: Add -sql-trace argument to plugin.

@@ -177,10 +177,10 @@ static void printDatabaseVersion(mageec::Database &db) {
 
 
 /// \brief Parse arguments provided to the plugin
-///
-/// FIXME: This method is rather large an unweildy as we mutate
-/// the configuration of the framework and context all over the place.
-/// It needs to be factored out to make it more manageable.
+//
+// FIXME: This method is rather large an unweildy as we mutate
+// the configuration of the framework and context all over the place.
+// It needs to be factored out to make it more manageable.
 static bool parseArguments(struct plugin_name_args *plugin_info,
                            struct plugin_gcc_version *version) {
   int argc = plugin_info->argc;
